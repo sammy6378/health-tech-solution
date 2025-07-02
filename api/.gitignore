@@ -42,6 +42,9 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# http files/folders
+/requests
+
 # temp directory
 .temp
 .tmp
