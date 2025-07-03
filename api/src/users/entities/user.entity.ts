@@ -13,6 +13,11 @@ import * as Bcrypt from 'bcrypt';
 import { UserProfile } from 'src/user-profile/entities/user-profile.entity';
 import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
 import { Appointment } from 'src/appointments/entities/appointment.entity';
+import { Pharmacy } from 'src/pharmacy/entities/pharmacy.entity';
+import { Prescription } from 'src/prescriptions/entities/prescription.entity';
+import { Order } from 'src/orders/entities/order.entity';
+import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
+import { Notification } from 'src/notifications/entities/notification.entity';
 
 @Entity('users')
 export class User {
@@ -83,4 +88,29 @@ export class User {
 
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   doctorAppointments: Appointment[];
+
+  @OneToMany(() => Pharmacy, (pharmacy) => pharmacy.user, {
+    onDelete: 'CASCADE',
+  })
+  pharmacies: Pharmacy[];
+
+  @OneToMany(() => Prescription, (prescription) => prescription.patient, {
+    onDelete: 'CASCADE',
+  })
+  prescriptions: Prescription[];
+
+  @OneToMany(() => Order, (order) => order.patient, {
+    onDelete: 'CASCADE',
+  })
+  orders: Order[];
+
+  @OneToMany(() => MedicalRecord, (medicalRecord) => medicalRecord.patient, {
+    onDelete: 'CASCADE',
+  })
+  medicalRecord: MedicalRecord;
+
+  @OneToMany(() => Notification, (notification) => notification.user, {
+    onDelete: 'CASCADE',
+  })
+  notifications: Notification[];
 }

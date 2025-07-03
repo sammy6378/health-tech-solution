@@ -63,3 +63,11 @@ pnpm install --save @nestjs/swagger
 ```bash
 pnpm install bcrypt @types/bcrypt
 ```
+
+<!-- redis caching -->
+## redis caching
+
+```bash
+ pnpm install @nestjs/cache-manager cache-manager @keyv/redis cacheable
+    pnpm install @nestjs/redis ioredis
+    ```
