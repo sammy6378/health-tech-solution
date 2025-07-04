@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { CloudinaryProvider } from './cloudinary/cloudinary.provider';
@@ -71,7 +70,7 @@ import { AtGuard } from './auth/guards/at.guard';
     MailModule,
     LogsModule,
   ],
-  controllers: [AppController, UploadController],
+  controllers: [UploadController],
   providers: [
     AppService,
     CloudinaryProvider,

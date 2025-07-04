@@ -18,11 +18,47 @@ async function bootstrap() {
       'API documentation for the Tech Health Solution application [MediConnect] developed by Nuvex Tech Solutions. This API provides endpoints for user management, file uploads, and event handling.',
     )
     .setVersion('1.0')
-    .addBearerAuth()
+    .addServer('http://localhost:3000', 'Development Server')
+    .addServer('https://api.techhealthsolution.com', 'Production Server')
+    .addTag('auth', 'Endpoints related to authentication and authorization')
+    .addTag('Users', 'Endpoints related to user management')
+    .addTag('UserProfile', 'Endpoints related to user profiles')
+    .addTag('DoctorProfile', 'Endpoints related to doctor profiles')
+    .addTag('Appointments', 'Endpoints related to appointments')
+    .addTag('Pharmacy', 'Endpoints related to pharmacy management')
+    .addTag('Prescriptions', 'Endpoints related to prescriptions')
+    .addTag('Stocks', 'Endpoints related to pharmacy stocks')
+    .addTag('Orders', 'Endpoints related to orders')
+    .addTag('Upload', 'Endpoints related to file uploads')
+    .addTag('MedicalRecords', 'Endpoints related to medical records')
+    .addTag('Payments', 'Endpoints related to payments')
+    .addTag('Notifications', 'Endpoints related to notifications')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      in: 'header',
+    })
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, documentFactory());
+  SwaggerModule.setup('api/docs', app, documentFactory, {
+    jsonDocumentUrl: '/api/docs-json',
+    yamlDocumentUrl: '/api/docs-yaml',
+    swaggerOptions: {
+      persistAuthorization: true, // Persist authorization header
+      displayRequestDuration: true, // Display request duration in UI
+      tagsSorter: 'alpha', // Sort tags alphabetically
+      operationsSorter: 'alpha', // Sort operations alphabetically
+      filter: true, // Enable filtering
+      tryItOutEnabled: true, // Enable "Try it out" feature
+      docExpansion: 'none', // Collapse all sections by default
+    },
+    customCss: `
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin-bottom: 20px; }`,
+    customSiteTitle: 'MediConnect API Documentation',
+  });
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
