@@ -27,7 +27,7 @@ export class PrescriptionsController {
     return this.prescriptionsService.create(createPrescriptionDto);
   }
 
-  @Roles(Role.DOCTOR, Role.PHARMACY,Role.USER)
+  @Roles(Role.DOCTOR, Role.PHARMACY, Role.USER)
   @Get()
   findAll() {
     return this.prescriptionsService.findAll();

@@ -12,10 +12,11 @@ export default function DoctorsPage() {
   const { data, isLoading } = useGetDoctors()
   const [search, setSearch] = useState('')
   const doctors = data?.data || []
+  console.log('Doctors:', doctors)
 
   // Optional search filtering
   const filteredDoctors = doctors.filter((user) => {
-    const doctor = user.doctors?.[0]
+    const doctor = user.doctors;
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     return (
       fullName.includes(search.toLowerCase()) ||

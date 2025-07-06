@@ -1,9 +1,12 @@
 import type { TPrescription } from "@/types/api-types";
 import { useCreate, useDelete, useGetList, useGetOne, useUpdate } from "./useApiHook";
+import { useAuthStore } from "@/store/store";
 
 const base = 'prescriptions';
 
 export const useGetPrescriptions = () => useGetList<TPrescription>('prescriptions', base)
+export const useGetPrescriptionsByPatient = (patientId: string) =>
+  useGetList<TPrescription>('prescriptions', `${base}/patient/${patientId}`)
 export const useGetPrescription = (id: string) =>
   useGetOne<TPrescription>('prescription', `${base}/${id}`, !!id)
 export const useCreatePrescription = () =>
@@ -14,7 +17,9 @@ export const useDeletePrescription = () =>
   useDelete('prescriptions', (id: string) => `${base}/${id}`)
 
 export const useGetPrescriptionMetrics = () => {
-  const { data } = useGetPrescriptions();
+    const {user} = useAuthStore()
+      const userId = user?.userId || '';
+  const { data } = useGetPrescriptionsByPatient(userId)
   const prescriptions = data?.data || [];
   const totalPrescriptions = prescriptions?.length || 0
   const activePrescriptions =

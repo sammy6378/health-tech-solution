@@ -44,13 +44,16 @@ import {
   Mail,
 } from 'lucide-react'
 import { PrescriptionStatus, type TPrescription } from '@/types/api-types'
-import { useGetPrescriptions } from '@/hooks/usePrescriptions'
+import { useAuthStore } from '@/store/store'
+import { useGetPrescriptionsByPatient } from '@/hooks/usePrescriptions'
 
 
 export default function PrescriptionsPage() {
+  const {user} = useAuthStore()
+        const userId = user?.userId || '';
   const [searchTerm, setSearchTerm] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('all')
-  const { data: prescriptionsResponse } = useGetPrescriptions;
+  const { data: prescriptionsResponse } = useGetPrescriptionsByPatient(userId)
   const prescriptions = prescriptionsResponse?.data ?? []
 
   const getStatusColor = (status: string) => {
