@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { PrescriptionStatus } from '../dto/create-prescription.dto';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Entity('prescriptions')
 export class Prescription {
@@ -83,6 +84,16 @@ export class Prescription {
 
   @Column()
   medication_id: string;
+
+  @ManyToOne(() => Diagnosis, (diagnosis) => diagnosis.prescriptions, {
+    onDelete: 'CASCADE',
+    nullable: true, // Make it optional if prescriptions can exist without diagnosis
+  })
+  @JoinColumn({ name: 'diagnosis_id' })
+  diagnosis?: Relation<Diagnosis>;
+
+  @Column({ nullable: true })
+  diagnosis_id?: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

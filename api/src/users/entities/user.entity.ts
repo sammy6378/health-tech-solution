@@ -18,6 +18,7 @@ import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Entity('users')
 export class User {
@@ -109,4 +110,14 @@ export class User {
     onDelete: 'CASCADE',
   })
   notifications: Notification[];
+
+  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient, {
+    onDelete: 'CASCADE',
+  })
+  patientDiagnoses: Diagnosis[];
+
+  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.doctor, {
+    onDelete: 'CASCADE',
+  })
+  doctorDiagnoses: Diagnosis[];
 }
