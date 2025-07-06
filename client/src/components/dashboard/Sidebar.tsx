@@ -13,13 +13,9 @@ import { checkRole, Role } from '@/components/utils/roles-nav'
 import { LayoutDashboard } from 'lucide-react'
 import { navGroups } from '../utils/roles-nav'
 import { Link } from '@tanstack/react-router'
+import { authSlice } from '@/store/store'
+import { useRouterState } from '@tanstack/react-router'
 
-// Dummy user for now
-const currentUser = {
-  name: 'shadcn',
-  email: 'm@example.com',
-  avatar: '/avatars/shadcn.jpg',
-}
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   userRole: Role
@@ -35,9 +31,16 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
     ? [...roleBasedNavGroups, generalGroup]
     : roleBasedNavGroups
 
+    const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar
+      className="bg-gray-50  dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+      collapsible="offcanvas"
+      {...props}
+    >
+      <SidebarHeader className="bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -53,7 +56,7 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden hover:overflow-y-auto sidebar-scroll">
+      <SidebarContent className="overflow-hidden hover:overflow-y-auto sidebar-scroll bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 ">
         {filteredNavGroups.map((group, idx) => (
           <SidebarMenu key={idx} className="mb-4">
             <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">
@@ -62,7 +65,12 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
             {group.links.map((item, i) => (
               <SidebarMenuItem key={i}>
                 <SidebarMenuButton asChild>
-                  <Link to={item.url} className="flex items-center gap-2">
+                  <Link
+                    to={item.to}
+                    key={item.to}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors duration-200
+    ${pathname === item.to ? 'bg-gray-200 dark:bg-gray-700 font-semibold' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
                   </Link>
@@ -73,12 +81,28 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* Optional: Show user role info */}
-        <div className="px-4 py-2 text-xs text-muted-foreground">
-          Role: {userRole}
-        </div>
-        {/* <NavUser user={currentUser} /> */}
+      <SidebarFooter className="bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+        <Link
+          to="/auth-signin"
+          onClick={() => authSlice.logout()}
+          className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-md bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors duration-150"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1"
+            />
+          </svg>
+          Logout
+        </Link>
       </SidebarFooter>
     </Sidebar>
   )

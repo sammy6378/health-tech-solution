@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { StockCategory, StockType } from '../dto/create-stock.dto';
 
-@Entity('stock')
+@Entity('stocks')
 export class Stock {
   @PrimaryGeneratedColumn('uuid')
   medication_id: string;

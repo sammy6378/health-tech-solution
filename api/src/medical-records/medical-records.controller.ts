@@ -6,30 +6,40 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { MedicalRecordsService } from './medical-records.service';
 import { CreateMedicalRecordDto } from './dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from './dto/update-medical-record.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { AtGuard } from 'src/auth/guards/at.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/users/dto/create-user.dto';
 
+@UseGuards(AtGuard, RolesGuard)
 @Controller('medical-records')
 export class MedicalRecordsController {
   constructor(private readonly medicalRecordsService: MedicalRecordsService) {}
 
+  @Roles(Role.DOCTOR, Role.USER)
   @Post()
   create(@Body() createMedicalRecordDto: CreateMedicalRecordDto) {
     return this.medicalRecordsService.create(createMedicalRecordDto);
   }
 
+  @Roles(Role.DOCTOR, Role.ADMIN)
   @Get()
   findAll() {
     return this.medicalRecordsService.findAll();
   }
 
+  @Roles(Role.DOCTOR, Role.USER, Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.medicalRecordsService.findOne(id);
   }
 
+  @Roles(Role.DOCTOR, Role.USER)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -38,6 +48,7 @@ export class MedicalRecordsController {
     return this.medicalRecordsService.update(id, updateMedicalRecordDto);
   }
 
+  @Roles(Role.DOCTOR, Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.medicalRecordsService.remove(id);

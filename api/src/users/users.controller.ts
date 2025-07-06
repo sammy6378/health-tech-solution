@@ -27,10 +27,16 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.USER)
   @Get()
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Roles(Role.ADMIN, Role.USER)
+  @Get('doctors')
+  findAllDoctors() {
+    return this.usersService.findAllDoctors();
   }
 
   @Roles(Role.ADMIN, Role.USER)

@@ -60,6 +60,27 @@ export class AppointmentsService {
     return createResponse(data, 'All appointments fetched');
   }
 
+  async findByUser(userId: string): Promise<ApiResponse<Appointment[]>> {
+    const user = await this.userRepository.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const appointments = await this.appointmentRepository.find({
+      where: { patient: { user_id: userId } },
+      relations: ['patient', 'doctor'],
+    });
+
+    if (appointments.length === 0) {
+      return createResponse([], 'No appointments found for this user');
+    }
+
+    return createResponse(appointments, 'Appointments fetched successfully');
+  }
+
   async findOne(id: string): Promise<ApiResponse<Appointment>> {
     const appointment = await this.appointmentRepository.findOne({
       where: { appointment_id: id },

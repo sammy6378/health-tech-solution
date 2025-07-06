@@ -43,121 +43,15 @@ import {
   Phone,
   Mail,
 } from 'lucide-react'
+import { PrescriptionStatus, type TPrescription } from '@/types/api-types'
+import { useGetPrescriptions } from '@/hooks/usePrescriptions'
 
-enum PrescriptionStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-// Mock prescriptions data
-const prescriptions = [
-  {
-    id: 1,
-    prescription_date: '2025-06-28',
-    prescription_number: 'RX-2025-001234',
-    medication_name: 'Lisinopril',
-    quantity_prescribed: 30,
-    dosage_instructions: [
-      'Take 10mg once daily',
-      'Take with or without food',
-      'Take at the same time each day',
-    ],
-    status: PrescriptionStatus.ACTIVE,
-    duration_days: 30,
-    frequency_per_day: 1,
-    notes:
-      'Monitor blood pressure weekly. Contact doctor if experiencing dizziness or dry cough.',
-    doctor: 'Dr. Sarah Johnson',
-    doctor_specialty: 'Cardiology',
-    doctor_phone: '+1 (555) 123-4567',
-    doctor_email: 'sarah.johnson@medcenter.com',
-    pharmacy: 'CVS Pharmacy - Main St',
-    refills_remaining: 2,
-    expiry_date: '2025-12-28',
-    condition: 'Hypertension',
-  },
-  {
-    id: 2,
-    prescription_date: '2025-06-25',
-    prescription_number: 'RX-2025-001235',
-    medication_name: 'Metformin',
-    quantity_prescribed: 60,
-    dosage_instructions: [
-      'Take 500mg twice daily',
-      'Take with meals',
-      'Do not crush or chew tablets',
-    ],
-    status: PrescriptionStatus.ACTIVE,
-    duration_days: 60,
-    frequency_per_day: 2,
-    notes:
-      'Regular blood sugar monitoring required. May cause mild stomach upset initially.',
-    doctor: 'Dr. Michael Chen',
-    doctor_specialty: 'Endocrinology',
-    doctor_phone: '+1 (555) 234-5678',
-    doctor_email: 'michael.chen@diabetes.com',
-    pharmacy: 'Walgreens - Oak Avenue',
-    refills_remaining: 5,
-    expiry_date: '2026-01-25',
-    condition: 'Type 2 Diabetes',
-  },
-  {
-    id: 3,
-    prescription_date: '2025-06-20',
-    prescription_number: 'RX-2025-001236',
-    medication_name: 'Amoxicillin',
-    quantity_prescribed: 21,
-    dosage_instructions: [
-      'Take 500mg three times daily',
-      'Take with food',
-      'Complete full course even if feeling better',
-    ],
-    status: PrescriptionStatus.COMPLETED,
-    duration_days: 7,
-    frequency_per_day: 3,
-    notes:
-      'Antibiotic for respiratory infection. Avoid alcohol during treatment.',
-    doctor: 'Dr. Emily Rodriguez',
-    doctor_specialty: 'Family Medicine',
-    doctor_phone: '+1 (555) 345-6789',
-    doctor_email: 'emily.rodriguez@familymed.com',
-    pharmacy: 'Rite Aid - Downtown',
-    refills_remaining: 0,
-    expiry_date: '2025-06-27',
-    condition: 'Upper Respiratory Infection',
-  },
-  {
-    id: 4,
-    prescription_date: '2025-06-15',
-    prescription_number: 'RX-2025-001237',
-    medication_name: 'Ibuprofen',
-    quantity_prescribed: 60,
-    dosage_instructions: [
-      'Take 400mg every 6-8 hours as needed',
-      'Do not exceed 1200mg per day',
-      'Take with food or milk',
-    ],
-    status: PrescriptionStatus.PENDING,
-    duration_days: 14,
-    frequency_per_day: 3,
-    notes:
-      'For pain management post-surgery. Stop if experiencing stomach pain.',
-    doctor: 'Dr. James Wilson',
-    doctor_specialty: 'Orthopedics',
-    doctor_phone: '+1 (555) 456-7890',
-    doctor_email: 'james.wilson@orthocenter.com',
-    pharmacy: 'CVS Pharmacy - Main St',
-    refills_remaining: 0,
-    expiry_date: '2025-12-15',
-    condition: 'Post-operative Pain',
-  },
-]
 
 export default function PrescriptionsPage() {
   const [searchTerm, setSearchTerm] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('all')
+  const { data: prescriptionsResponse } = useGetPrescriptions;
+  const prescriptions = prescriptionsResponse?.data ?? []
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -189,12 +83,12 @@ export default function PrescriptionsPage() {
     }
   }
 
-  const filteredPrescriptions = prescriptions.filter((prescription) => {
+  const filteredPrescriptions = prescriptions.filter((prescription:TPrescription) => {
     const matchesSearch =
       prescription.medication_name
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      prescription.doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prescription.users?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       prescription.condition.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus =
       statusFilter === 'all' || prescription.status === statusFilter
@@ -270,7 +164,7 @@ export default function PrescriptionsPage() {
           {/* Prescriptions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {filteredPrescriptions.map((prescription) => (
-              <Sheet key={prescription.id}>
+              <Sheet key={prescription.medication_id}>
                 <SheetTrigger asChild>
                   <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 relative overflow-hidden">
                     {/* Status indicator strip */}
@@ -310,7 +204,7 @@ export default function PrescriptionsPage() {
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <User className="w-4 h-4" />
-                        {prescription.doctor}
+                        {prescription.users?.first_name}
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">

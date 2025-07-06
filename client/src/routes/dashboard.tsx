@@ -1,17 +1,61 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import Tobbar from '@/components/dashboard/Tobbar'
 import { AppSidebar } from '@/components/dashboard/Sidebar'
 import { Outlet } from '@tanstack/react-router'
 import { Role } from '@/components/utils/roles-nav'
+import { authStore, useAuthStore } from '@/store/store'
 
 export const Route = createFileRoute('/dashboard')({
+    beforeLoad: ({location}) =>{
+      // Check both store state and localStorage
+      const isAuthenticated = authStore.state.isAuthenticated
+      const storedData = localStorage.getItem('auth')
+      if (!isAuthenticated && !storedData) {
+        throw redirect({
+          to: '/auth-signin',
+          search: {
+            redirect: location.href,
+          },
+        })
+      }
+
+      // If store says not authenticated but localStorage has data, reinitialize
+    if (!isAuthenticated && storedData) {
+      try {
+        const userData = JSON.parse(storedData)
+        if (userData && userData.isAuthenticated) {
+          authStore.setState({
+            isAuthenticated: true,
+            ...userData,
+          })
+        } else {
+          throw redirect({
+            to: '/auth-signin',
+            search: {
+              redirect: location.href
+            }
+          })
+        }
+      }catch (error) {
+        localStorage.removeItem('auth')
+        throw redirect({
+          to: '/auth-signin',
+          search: {
+            redirect: location.href
+          }
+        })
+      }}
+    },
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const authState = useAuthStore()
+  const role = authState.user?.role as Role
   return (
     <SidebarProvider
+      className="bg-gray-50 dark:bg-gray-900"
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -19,7 +63,7 @@ function RouteComponent() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" userRole={Role.PATIENT} />
+      <AppSidebar variant="inset" userRole={role} />
       <SidebarInset>
         <Tobbar />
         <div className="flex flex-1 flex-col bg-gray-50 dark:bg-gray-900">

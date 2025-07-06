@@ -1,9 +1,12 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { Logger } from '@nestjs/common';
+import { AllExceptionsFilter } from './http-exceptions.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -12,13 +15,20 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  // helmet
+  app.use(helmet());
+
+  // register global exception filter
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+
   const config = new DocumentBuilder()
     .setTitle('MediConnect API')
     .setDescription(
       'API documentation for the Tech Health Solution application [MediConnect] developed by Nuvex Tech Solutions. This API provides endpoints for user management, file uploads, and event handling.',
     )
     .setVersion('1.0')
-    .addServer('http://localhost:3000', 'Development Server')
+    .addServer('http://localhost:8000', 'Development Server')
     .addServer('https://api.techhealthsolution.com', 'Production Server')
     .addTag('auth', 'Endpoints related to authentication and authorization')
     .addTag('Users', 'Endpoints related to user management')
@@ -70,6 +80,23 @@ async function bootstrap() {
   // const isProduction = process.env.NODE_ENV === 'production';
   const PORT = configService.getOrThrow<number>('PORT');
 
+  const corsOptions = {
+    origin: 'http://localhost:3000',
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+    ],
+  };
+
+  app.enableCors(corsOptions);
+
   await app.listen(PORT);
+
+  Logger.log(`Server is running on http://localhost:${PORT}`);
 }
 bootstrap();

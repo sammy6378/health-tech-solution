@@ -1,4 +1,5 @@
 import { Store } from '@tanstack/store'
+import { useStore } from '@tanstack/react-store'
 
 export interface TLoginRequest {
   email: string
@@ -17,8 +18,7 @@ export interface TUser {
   isAuthenticated: boolean
 }
 
-
-const initialState = {
+const initialState: TUser = {
   isAuthenticated: false,
   user: {
     userId: '',
@@ -32,26 +32,43 @@ const initialState = {
 
 export const authStore = new Store<TUser>(initialState)
 
-export const loadData = () => {
-  const storedData = localStorage.getItem('auth')
-  let jsonData
-  if (storedData) {
-    jsonData = JSON.parse(storedData)
+// Add this hook to subscribe to store changes
+export const useAuthStore = () => {
+  return useStore(authStore)
+}
+
+export const loadData = (): TUser | null => {
+  try {
+    const storedData = localStorage.getItem('auth')
+    if (storedData) {
+      const jsonData = JSON.parse(storedData)
+      // Validate the data structure
+      if (
+        jsonData &&
+        typeof jsonData === 'object' &&
+        jsonData.user &&
+        jsonData.tokens
+      ) {
+        return jsonData
+      }
+    }
+  } catch (error) {
+    console.error('Error loading auth data from localStorage:', error)
+    localStorage.removeItem('auth') // Clear corrupted data
   }
-  return jsonData
+  return null
 }
 
 export const authSlice = {
   login: (userData: TUser) => {
-    authStore.setState({
+    const newState = {
       isAuthenticated: true,
       user: userData.user,
       tokens: userData.tokens,
-    })
-    localStorage.setItem(
-      'auth',
-      JSON.stringify({ ...userData, isAuthenticated: true }),
-    )
+    }
+
+    authStore.setState(newState)
+    localStorage.setItem('auth', JSON.stringify(newState))
   },
 
   logout: () => {
@@ -60,13 +77,27 @@ export const authSlice = {
   },
 
   initializeUser: () => {
-    const userData = localStorage.getItem('auth')
+    const userData = loadData()
     if (userData) {
-      const jsonData = JSON.parse(userData)
       authStore.setState({
+        ...userData,
         isAuthenticated: true,
-        ...jsonData,
       })
+      return true
     }
+    return false
+  },
+
+  // Add method to check if user is authenticated
+  isAuthenticated: () => {
+    return authStore.state.isAuthenticated
+  },
+
+  // Add method to get current user
+  getCurrentUser: () => {
+    return authStore.state.user
   },
 }
+
+// Initialize on module load
+authSlice.initializeUser()

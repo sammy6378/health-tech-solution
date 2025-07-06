@@ -11,116 +11,66 @@ import {
   Filter,
   Search,
 } from 'lucide-react'
-
-// Types
-type ConsultationType =
-  | 'General Checkup'
-  | 'Dermatology'
-  | 'Cardiology'
-  | 'Pediatrics'
-  | 'Dental'
-type AppointmentStatus = 'upcoming' | 'completed' | 'canceled'
-
-interface Appointment {
-  id: number
-  doctor: string
-  appointment_date: Date
-  appointment_time: string
-  duration_minutes: number
-  consultation_type: ConsultationType
-  status: AppointmentStatus
-  notes: string
-}
+import { useGetAppointmentsByUser } from '@/hooks/useAppointments'
+import {
+  AppointmentStatus,
+  ConsultationType,
+  formatDate,
+  type TAppointment,
+} from '@/types/api-types'
+import { AppointmentModal } from '@/components/modals/AppointmentModal'
+import { useAuthStore } from '@/store/store'
 
 const AppointmentPage = () => {
-  const [activeTab, setActiveTab] = useState<
-    'upcoming' | 'completed' | 'canceled'
-  >('upcoming')
+  const [activeTab, setActiveTab] = useState<AppointmentStatus>(
+    AppointmentStatus.SCHEDULED,
+  )
+  const [openModal, setOpenModal] = useState(false)
+  const {user} = useAuthStore()
+  const userId = user?.userId || '';
+
+
+
+  const { data } = useGetAppointmentsByUser(userId);
   const [searchQuery, setSearchQuery] = useState('')
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof Appointment
+    key: keyof TAppointment
     direction: 'ascending' | 'descending'
   } | null>(null)
 
   // Sample data
-  const appointments: Appointment[] = [
-    {
-      id: 1,
-      doctor: 'Dr. Smith',
-      appointment_date: new Date('2023-06-15'),
-      appointment_time: '10:00 AM',
-      duration_minutes: 30,
-      consultation_type: 'General Checkup',
-      status: 'upcoming',
-      notes: 'Annual physical examination',
-    },
-    {
-      id: 2,
-      doctor: 'Dr. Johnson',
-      appointment_date: new Date('2023-06-20'),
-      appointment_time: '2:30 PM',
-      duration_minutes: 45,
-      consultation_type: 'Dermatology',
-      status: 'upcoming',
-      notes: 'Skin allergy follow-up',
-    },
-    {
-      id: 3,
-      doctor: 'Dr. Williams',
-      appointment_date: new Date('2023-05-28'),
-      appointment_time: '9:15 AM',
-      duration_minutes: 60,
-      consultation_type: 'Cardiology',
-      status: 'completed',
-      notes: 'ECG and stress test results',
-    },
-    {
-      id: 4,
-      doctor: 'Dr. Brown',
-      appointment_date: new Date('2023-05-15'),
-      appointment_time: '11:00 AM',
-      duration_minutes: 30,
-      consultation_type: 'Pediatrics',
-      status: 'canceled',
-      notes: 'Rescheduled to June 20',
-    },
-    {
-      id: 5,
-      doctor: 'Dr. Davis',
-      appointment_date: new Date('2023-04-10'),
-      appointment_time: '3:45 PM',
-      duration_minutes: 45,
-      consultation_type: 'Dental',
-      status: 'completed',
-      notes: 'Regular cleaning and checkup',
-    },
-  ]
+  const appointments = data?.data || []
 
   // Filter appointments based on active tab and search query
   const filteredAppointments = appointments
     .filter((appt) => appt.status === activeTab)
     .filter(
       (appt) =>
-        appt.doctor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        appt.consultation_type
+        appt.doctor?.first_name
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
-        appt.notes.toLowerCase().includes(searchQuery.toLowerCase()),
+        appt.consultation_type
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     )
 
   // Sort appointments
   const sortedAppointments = [...filteredAppointments].sort((a, b) => {
     if (!sortConfig) return 0
-    if (a[sortConfig.key] < b[sortConfig.key]) {
+    const aValue = a[sortConfig.key]
+    const bValue = b[sortConfig.key]
+    if (aValue === undefined) return 1
+    if (bValue === undefined) return -1
+    if (aValue < bValue) {
       return sortConfig.direction === 'ascending' ? -1 : 1
     }
-    if (a[sortConfig.key] > b[sortConfig.key]) {
+    if (aValue > bValue) {
       return sortConfig.direction === 'ascending' ? 1 : -1
     }
     return 0
   })
 
-  const requestSort = (key: keyof Appointment) => {
+  const requestSort = (key: keyof TAppointment) => {
     let direction: 'ascending' | 'descending' = 'ascending'
     if (
       sortConfig &&
@@ -134,35 +84,46 @@ const AppointmentPage = () => {
 
   // Calculate metrics
   const metrics = {
-    upcoming: appointments.filter((a) => a.status === 'upcoming').length,
-    completed: appointments.filter((a) => a.status === 'completed').length,
-    canceled: appointments.filter((a) => a.status === 'canceled').length,
+    upcoming: appointments.filter(
+      (a) => a.status === AppointmentStatus.SCHEDULED,
+    ).length,
+    completed: appointments.filter(
+      (a) => a.status === AppointmentStatus.COMPLETED,
+    ).length,
+    canceled: appointments.filter(
+      (a) => a.status === AppointmentStatus.CANCELLED,
+    ).length,
     total: appointments.length,
   }
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
+  const handleAddAppointment = (data: any) => {
+    console.log('New Appointment:', data)
+    // ✅ Send to API here
   }
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
       {/* Header */}
-      <header className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <header className="p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold flex items-center">
             <Calendar className="mr-2" />
             Appointments
           </h1>
-          <button className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+          <button
+            onClick={() => setOpenModal(true)}
+            className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
             <Plus size={18} className="mr-2" />
             New Appointment
           </button>
         </div>
       </header>
+      <AppointmentModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        onSubmit={handleAddAppointment}
+      />
 
       <main className="container mx-auto p-4">
         {/* Metrics */}
@@ -184,8 +145,8 @@ const AppointmentPage = () => {
 
           {/* Upcoming */}
           <div
-            className={`p-4 rounded-lg shadow cursor-pointer transition-colors ${activeTab === 'upcoming' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}
-            onClick={() => setActiveTab('upcoming')}
+            className={`p-4 rounded-lg shadow cursor-pointer transition-colors ${activeTab === AppointmentStatus.SCHEDULED ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}
+            onClick={() => setActiveTab(AppointmentStatus.SCHEDULED)}
           >
             <div className="flex justify-between items-center">
               <div>
@@ -203,7 +164,7 @@ const AppointmentPage = () => {
           {/* Completed */}
           <div
             className={`p-4 rounded-lg shadow cursor-pointer transition-colors ${activeTab === 'completed' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}
-            onClick={() => setActiveTab('completed')}
+            onClick={() => setActiveTab(AppointmentStatus.COMPLETED)}
           >
             <div className="flex justify-between items-center">
               <div>
@@ -220,8 +181,8 @@ const AppointmentPage = () => {
 
           {/* Canceled */}
           <div
-            className={`p-4 rounded-lg shadow cursor-pointer transition-colors ${activeTab === 'canceled' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}
-            onClick={() => setActiveTab('canceled')}
+            className={`p-4 rounded-lg shadow cursor-pointer transition-colors ${activeTab === AppointmentStatus.CANCELLED ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}
+            onClick={() => setActiveTab(AppointmentStatus.CANCELLED)}
           >
             <div className="flex justify-between items-center">
               <div>
@@ -328,7 +289,7 @@ const AppointmentPage = () => {
                 {sortedAppointments.length > 0 ? (
                   sortedAppointments.map((appointment) => (
                     <tr
-                      key={appointment.id}
+                      key={appointment.appointment_id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -341,7 +302,8 @@ const AppointmentPage = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium">
-                              {appointment.doctor}
+                              {appointment.doctor?.first_name}{' '}
+                              {appointment.doctor?.last_name}
                             </div>
                           </div>
                         </div>
@@ -357,13 +319,13 @@ const AppointmentPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 text-xs rounded-full ${
-                            appointment.consultation_type === 'General Checkup'
+                            appointment.consultation_type ===
+                            ConsultationType.IN_PERSON
                               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : appointment.consultation_type === 'Dermatology'
+                              : appointment.consultation_type ===
+                                  ConsultationType.VIRTUAL
                                 ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                : appointment.consultation_type === 'Cardiology'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                           }`}
                         >
                           {appointment.consultation_type}

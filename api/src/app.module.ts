@@ -27,6 +27,7 @@ import { LogsModule } from './logs/logs.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AtGuard } from './auth/guards/at.guard';
+import { DiagnosisModule } from './diagnosis/diagnosis.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { AtGuard } from './auth/guards/at.guard';
     NotificationsModule,
     MailModule,
     LogsModule,
+    DiagnosisModule,
   ],
   controllers: [UploadController],
   providers: [

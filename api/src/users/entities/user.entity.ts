@@ -56,17 +56,13 @@ export class User {
   @BeforeUpdate()
   async hashPassword() {
     if (this.password) {
-      const saltRounds = 12;
+      const saltRounds = 10;
       this.password = await Bcrypt.hash(this.password, saltRounds);
     }
   }
 
   async validatePassword(plainPassword: string): Promise<boolean> {
     return await Bcrypt.compare(plainPassword, this.password);
-  }
-
-  getPassword(): string {
-    return this.password;
   }
 
   @OneToOne(() => UserProfile, (userProfile) => userProfile.user, {

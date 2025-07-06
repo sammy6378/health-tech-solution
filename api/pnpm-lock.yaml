@@ -77,6 +77,9 @@ importers:
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
+      helmet:
+        specifier: ^8.1.0
+        version: 8.1.0
       multer:
         specifier: ^2.0.1
         version: 2.0.1
@@ -2658,6 +2661,10 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
+
+  helmet@8.1.0:
+    resolution: {integrity: sha512-jOiHyAZsmnr8LqoPGmCjYAaiuWwjAPLgY8ZX2XrmHawt99/u1y6RgrZMTeoPfpUbV96HOalYgz1qzkRbw54Pmg==}
+    engines: {node: '>=18.0.0'}
 
   hookified@1.10.0:
     resolution: {integrity: sha512-dJw0492Iddsj56U1JsSTm9E/0B/29a1AuoSLRAte8vQg/kaTGF3IgjEWT8c8yG4cC10+HisE1x5QAwR0Xwc+DA==}
@@ -7516,6 +7523,8 @@ snapshots:
 
   he@1.2.0:
     optional: true
+
+  helmet@8.1.0: {}
 
   hookified@1.10.0: {}
 

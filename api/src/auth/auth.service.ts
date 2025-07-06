@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
-import * as Bycrypt from 'bcrypt';
+import * as Bcrypt from 'bcrypt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -99,8 +99,8 @@ export class AuthService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const salt = await Bycrypt.genSalt(10);
-    return await Bycrypt.hash(password, salt);
+    const salt = await Bcrypt.genSalt(10);
+    return await Bcrypt.hash(password, salt);
   }
 
   // save refresh token in the database
@@ -223,19 +223,22 @@ export class AuthService {
     if (!user.refresh_token) {
       throw new NotFoundException('Refresh token not found');
     }
-    const isRefreshTokenValid = await Bycrypt.compare(
+    console.log('refresh-token [unhashed]', refreshToken);
+    console.log('refresh-token[hashed]', user.refresh_token);
+    const isRefreshTokenValid = await Bcrypt.compare(
       refreshToken,
       user.refresh_token,
     );
+
+    console.log('is match', isRefreshTokenValid);
     if (!isRefreshTokenValid) {
       throw new NotFoundException('Invalid refresh token');
     }
 
     // generate new tokens
-    const { access_token, refresh_token: newRefreshToken } =
-      await this.createTokens(user.user_id, user.email);
+    const { access_token } = await this.createTokens(user.user_id, user.email);
 
-    return { access_token, refresh_token: newRefreshToken };
+    return { access_token };
   }
 
   // validate user
@@ -259,6 +262,7 @@ export class AuthService {
   ) {
     const user = await this.userRepository.findOne({
       where: { user_id: user_id },
+      select: ['user_id', 'password'],
     });
     if (!user) {
       throw new UnauthorizedException('User not found');

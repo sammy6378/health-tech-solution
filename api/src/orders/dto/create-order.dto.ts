@@ -43,6 +43,9 @@ export class CreateOrderDto {
   @IsEnum(PaymentMethod)
   payment_method: PaymentMethod;
 
+  @IsEnum(DeliveryStatus)
+  delivery_status: DeliveryStatus = DeliveryStatus.PENDING;
+
   @IsOptional()
   @IsString()
   notes?: string;

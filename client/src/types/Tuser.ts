@@ -10,6 +10,7 @@ export interface TUser {
   email: string
   password: string
   role?: Role
+  doctors?: TDoctor[]
 }
 
 export interface TRegister {
@@ -30,4 +31,27 @@ export interface TRegisterResponse {
     phone_number: string
     role: string
   }
+}
+
+
+export enum Gender{
+  FEMALE = 'female',
+  MALE = 'male'
+}
+
+export interface TDoctor {
+  license_number: string
+  phone_number?: string
+  specialization?: string
+  years_of_experience: number
+  education: string
+  department: string
+  availability: boolean
+  sex: Gender
+  address: string
+  consultation_fee?: number
+  ratings?: number[]
+  reviews?: string[]
+  avatar: string
+  bio?: string
 }

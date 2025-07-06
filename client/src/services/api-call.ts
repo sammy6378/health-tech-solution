@@ -1,6 +1,7 @@
-import handleApiResponse from "./api-response"
+import handleApiResponse from './api-response'
+import { authStore } from '@/store/store'
 
-export const baseUrl = 'https://resolveit.onrender.com/api'
+export const baseUrl = 'http://localhost:8000/api'
 
 export interface ApiResponse<T> {
   success: boolean
@@ -8,10 +9,20 @@ export interface ApiResponse<T> {
   data: T
 }
 
+/** Get authorization headers */
+const getAuthHeaders = (): HeadersInit => {
+  const token = authStore.state.tokens?.access_token
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  }
+}
+
 /** Get a list of entities */
 export const fetchList = async <T>(url: string): Promise<ApiResponse<T[]>> => {
   const res = await fetch(`${baseUrl}/${url}`, {
-    credentials: 'include',
+    method: 'GET',
+    headers: getAuthHeaders(),
   })
   await handleApiResponse(res)
   return res.json()
@@ -20,7 +31,8 @@ export const fetchList = async <T>(url: string): Promise<ApiResponse<T[]>> => {
 /** Get a single entity by ID */
 export const fetchOne = async <T>(url: string): Promise<ApiResponse<T>> => {
   const res = await fetch(`${baseUrl}/${url}`, {
-    credentials: 'include',
+    method: 'GET',
+    headers: getAuthHeaders(),
   })
   await handleApiResponse(res)
   return res.json()
@@ -33,8 +45,7 @@ export const createItem = async <T, D = Partial<T>>(
 ): Promise<ApiResponse<T>> => {
   const res = await fetch(`${baseUrl}/${url}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   })
   await handleApiResponse(res)
@@ -48,8 +59,7 @@ export const updateItem = async <T, D = Partial<T>>(
 ): Promise<ApiResponse<T>> => {
   const res = await fetch(`${baseUrl}/${url}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   })
   await handleApiResponse(res)
@@ -60,11 +70,11 @@ export const updateItem = async <T, D = Partial<T>>(
 export const deleteItem = async (url: string): Promise<ApiResponse<null>> => {
   const res = await fetch(`${baseUrl}/${url}`, {
     method: 'DELETE',
-    credentials: 'include',
+    headers: getAuthHeaders(),
   })
   await handleApiResponse(res)
 
-  // 👇 Modify this part to handle plain text too
+  // Handle both JSON and text responses
   const contentType = res.headers.get('content-type')
   const data = contentType?.includes('application/json')
     ? await res.json()
@@ -75,4 +85,33 @@ export const deleteItem = async (url: string): Promise<ApiResponse<null>> => {
       }
 
   return data
+}
+
+/** Public endpoints (no auth required) */
+export const fetchPublic = async <T>(url: string): Promise<ApiResponse<T>> => {
+  const res = await fetch(`${baseUrl}/${url}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  await handleApiResponse(res)
+  return res.json()
+}
+
+/** Auth endpoints (login, register, etc.) */
+export const authRequest = async <T, D = any>(
+  url: string,
+  payload: D,
+  method: 'POST' | 'PUT' | 'PATCH' = 'POST',
+): Promise<ApiResponse<T>> => {
+  const res = await fetch(`${baseUrl}/${url}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  await handleApiResponse(res)
+  return res.json()
 }

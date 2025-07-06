@@ -13,6 +13,8 @@ import { Public } from './decorators/public.decorator';
 import { AtGuard } from './guards/at.guard';
 import { RtGuard } from './guards/rt.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { JWTPayload } from './strategies/at.strategy';
 
 export interface RequestWithUser extends Request {
   user: {
@@ -45,17 +47,18 @@ export class AuthController {
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh/:id')
-  async refreshTokens(@Param('id') id: string, @Req() req: RequestWithUser) {
+  async refreshTokens(@Param('id') id: string, @Req() req: Request) {
     // Extract the refresh token from the request
-    const user = req.user;
-    if (user.sub !== id) {
+    const user = req.user as JWTPayload;
+    if (user?.sub !== id) {
       throw new UnauthorizedException('Invalid user ID');
     }
-    return await this.authService.refreshTokens(id, user.refresh_token);
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    return await this.authService.refreshTokens(id, token);
   }
 
   // auth/changePassword
-  @Post('changepassword/:id')
+  @Post('change-password/:id')
   async changePassword(
     @Param('id') id: string,
     @Body() body: { oldPassword: string; newPassword: string },

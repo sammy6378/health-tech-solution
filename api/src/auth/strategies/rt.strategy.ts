@@ -16,7 +16,7 @@ interface JwtPayloadWithRt extends JwtPayload {
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-rt') {
-  constructor(private readonly configService: ConfigService) {
+  constructor(configService: ConfigService) {
     const options: StrategyOptionsWithRequest = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
@@ -31,7 +31,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'jwt-rt') {
       throw new Error('Authorization header not found');
     }
 
-    const refreshToken = authHeader.replace('Bearer', '').trim();
+    const refreshToken = authHeader.replace('Bearer ', '')?.trim();
     if (!refreshToken) {
       throw new Error('Refresh token not found');
     }

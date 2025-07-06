@@ -39,7 +39,7 @@ export class OrdersService {
       // Validate prescription exists and is not already ordered
       const prescription = await this.prescriptionRepository.findOne({
         where: { prescription_id: createOrderDto.prescription_id },
-        relations: ['patient', 'medication', 'doctor'],
+        relations: ['medication', 'doctor'],
       });
 
       if (!prescription) {
@@ -95,7 +95,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'patient',
         ],
       });
 
@@ -126,7 +125,7 @@ export class OrdersService {
         // 1. Get order with lock to prevent concurrent updates
         const order = await manager.findOne(Order, {
           where: { order_id: orderId },
-          relations: ['prescription', 'prescription.medication', 'patient'],
+          relations: ['prescription', 'prescription.medication'],
           lock: { mode: 'pessimistic_write' },
         });
 
@@ -204,7 +203,6 @@ export class OrdersService {
             'prescription',
             'prescription.medication',
             'prescription.doctor',
-            'patient',
           ],
         });
 
@@ -237,7 +235,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
         order: { created_at: 'DESC' },
       });
@@ -258,7 +255,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
         order: { created_at: 'DESC' },
       });
@@ -291,7 +287,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
         order: { created_at: 'DESC' },
       });
@@ -315,7 +310,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
       });
 
@@ -359,7 +353,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
       });
 
@@ -401,7 +394,6 @@ export class OrdersService {
           'prescription',
           'prescription.medication',
           'prescription.doctor',
-          'users',
         ],
       });
 

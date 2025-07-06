@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, Role } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -37,6 +37,22 @@ export class UsersService {
       .catch((error) => {
         console.error('Error retrieving users:', error);
         throw new Error('Failed to retrieve users');
+      });
+  }
+
+  // all doctors
+  async findAllDoctors(): Promise<ApiResponse<User[]>> {
+    return this.userRepository
+      .find({ where: { role: Role.DOCTOR } })
+      .then((doctors) => {
+        if (doctors.length === 0) {
+          return createResponse([], 'No doctors found');
+        }
+        return createResponse(doctors, 'Doctors retrieved successfully');
+      })
+      .catch((error) => {
+        console.error('Error retrieving doctors:', error);
+        throw new Error('Failed to retrieve doctors');
       });
   }
 
