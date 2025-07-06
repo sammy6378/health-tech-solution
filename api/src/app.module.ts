@@ -1,15 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { CloudinaryProvider } from './cloudinary/cloudinary.provider';
-import { UploadService } from './cloudinary/upload.service';
-import { UploadController } from './cloudinary/upload.controller';
-import { UploadModule } from './cloudinary/upload.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { CacheableMemory } from 'cacheable';
 import { createKeyv, Keyv } from '@keyv/redis';
-import { EventsModule } from './events/events.module';
 import { DbModule } from './db/db.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
 import { DoctorProfileModule } from './doctor-profile/doctor-profile.module';
@@ -54,8 +49,6 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
       },
     }),
     UsersModule,
-    UploadModule,
-    EventsModule,
     DbModule,
     UserProfileModule,
     DoctorProfileModule,
@@ -72,11 +65,9 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
     LogsModule,
     DiagnosisModule,
   ],
-  controllers: [UploadController],
+  controllers: [],
   providers: [
     AppService,
-    CloudinaryProvider,
-    UploadService,
     {
       provide: 'APP_INTERCEPTOR',
       useClass: CacheInterceptor, // global cache interceptor
