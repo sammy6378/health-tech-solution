@@ -1,7 +1,6 @@
+import { baseUrl } from '@/lib/baseUrl'
 import handleApiResponse from './api-response'
 import { authStore } from '@/store/store'
-
-export const baseUrl = 'http://localhost:8000/api'
 
 export interface ApiResponse<T> {
   success: boolean

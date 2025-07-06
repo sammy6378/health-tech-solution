@@ -28,8 +28,11 @@ async function bootstrap() {
       'API documentation for the Tech Health Solution application [MediConnect] developed by Nuvex Tech Solutions. This API provides endpoints for user management, file uploads, and event handling.',
     )
     .setVersion('1.0')
-    .addServer('http://localhost:8000', 'Development Server')
-    .addServer('https://api.techhealthsolution.com', 'Production Server')
+    .addServer('http://localhost:8000/api', 'Development Server')
+    .addServer(
+      'https://health-tech-solution.onrender.com/api',
+      'Production Server',
+    )
     .addTag('auth', 'Endpoints related to authentication and authorization')
     .addTag('Users', 'Endpoints related to user management')
     .addTag('UserProfile', 'Endpoints related to user profiles')
@@ -81,7 +84,10 @@ async function bootstrap() {
   const PORT = configService.getOrThrow<number>('PORT');
 
   const corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://health-tech-solution.onrender.com/',
+    ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: [
