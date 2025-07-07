@@ -6,7 +6,6 @@ import {
   Users,
   Star,
   Stethoscope,
-  Heart,
   Activity,
 } from 'lucide-react'
 import { buttonVariants, containerVariants, itemVariants } from '../variants/motion'
@@ -85,17 +84,6 @@ function Hero() {
         >
           {/* Main Heading */}
           <motion.div variants={itemVariants} className="space-y-4">
-            <motion.div
-              className="inline-flex items-center space-x-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Heart className="w-5 h-5 text-red-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Trusted Healthcare Platform
-              </span>
-            </motion.div>
-
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
               Your Health.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1A94E5] to-emerald-400">
@@ -119,7 +107,7 @@ function Hero() {
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              className="group relative px-8 py-4 bg-[#1A94E5] text-white rounded-lg font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+              className="group relative px-8 py-4 bg-[#1A94E5] text-white cursor-pointer rounded-lg font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
             >
               <span className="relative z-10 flex items-center space-x-2">
                 <Activity className="w-5 h-5" />
@@ -133,7 +121,7 @@ function Hero() {
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              className="group px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 rounded-lg font-semibold text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300"
+              className="group px-8 py-4 bg-white/10 cursor-pointer backdrop-blur-sm text-white border-2 border-white/30 rounded-lg font-semibold text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300"
             >
               <span className="flex items-center space-x-2">
                 <Calendar className="w-5 h-5" />

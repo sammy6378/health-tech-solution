@@ -1,4 +1,4 @@
-import { useGetDoctors, useGetUsers } from '@/hooks/useUserHook'
+import { useGetDoctors} from '@/hooks/useUserHook'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,17 +12,20 @@ export default function DoctorsPage() {
   const { data, isLoading } = useGetDoctors()
   const [search, setSearch] = useState('')
   const doctors = data?.data || []
-  console.log('Doctors:', doctors)
 
-  // Optional search filtering
+  console.log('Doctors data:', doctors)
+
+  // Filter only those users who have doctor info
   const filteredDoctors = doctors.filter((user) => {
-    const doctor = user.doctors;
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+    const specialization =
+      user.doctorProfile?.specialization?.toLowerCase() || ''
     return (
       fullName.includes(search.toLowerCase()) ||
-      doctor?.specialization?.toLowerCase().includes(search.toLowerCase())
+      specialization.includes(search.toLowerCase())
     )
   })
+  
 
   return (
     <div className="container py-12 px-4 min-h-screen">
@@ -55,65 +58,70 @@ export default function DoctorsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredDoctors.map((user, i) => {
-            const doctor = user.doctors![0]
-            return (
-              <Card
-                key={i}
-                className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition bg-white dark:bg-gray-900"
-              >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <Avatar className="w-20 h-20 mb-4">
-                    <AvatarImage src={doctor.avatar} alt={user.first_name} />
-                    <AvatarFallback>
-                      {user.first_name[0]}
-                      {user.last_name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Dr. {user.first_name} {user.last_name}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {doctor.specialization}
-                  </p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {doctor.ratings?.length ? (
-                      <>
-                        <Star className="w-4 h-4 text-yellow-400" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {(
-                            doctor.ratings.reduce((a, b) => a + b, 0) /
-                            doctor.ratings.length
-                          ).toFixed(1)}{' '}
-                          ⭐
+              const doctor = user.doctorProfile
+              if (!doctor) return null
+              return (
+                <Card
+                  key={user.doctorProfile?.profile_id|| i}
+                  className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition bg-white dark:bg-gray-900"
+                >
+                  <CardContent className="p-6 flex flex-col items-center text-center">
+                    <Avatar className="w-20 h-20 mb-4">
+                      <AvatarImage
+                        src={doctor.avatar}
+                        alt={`${user.first_name} ${user.last_name}`}
+                      />
+                      <AvatarFallback>
+                        {user.first_name[0]}
+                        {user.last_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Dr. {user.first_name} {user.last_name}
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {doctor.specialization}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {doctor.ratings?.length ? (
+                        <>
+                          <Star className="w-4 h-4 text-yellow-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {(
+                              doctor.ratings.reduce((a, b) => a + b, 0) /
+                              doctor.ratings.length
+                            ).toFixed(1)}{' '}
+                            ⭐
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400 italic">
+                          No ratings
                         </span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-gray-400 italic">
-                        No ratings
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2 justify-center">
-                    <Badge variant="outline">{doctor.department}</Badge>
-                    <Badge
-                      className={
-                        doctor.availability ? 'bg-green-500' : 'bg-red-500'
-                      }
-                    >
-                      {doctor.availability ? 'Available' : 'Unavailable'}
-                    </Badge>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm">
-                      View Profile
-                    </Button>
-                    <Button size="sm" disabled={!doctor.availability}>
-                      Book Appointment
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
+                      )}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 justify-center">
+                      <Badge variant="outline">{doctor.department}</Badge>
+                      <Badge
+                        className={
+                          doctor.availability ? 'bg-green-500' : 'bg-red-500'
+                        }
+                      >
+                        {doctor.availability ? 'Available' : 'Unavailable'}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <Button variant="outline" size="sm">
+                        View Profile
+                      </Button>
+                      <Button size="sm" disabled={!doctor.availability}>
+                        Book Appointment
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+              
           })}
         </div>
       )}

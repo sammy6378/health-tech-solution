@@ -27,7 +27,7 @@ export class DoctorProfileController {
     return this.doctorProfileService.create(createDoctorProfileDto);
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN)
+  @Roles(Role.DOCTOR, Role.ADMIN,Role.USER)
   @Get()
   findAll() {
     return this.doctorProfileService.findAll();

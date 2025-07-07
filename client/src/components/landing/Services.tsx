@@ -119,7 +119,7 @@ function Services() {
         <motion.div
           variants={containerVariants}
           initial="hidden"
-          whileInView="visible"
+          animate="visible" 
           viewport={{ once: true, amount: 0.3 }}
         >
           {/* Section Header */}

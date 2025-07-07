@@ -7,25 +7,36 @@ export const containerVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      staggerChildren: 0.1,
-      duration: 0.5,
+      staggerChildren: 0.05,
+      duration: 0.3,
     },
   },
 }
 
-
 export const cardVariants = {
-  hidden: { opacity: 0, y: 50 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.7,
+      duration: 0.4,
       ease: easeOut,
     },
   },
   hover: {
-    y: -5,
+    y: -4,
+    transition: {
+      duration: 0.2,
+      ease: easeOut,
+    },
+  },
+}
+
+export const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
     transition: {
       duration: 0.3,
       ease: easeOut,
@@ -33,17 +44,6 @@ export const cardVariants = {
   },
 }
 
- export const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: easeOut,
-      },
-    },
-  }
 
 
 export const buttonVariants = {
