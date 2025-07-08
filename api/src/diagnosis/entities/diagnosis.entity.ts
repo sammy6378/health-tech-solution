@@ -5,44 +5,25 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Relation,
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
+import { Appointment } from 'src/appointments/entities/appointment.entity';
 
 @Entity('diagnosis')
 export class Diagnosis {
   @PrimaryGeneratedColumn('uuid')
   diagnosis_id: string;
 
-  // Remove the string columns and replace with proper relationships
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'patient_id' })
-  patient: User;
-
   @Column()
-  patient_id: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'doctor_id' })
-  doctor: User;
-
-  @Column()
-  doctor_id: string;
-
-  // One diagnosis can have multiple prescriptions
-  @OneToMany(() => Prescription, (prescription) => prescription.diagnosis, {
-    cascade: true,
-  })
-  prescriptions: Prescription[];
-
-  @Column()
-  diagnosis: string;
+  diagnosis_name: string;
 
   @Column()
   treatment_plan: string;
 
   @Column({ type: 'date' })
-  record_date: Date;
+  diagnosis_date: string;
 
   @Column('text', { array: true, nullable: true })
   notes?: string[];
@@ -68,4 +49,26 @@ export class Diagnosis {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updated_at: Date;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'patient_id' })
+  patient: Relation<User>;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'doctor_id' })
+  doctor: Relation<User>;
+
+  // One diagnosis can have multiple prescriptions
+  @OneToMany(() => Prescription, (prescription) => prescription.diagnosis, {
+    cascade: true,
+  })
+  @JoinColumn({ name: 'prescription_id' })
+  prescriptions: Relation<Prescription[]>;
+
+  @ManyToOne(() => Appointment, (appointment) => appointment.diagnoses, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'appointment_id' })
+  appointment?: Relation<Appointment>;
 }

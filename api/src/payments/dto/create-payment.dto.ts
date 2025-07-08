@@ -1,13 +1,20 @@
-import { IsDate, IsDecimal, IsEnum, IsNumber, IsUUID } from 'class-validator';
+import { IsDate, IsDecimal, IsEnum, IsNumber, IsString } from 'class-validator';
 import { PaymentMethod, PaymentStatus } from 'src/orders/dto/create-order.dto';
+import { PrimaryGeneratedColumn } from 'typeorm';
 
 export class CreatePaymentDto {
-  @IsUUID()
+  @PrimaryGeneratedColumn('uuid')
+  payment_id: string;
+
+  @IsString()
   order_number: string;
 
   @IsDecimal({ decimal_digits: '0,2' })
   @IsNumber()
   amount: number;
+
+  @IsString()
+  transcation_id: string;
 
   @IsDate()
   payment_date: Date;

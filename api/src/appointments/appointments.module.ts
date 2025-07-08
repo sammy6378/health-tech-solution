@@ -5,9 +5,10 @@ import { DbModule } from 'src/db/db.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Module({
-  imports: [DbModule, TypeOrmModule.forFeature([Appointment, User])],
+  imports: [DbModule, TypeOrmModule.forFeature([Appointment, User, Diagnosis])],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
 })

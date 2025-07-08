@@ -19,25 +19,25 @@ import { Role } from 'src/users/dto/create-user.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.PATIENT)
   @Get()
   findAll() {
     return this.ordersService.findAll();
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Post()
   async createOrderFromPrescription(@Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get('/status/:status')
   async findByStatus(@Param('status') status: DeliveryStatus) {
     return this.ordersService.findByStatus(status);
@@ -52,25 +52,29 @@ export class OrdersController {
     return this.ordersService.updateDeliveryStatus(id, status);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Patch(':id/confirm-payment')
-  async confirmPayment(@Param('id') id: string) {
-    return this.ordersService.confirmPayment(id);
+  async confirmPayment(
+    @Param('id') id: string,
+    @Body('amount') amount: number,
+    @Body('transcation_id') transcationId: string,
+  ) {
+    return this.ordersService.confirmPayment(id, amount, transcationId);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Patch(':id/cancel')
   async cancelOrder(@Param('id') id: string) {
     return this.ordersService.cancelOrder(id);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get('prescription/:prescriptionId')
   async findByPrescription(@Param('prescriptionId') prescriptionId: string) {
     return this.ordersService.findByPrescription(prescriptionId);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

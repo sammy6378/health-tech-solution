@@ -10,6 +10,7 @@ import {
   DeliveryMethod,
   DeliveryStatus,
   PaymentMethod,
+  PaymentStatus,
 } from '../dto/create-order.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
@@ -37,8 +38,8 @@ export class Order {
   @Column({ nullable: true })
   delivery_time: string;
 
-  @Column()
-  estimated_delivery: string;
+  @Column({ nullable: true })
+  estimated_delivery?: string;
 
   @Column({
     type: 'enum',
@@ -50,24 +51,26 @@ export class Order {
   @Column({ type: 'enum', enum: PaymentMethod })
   payment_method: PaymentMethod;
 
+  @Column({
+    type: 'enum',
+    enum: PaymentStatus,
+    default: PaymentStatus.PENDING,
+  })
+  payment_status: PaymentStatus;
+
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
-  // Reference to prescription (required - every order is from a prescription)
-  @ManyToOne(() => Prescription, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Prescription, (prescription) => prescription.order, {
+    onDelete: 'RESTRICT',
+  })
   @JoinColumn({ name: 'prescription_id' })
   prescription: Relation<Prescription>;
-
-  @Column()
-  prescription_id: string;
 
   // Patient who places the order (from prescription)
   @ManyToOne(() => User, (user) => user.orders, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'patient_id' })
   patient: Relation<User>;
-
-  @Column()
-  patient_id: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

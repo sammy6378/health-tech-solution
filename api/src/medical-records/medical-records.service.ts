@@ -37,7 +37,7 @@ export class MedicalRecordsService {
 
       const medicalRecord = this.medicalRecordRepository.create({
         ...createMedicalRecordDto,
-        patient_id: createMedicalRecordDto.patient_id,
+        patient,
       });
       const savedRecord =
         await this.medicalRecordRepository.save(medicalRecord);
@@ -167,7 +167,7 @@ export class MedicalRecordsService {
       }
 
       const medicalRecords = await this.medicalRecordRepository.find({
-        where: { patient_id: patientId },
+        where: { patient: { user_id: patientId } },
         order: { record_date: 'DESC' },
       });
 

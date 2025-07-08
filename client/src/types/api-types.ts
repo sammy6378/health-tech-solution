@@ -11,6 +11,19 @@ export const formatDate = (date: Date | string) => {
   })
 }
 
+// diagnosis
+export interface TDiagnosis {
+  diagnosis_id?: string
+  patient?: TUser
+  doctor?: TUser
+  prescription?: TPrescription
+  diagnosis: string
+  record_date: Date
+  docs?: string[]
+  tests?: string[]
+  allergies?: string[]
+  symptoms?: string[]
+}
 
 // prescriptions
 export enum PrescriptionStatus {
@@ -25,8 +38,9 @@ export enum PrescriptionStatus {
 export interface TPrescription {
   medication_id: string
   medication_name: string
-  patient_id: string
-  doctor_id: string
+  patient?: TUser
+  doctor?: TUser
+  diagnosis?: TDiagnosis
   prescription_date: string
   expiry_date: string
   prescription_number: string
@@ -36,7 +50,8 @@ export interface TPrescription {
   duration_days?: number
   frequency_per_day?: number
   notes?: string
-  users?: TUser
+  unit_price?: number
+  total_price?: number // Calculated field
   createdAt?: string
 }
 
@@ -55,7 +70,7 @@ export enum ConsultationType {
 
 export interface TAppointment {
   appointment_id?: string
-  user?: TUser
+  patient?: TUser
   doctor?: TUser
   appointment_date: Date
   appointment_time: string
@@ -158,4 +173,21 @@ export interface TOrder {
   payment_method: PaymentMethod
   notes?: string
   created_at?: Date
+}
+
+// medical records
+export interface TMedicalrecord {
+  patient?: TUser
+  record_date?: string
+  description?: string
+  diagnosis?: string
+  treatment_plan?: string
+  blood_pressure?: string
+  heart_rate?: number
+  temperature?: number
+  weight?: number
+  height?: number
+  allergies?: string[]
+  notes?: string
+  docs?: string[]
 }

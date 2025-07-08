@@ -20,12 +20,6 @@ export enum ConsultationType {
 }
 
 export class CreateAppointmentDto {
-  @IsUUID()
-  patient_id: string;
-
-  @IsUUID()
-  doctor_id: string;
-
   @IsDate()
   appointment_date: Date;
 
@@ -44,4 +38,10 @@ export class CreateAppointmentDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsUUID()
+  patient_id: string;
+
+  @IsUUID()
+  doctor_id: string;
 }

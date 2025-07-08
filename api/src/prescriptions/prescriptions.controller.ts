@@ -27,14 +27,14 @@ export class PrescriptionsController {
     return this.prescriptionsService.create(createPrescriptionDto);
   }
 
-  @Roles(Role.DOCTOR, Role.PHARMACY, Role.USER)
+  @Roles(Role.DOCTOR, Role.PHARMACY, Role.PATIENT)
   @Get()
   findAll() {
     return this.prescriptionsService.findAll();
   }
 
   // find by patient
-  @Roles(Role.DOCTOR, Role.PHARMACY)
+  @Roles(Role.DOCTOR, Role.PHARMACY, Role.PATIENT)
   @Get('patient/:patientId')
   findByPatient(@Param('patientId') patientId: string) {
     return this.prescriptionsService.findByPatient(patientId);

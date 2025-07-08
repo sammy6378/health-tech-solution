@@ -3,22 +3,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
-import { UserProfile } from './entities/user-profile.entity';
+import { PatientProfile } from './entities/user-profile.entity';
 import { ApiResponse, createResponse } from 'src/utils/apiResponse';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class UserProfileService {
   constructor(
-    @InjectRepository(UserProfile)
-    private readonly userProfileRepository: Repository<UserProfile>,
+    @InjectRepository(PatientProfile)
+    private readonly userProfileRepository: Repository<PatientProfile>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
 
   async create(
     createUserProfileDto: CreateUserProfileDto,
-  ): Promise<ApiResponse<UserProfile>> {
+  ): Promise<ApiResponse<PatientProfile>> {
     const user = await this.userRepository.findOneBy({
       user_id: createUserProfileDto.user_id,
     });
@@ -28,7 +28,7 @@ export class UserProfileService {
     }
 
     const existingProfile = await this.userProfileRepository.findOneBy({
-      user: { user_id: createUserProfileDto.user_id },
+      patient: { user_id: createUserProfileDto.user_id },
     });
 
     if (existingProfile) {
@@ -36,7 +36,7 @@ export class UserProfileService {
     }
     const profile = this.userProfileRepository.create({
       ...createUserProfileDto,
-      user,
+      patient: user,
     });
     return this.userProfileRepository
       .save(profile)
@@ -52,7 +52,7 @@ export class UserProfileService {
       });
   }
 
-  async findAll(): Promise<ApiResponse<UserProfile[]>> {
+  async findAll(): Promise<ApiResponse<PatientProfile[]>> {
     return this.userProfileRepository
       .find()
       .then((profiles) => {
@@ -67,7 +67,7 @@ export class UserProfileService {
       });
   }
 
-  async findOne(id: string): Promise<ApiResponse<UserProfile | null>> {
+  async findOne(id: string): Promise<ApiResponse<PatientProfile | null>> {
     return this.userProfileRepository
       .findOneBy({ profile_id: id })
       .then((profile) => {
@@ -85,7 +85,7 @@ export class UserProfileService {
   async update(
     id: string,
     updateUserProfileDto: UpdateUserProfileDto,
-  ): Promise<ApiResponse<UserProfile | null>> {
+  ): Promise<ApiResponse<PatientProfile | null>> {
     await this.userProfileRepository.update(id, updateUserProfileDto);
     return this.findOne(id)
       .then((response) => {

@@ -13,7 +13,6 @@ import { CreateUserProfileDto } from './dto/create-user-profile.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AtGuard } from 'src/auth/guards/at.guard';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/users/dto/create-user.dto';
 
@@ -22,7 +21,7 @@ import { Role } from 'src/users/dto/create-user.dto';
 export class UserProfileController {
   constructor(private readonly userProfileService: UserProfileService) {}
 
-  @Public()
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Post()
   create(@Body() createUserProfileDto: CreateUserProfileDto) {
     return this.userProfileService.create(createUserProfileDto);
@@ -34,13 +33,13 @@ export class UserProfileController {
     return this.userProfileService.findAll();
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userProfileService.findOne(id);
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Patch(':id')
   update(
     @Param('id') id: string,

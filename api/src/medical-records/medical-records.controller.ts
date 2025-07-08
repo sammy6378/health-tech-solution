@@ -21,7 +21,7 @@ import { Role } from 'src/users/dto/create-user.dto';
 export class MedicalRecordsController {
   constructor(private readonly medicalRecordsService: MedicalRecordsService) {}
 
-  @Roles(Role.DOCTOR, Role.USER)
+  @Roles(Role.DOCTOR, Role.PATIENT)
   @Post()
   create(@Body() createMedicalRecordDto: CreateMedicalRecordDto) {
     return this.medicalRecordsService.create(createMedicalRecordDto);
@@ -33,13 +33,13 @@ export class MedicalRecordsController {
     return this.medicalRecordsService.findAll();
   }
 
-  @Roles(Role.DOCTOR, Role.USER, Role.ADMIN)
+  @Roles(Role.DOCTOR, Role.PATIENT, Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.medicalRecordsService.findOne(id);
   }
 
-  @Roles(Role.DOCTOR, Role.USER)
+  @Roles(Role.DOCTOR, Role.PATIENT)
   @Patch(':id')
   update(
     @Param('id') id: string,

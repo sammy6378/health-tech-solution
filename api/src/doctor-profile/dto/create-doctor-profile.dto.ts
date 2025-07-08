@@ -10,6 +10,15 @@ import {
 import { Gender } from 'src/user-profile/dto/create-user-profile.dto';
 
 export class CreateDoctorProfileDto {
+  @IsArray()
+  days: string[];
+
+  @IsString()
+  start_time: string;
+
+  @IsString()
+  end_time: string;
+
   @IsString()
   specialization: string;
 

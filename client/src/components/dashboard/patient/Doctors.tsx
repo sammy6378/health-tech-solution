@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Star } from 'lucide-react'
 import { useState } from 'react'
+import { AppointmentModal } from '@/components/modals/AppointmentModal'
 
 export default function DoctorsPage() {
   const { data, isLoading } = useGetDoctors()
   const [search, setSearch] = useState('')
+   const [openModal, setOpenModal] = useState(false)
   const doctors = data?.data || []
 
   console.log('Doctors data:', doctors)
@@ -26,6 +28,11 @@ export default function DoctorsPage() {
     )
   })
   
+  const handleAddAppointment = (data: any) => {
+    console.log('New Appointment:', data)
+    // ✅ Send to API here
+  }
+
 
   return (
     <div className="container py-12 px-4 min-h-screen">
@@ -62,7 +69,7 @@ export default function DoctorsPage() {
               if (!doctor) return null
               return (
                 <Card
-                  key={user.doctorProfile?.profile_id|| i}
+                  key={user.doctorProfile?.profile_id || i}
                   className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition bg-white dark:bg-gray-900"
                 >
                   <CardContent className="p-6 flex flex-col items-center text-center">
@@ -114,10 +121,20 @@ export default function DoctorsPage() {
                       <Button variant="outline" size="sm">
                         View Profile
                       </Button>
-                      <Button size="sm" disabled={!doctor.availability}>
+                      <Button
+                        size="sm"
+                        disabled={!doctor.availability}
+                        onClick={() => setOpenModal(true)}
+                        className='cursor-pointer'
+                      >
                         Book Appointment
                       </Button>
                     </div>
+                    <AppointmentModal
+                      open={openModal}
+                      onClose={() => setOpenModal(false)}
+                      onSubmit={handleAddAppointment}
+                    />
                   </CardContent>
                 </Card>
               )

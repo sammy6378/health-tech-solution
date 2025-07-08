@@ -8,8 +8,8 @@ import {
 import { Gender } from '../dto/create-user-profile.dto';
 import { User } from 'src/users/entities/user.entity';
 
-@Entity('userProfile')
-export class UserProfile {
+@Entity('patientProfile')
+export class PatientProfile {
   @PrimaryGeneratedColumn('uuid')
   profile_id: string;
 
@@ -46,6 +46,6 @@ export class UserProfile {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @OneToOne(() => User, (user) => user.profile)
-  user: Relation<User>;
+  @OneToOne(() => User, (user) => user.patientProfile)
+  patient: Relation<User>;
 }

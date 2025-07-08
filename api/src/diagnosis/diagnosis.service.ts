@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { createResponse, ApiResponse } from 'src/utils/apiResponse';
+import { Appointment } from 'src/appointments/entities/appointment.entity';
 
 @Injectable()
 export class DiagnosisService {
@@ -21,44 +22,47 @@ export class DiagnosisService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Prescription)
     private readonly prescriptionRepository: Repository<Prescription>,
+    @InjectRepository(Appointment)
+    private readonly appointmentRepository: Repository<Appointment>,
   ) {}
 
-  async create(
-    createDiagnosisDto: CreateDiagnosisDto,
-  ): Promise<ApiResponse<Diagnosis>> {
-    try {
-      // Verify patient exists
-      const patient = await this.userRepository.findOne({
-        where: { user_id: createDiagnosisDto.patient_id },
-      });
-      if (!patient) {
-        throw new NotFoundException('Patient not found');
-      }
+  async create(dto: CreateDiagnosisDto): Promise<ApiResponse<Diagnosis>> {
+    const { doctor_id, patient_id } = dto;
 
-      // Verify doctor exists
-      const doctor = await this.userRepository.findOne({
-        where: { user_id: createDiagnosisDto.doctor_id },
-      });
-      if (!doctor) {
-        throw new NotFoundException('Doctor not found');
-      }
+    const [doctor, patient] = await Promise.all([
+      this.userRepository.findOne({ where: { user_id: doctor_id } }),
+      this.userRepository.findOne({ where: { user_id: patient_id } }),
+    ]);
 
-      // Create diagnosis
-      const diagnosis = this.diagnosisRepository.create({
-        ...createDiagnosisDto,
-        patient,
-        doctor,
-      });
+    if (!doctor) throw new NotFoundException('Doctor not found');
+    if (!patient) throw new NotFoundException('Patient not found');
 
-      const savedDiagnosis = await this.diagnosisRepository.save(diagnosis);
+    const appointment = await this.appointmentRepository.findOne({
+      where: { appointment_id: dto.appointment_id },
+    });
 
-      return createResponse(savedDiagnosis, 'Diagnosis created successfully');
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException('Failed to create diagnosis');
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
     }
+
+    const prescription = await this.prescriptionRepository.findOne({
+      where: { prescription_id: dto.prescription_id },
+    });
+
+    if (dto.prescription_id && !prescription) {
+      throw new NotFoundException('Prescription not found');
+    }
+
+    const diagnosis = this.diagnosisRepository.create({
+      ...dto,
+      patient,
+      doctor,
+      appointment,
+      prescriptions: prescription ? [prescription] : [],
+    });
+
+    const saved = await this.diagnosisRepository.save(diagnosis);
+    return createResponse(saved, 'Diagnosis created successfully');
   }
 
   async findAll(): Promise<ApiResponse<Diagnosis[]>> {
@@ -103,7 +107,7 @@ export class DiagnosisService {
   async findByPatient(patientId: string): Promise<ApiResponse<Diagnosis[]>> {
     try {
       const diagnoses = await this.diagnosisRepository.find({
-        where: { patient_id: patientId },
+        where: { patient: { user_id: patientId } },
         relations: ['patient', 'doctor', 'prescriptions'],
         order: { created_at: 'DESC' },
       });
@@ -121,7 +125,7 @@ export class DiagnosisService {
   async findByDoctor(doctorId: string): Promise<ApiResponse<Diagnosis[]>> {
     try {
       const diagnoses = await this.diagnosisRepository.find({
-        where: { doctor_id: doctorId },
+        where: { doctor: { user_id: doctorId } },
         relations: ['patient', 'doctor', 'prescriptions'],
         order: { created_at: 'DESC' },
       });

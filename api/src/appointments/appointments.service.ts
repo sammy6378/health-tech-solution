@@ -28,16 +28,50 @@ export class AppointmentsService {
     const patient = await this.userRepository.findOne({
       where: { user_id: dto.patient_id },
     });
+
     const doctor = await this.userRepository.findOne({
       where: { user_id: dto.doctor_id },
+      relations: ['doctorProfile'],
     });
 
-    if (!patient || patient.role !== Role.USER) {
-      throw new BadRequestException('patient not found');
+    if (!patient || patient.role !== Role.PATIENT) {
+      throw new BadRequestException('Patient not found');
     }
 
     if (!doctor || doctor.role !== Role.DOCTOR) {
-      throw new BadRequestException('doctor not found');
+      throw new BadRequestException('Doctor not found');
+    }
+
+    const profile = doctor.doctorProfile;
+    if (!profile) {
+      throw new BadRequestException('Doctor profile not found');
+    }
+
+    // ✅ Prevent appointments in the past
+    const today = new Date();
+    const selectedDate = new Date(dto.appointment_date);
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      throw new BadRequestException('Appointment date cannot be in the past');
+    }
+
+    const appointmentDay = selectedDate.toLocaleString('en-US', {
+      weekday: 'long',
+    });
+
+    const appointmentTime = dto.appointment_time;
+
+    const isDayAvailable = profile.days.includes(appointmentDay);
+    const isTimeInRange =
+      appointmentTime >= profile.start_time &&
+      appointmentTime <= profile.end_time;
+
+    if (!isDayAvailable || !isTimeInRange) {
+      throw new BadRequestException(
+        'Doctor is not available at the selected time',
+      );
     }
 
     const appointment = this.appointmentRepository.create({
@@ -125,5 +159,47 @@ export class AppointmentsService {
       appointments,
       `Appointments with status ${status} fetched`,
     );
+  }
+
+  async findAppointmentsByDoctor(
+    doctorId: string,
+  ): Promise<ApiResponse<Appointment[]>> {
+    const doctor = await this.userRepository.findOne({
+      where: { user_id: doctorId },
+      relations: ['doctorProfile'],
+    });
+
+    if (!doctor || doctor.role !== Role.DOCTOR) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    const appointments = await this.appointmentRepository.find({
+      where: { doctor: { user_id: doctorId } },
+      relations: ['patient', 'doctor'],
+      order: { appointment_date: 'ASC' },
+    });
+
+    return createResponse(appointments, 'Doctor appointments fetched');
+  }
+
+  async findAppointmentsByPatient(
+    patientId: string,
+  ): Promise<ApiResponse<Appointment[]>> {
+    const patient = await this.userRepository.findOne({
+      where: { user_id: patientId },
+      relations: ['patientProfile'],
+    });
+
+    if (!patient || patient.role !== Role.PATIENT) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    const appointments = await this.appointmentRepository.find({
+      where: { patient: { user_id: patientId } },
+      relations: ['patient', 'doctor'],
+      order: { appointment_date: 'ASC' },
+    });
+
+    return createResponse(appointments, 'Patient appointments fetched');
   }
 }

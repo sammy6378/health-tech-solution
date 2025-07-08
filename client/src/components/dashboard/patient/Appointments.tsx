@@ -5,8 +5,6 @@ import {
   Stethoscope,
   CheckCircle2,
   XCircle,
-  MoreHorizontal,
-  Plus,
   ArrowUpDown,
   Filter,
   Search,
@@ -18,14 +16,13 @@ import {
   formatDate,
   type TAppointment,
 } from '@/types/api-types'
-import { AppointmentModal } from '@/components/modals/AppointmentModal'
 import { useAuthStore } from '@/store/store'
 
 const AppointmentPage = () => {
   const [activeTab, setActiveTab] = useState<AppointmentStatus>(
     AppointmentStatus.SCHEDULED,
   )
-  const [openModal, setOpenModal] = useState(false)
+ 
   const {user} = useAuthStore()
   const userId = user?.userId || '';
 
@@ -96,11 +93,6 @@ const AppointmentPage = () => {
     total: appointments.length,
   }
 
-  const handleAddAppointment = (data: any) => {
-    console.log('New Appointment:', data)
-    // ✅ Send to API here
-  }
-
   return (
     <div className="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
       {/* Header */}
@@ -110,20 +102,8 @@ const AppointmentPage = () => {
             <Calendar className="mr-2" />
             Appointments
           </h1>
-          <button
-            onClick={() => setOpenModal(true)}
-            className="flex items-center px-4 py-2 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <Plus size={18} className="mr-2" />
-            New Appointment
-          </button>
         </div>
       </header>
-      <AppointmentModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        onSubmit={handleAddAppointment}
-      />
 
       <main className="container mx-auto p-4">
         {/* Metrics */}
@@ -340,12 +320,12 @@ const AppointmentPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                        <button className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
                           View
                         </button>
-                        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        {/* <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                           <MoreHorizontal size={18} />
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ))

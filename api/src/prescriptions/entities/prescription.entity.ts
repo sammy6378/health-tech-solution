@@ -4,12 +4,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
 import { PrescriptionStatus } from '../dto/create-prescription.dto';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
+import { Order } from 'src/orders/entities/order.entity';
 
 @Entity('prescriptions')
 export class Prescription {
@@ -66,24 +68,15 @@ export class Prescription {
   @JoinColumn({ name: 'doctor_id' })
   doctor: Relation<User>;
 
-  @Column()
-  doctor_id: string;
-
   // Who it's prescribed to (patient)
   @ManyToOne(() => User, (user) => user.prescriptions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'patient_id' })
   patient: Relation<User>;
 
-  @Column()
-  patient_id: string;
-
   // Reference to the medication in stock
   @ManyToOne(() => Stock, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'medication_id' })
   medication: Relation<Stock>;
-
-  @Column()
-  medication_id: string;
 
   @ManyToOne(() => Diagnosis, (diagnosis) => diagnosis.prescriptions, {
     onDelete: 'CASCADE',
@@ -91,6 +84,9 @@ export class Prescription {
   })
   @JoinColumn({ name: 'diagnosis_id' })
   diagnosis?: Relation<Diagnosis>;
+
+  @OneToOne(() => Order, (order) => order.prescription, { nullable: true })
+  order: Order;
 
   @Column({ nullable: true })
   diagnosis_id?: string;

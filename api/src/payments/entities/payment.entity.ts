@@ -7,16 +7,6 @@ export class Payment {
   @PrimaryGeneratedColumn('uuid')
   payment_id: string;
 
-  // Foreign key to the order
-  @Column({ type: 'uuid' })
-  order_number: string;
-
-  @Column({ type: 'uuid' })
-  order_id: string;
-
-  @Column({ type: 'uuid' })
-  patient_id: string;
-
   // Amount paid
   @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
@@ -27,6 +17,18 @@ export class Payment {
   @Column({ type: 'enum', enum: PaymentMethod })
   payment_method: PaymentMethod;
 
+  @Column({ unique: true })
+  transcation_id: string;
+
   @Column({ type: 'date' })
   payment_date: Date;
+
+  @Column()
+  order_number: string;
+
+  @Column({ type: 'uuid' })
+  order_id: string;
+
+  @Column({ type: 'uuid' })
+  patient_id: string;
 }

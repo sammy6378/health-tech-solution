@@ -12,6 +12,7 @@ import { createResponse, ApiResponse } from 'src/utils/apiResponse';
 import { Role } from 'src/users/dto/create-user.dto';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Injectable()
 export class PrescriptionsService {
@@ -22,6 +23,8 @@ export class PrescriptionsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Stock)
     private readonly pharmacyStockRepository: Repository<Stock>,
+    @InjectRepository(Diagnosis)
+    private readonly diagnosisRepository: Repository<Diagnosis>,
 
     private readonly uniqueNumberGenerator: UniqueNumberGenerator,
   ) {}
@@ -39,7 +42,10 @@ export class PrescriptionsService {
           },
         }),
         this.userRepository.findOne({
-          where: { user_id: createPrescriptionDto.patient_id, role: Role.USER },
+          where: {
+            user_id: createPrescriptionDto.patient_id,
+            role: Role.PATIENT,
+          },
         }),
       ]);
 
@@ -51,6 +57,15 @@ export class PrescriptionsService {
         throw new NotFoundException(
           'Patient not found or user is not a patient',
         );
+      }
+
+      // validate if a diagnosis exists
+      const diagnosis = await this.diagnosisRepository.findOne({
+        where: { diagnosis_id: createPrescriptionDto.diagnosis_id },
+      });
+
+      if (!diagnosis) {
+        throw new NotFoundException('Diagnosis not found');
       }
 
       // Validate pharmacy stock exists and has sufficient quantity
@@ -84,6 +99,7 @@ export class PrescriptionsService {
         doctor,
         patient,
         medication,
+        diagnosis,
         prescription_number: prescriptionNumber,
         unit_price: unitPrice,
         total_price: totalPrice,
@@ -112,7 +128,7 @@ export class PrescriptionsService {
   async findAll(): Promise<ApiResponse<Prescription[]>> {
     try {
       const prescriptions = await this.prescriptionRepository.find({
-        relations: ['doctor', 'patient'],
+        relations: ['doctor', 'patient', 'order', 'medication'],
         order: { created_at: 'DESC' },
       });
 
@@ -130,7 +146,7 @@ export class PrescriptionsService {
     try {
       const prescription = await this.prescriptionRepository.findOne({
         where: { prescription_id: id },
-        relations: ['doctor', 'patient'],
+        relations: ['doctor', 'patient', 'order', 'medication'],
       });
 
       if (!prescription) {
@@ -173,7 +189,7 @@ export class PrescriptionsService {
     try {
       const prescription = await this.prescriptionRepository.findOne({
         where: { prescription_id: id },
-        relations: ['doctor', 'patient'],
+        relations: ['doctor', 'patient', 'order', 'medication'],
       });
 
       if (!prescription) {

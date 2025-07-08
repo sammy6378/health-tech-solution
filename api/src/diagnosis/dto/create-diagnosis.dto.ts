@@ -1,26 +1,23 @@
-import { IsArray, IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateDiagnosisDto {
-  @IsUUID()
-  patient_id: string;
-
-  @IsUUID()
-  doctor_id: string;
-
-  @IsUUID()
-  prescription_id: string;
-
   @IsString()
-  diagnosis: string;
+  diagnosis_name: string;
 
   @IsString()
   treatment_plan: string;
 
-  @IsDate()
-  record_date: Date;
+  @IsDateString()
+  diagnosis_date: string;
 
-  @IsString()
   @IsOptional()
+  @IsArray()
   notes?: string[];
 
   @IsOptional()
@@ -38,4 +35,18 @@ export class CreateDiagnosisDto {
   @IsOptional()
   @IsArray()
   symptoms?: string[];
+
+  @IsUUID()
+  patient_id: string;
+
+  @IsUUID()
+  doctor_id: string;
+
+  @IsOptional()
+  @IsUUID()
+  prescription_id?: string; // Optional, prescriptions can come later
+
+  @IsOptional()
+  @IsUUID()
+  appointment_id?: string;
 }

@@ -23,31 +23,39 @@ import {
   FileText,
   Calendar1,
 } from 'lucide-react'
-import { useGetAppointments } from '@/hooks/useAppointments'
-import { AppointmentStatus } from '@/types/api-types'
+import {  useGetAppointmentsByUser } from '@/hooks/useAppointments'
+import { AppointmentStatus, formatDate } from '@/types/api-types'
 import { InfoRow } from '@/components/utils/Labels'
+import { useAuthStore } from '@/store/store'
 
 export function MyCalendar() {
   const [date, setDate] = React.useState<Date | undefined>(
     new Date(2025, 5, 12),
   )
-  const { data } = useGetAppointments()
+
+   const {user} = useAuthStore()
+      const userId = user?.userId || '';
+
+  const { data } = useGetAppointmentsByUser(userId)
   const appointments = data?.data || []
 
   // Get appointments for selected date
   const getAppointmentsForDate = (selectedDate: Date | undefined) => {
     if (!selectedDate) return []
-    return appointments.filter(
-      (apt) =>
-        apt.appointment_date.getDate() === selectedDate.getDate() &&
-        apt.appointment_date.getMonth() === selectedDate.getMonth() &&
-        apt.appointment_date.getFullYear() === selectedDate.getFullYear(),
-    )
+    return appointments.filter((apt) => {
+      const date = new Date(apt.appointment_date)
+      return (
+        date.getDate() === selectedDate.getDate() &&
+        date.getMonth() === selectedDate.getMonth() &&
+        date.getFullYear() === selectedDate.getFullYear()
+      )
+    })
   }
 
   const getDatesWithAppointments = () => {
-    return appointments.map((apt) => apt.appointment_date)
+    return appointments.map((apt) => new Date(apt.appointment_date))
   }
+  
 
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
@@ -201,7 +209,7 @@ export function MyCalendar() {
                                 }
                                 label="Date & Time"
                               >
-                                {appointment.appointment_date.toLocaleDateString()}{' '}
+                                {formatDate(appointment.appointment_date)}{' '}
                                 at {appointment.appointment_time}
                               </InfoRow>
 

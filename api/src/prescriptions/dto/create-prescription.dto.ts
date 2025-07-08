@@ -26,6 +26,9 @@ export class CreatePrescriptionDto {
   @IsUUID()
   medication_id: string;
 
+  @IsUUID()
+  diagnosis_id: string;
+
   @IsDateString()
   prescription_date: string;
 

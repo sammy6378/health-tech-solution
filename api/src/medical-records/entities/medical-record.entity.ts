@@ -3,7 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -11,13 +11,6 @@ import {
 export class MedicalRecord {
   @PrimaryGeneratedColumn('uuid')
   record_id: string;
-
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'patient_id' })
-  patient: User;
-
-  @Column({ type: 'int' })
-  patient_id: string;
 
   @Column({ type: 'date', nullable: true })
   record_date?: Date;
@@ -57,4 +50,8 @@ export class MedicalRecord {
 
   @Column('text', { array: true, nullable: true })
   docs?: string[];
+
+  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'patient_id' })
+  patient: User;
 }

@@ -205,190 +205,113 @@ const Pharmacy = () => {
               <p>No medications found matching your criteria</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMeds.map((med) => {
-                const TypeIcon = getTypeIcon(med.medication_type)
-                return (
-                  <Card
-                    key={med.medication_id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardHeader className="p-4 pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{med.name}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {med.manufacturer}
-                          </CardDescription>
-                        </div>
-                        <TypeIcon className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex justify-between items-center mb-3">
-                        <Badge className={getCategoryColor(med.category)}>
-                          {med.category}
-                        </Badge>
-                        <div className="text-sm font-semibold">
-                          ${med.unit_price.toFixed(2)}
-                        </div>
-                      </div>
-
-                      <div className="relative aspect-square w-full mb-3 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                        {med.image ? (
-                          <img
-                            src={med.image}
-                            alt={med.name}
-                            className="object-contain"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
-                            <Pill className="h-12 w-12" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm">
-                          <span
-                            className={
-                              med.stock_quantity < 5
-                                ? 'text-red-500'
-                                : 'text-muted-foreground'
-                            }
-                          >
-                            {med.stock_quantity} in stock
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-300 dark:border-gray-600 rounded-lg">
+                <thead className="bg-gray-100 dark:bg-gray-700">
+                  <tr>
+                    <th className="p-3 text-left text-sm font-medium">Name</th>
+                    <th className="p-3 text-left text-sm font-medium">
+                      Manufacturer
+                    </th>
+                    <th className="p-3 text-left text-sm font-medium">
+                      Category
+                    </th>
+                    <th className="p-3 text-left text-sm font-medium">Type</th>
+                    <th className="p-3 text-left text-sm font-medium">
+                      Dosage
+                    </th>
+                    <th className="p-3 text-left text-sm font-medium">Price</th>
+                    <th className="p-3 text-left text-sm font-medium">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMeds.map((med) => {
+                    const TypeIcon = getTypeIcon(med.medication_type)
+                    return (
+                      <tr
+                        key={med.medication_id}
+                        className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <td className="p-3 font-medium">{med.name}</td>
+                        <td className="p-3">{med.manufacturer}</td>
+                        <td className="p-3">
+                          <Badge className={getCategoryColor(med.category)}>
+                            {med.category}
+                          </Badge>
+                        </td>
+                        <td className="p-3 flex items-center gap-1">
+                          <TypeIcon className="h-4 w-4" />
+                          <span className="capitalize">
+                            {med.medication_type}
                           </span>
-                        </div>
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedMed(med)}
+                        </td>
+                        <td className="p-3">{med.dosage}</td>
+                        <td className="p-3 font-semibold">${med.unit_price}</td>
+                        <td className="p-3">
+                          <Sheet>
+                            <SheetTrigger asChild>
+                              <button
+                                onClick={() => setSelectedMed(med)}
+                                className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
+                              >
+                                View
+                              </button>
+                            </SheetTrigger>
+                            <SheetContent
+                              side="right"
+                              className="w-full sm:max-w-md"
                             >
-                              Details
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent
-                            side="right"
-                            className="w-full sm:max-w-md"
-                          >
-                            <SheetHeader>
-                              <SheetTitle className="flex items-center gap-2">
-                                <TypeIcon className="h-5 w-5" />
-                                {med.name}
-                              </SheetTitle>
-                            </SheetHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="relative aspect-square w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                                {med.image ? (
-                                  <img
-                                    src={med.image}
-                                    alt={med.name}
-                                    className="object-contain"
-                                  />
-                                ) : (
-                                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                                    <Pill className="h-20 w-20" />
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="space-y-2">
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Manufacturer
-                                  </h4>
-                                  <p>{med.manufacturer}</p>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Dosage
-                                  </h4>
-                                  <p>{med.dosage}</p>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Type
-                                  </h4>
-                                  <Badge variant="outline">
-                                    {med.medication_type}
-                                  </Badge>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Category
-                                  </h4>
-                                  <Badge
-                                    className={getCategoryColor(med.category)}
-                                  >
-                                    {med.category}
-                                  </Badge>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Price
-                                  </h4>
-                                  <p>${med.unit_price.toFixed(2)}</p>
-                                </div>
-
-                                <div>
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    Stock
-                                  </h4>
-                                  <p
-                                    className={
-                                      med.stock_quantity < 5
-                                        ? 'text-red-500'
-                                        : ''
-                                    }
-                                  >
-                                    {med.stock_quantity} available
-                                  </p>
-                                </div>
-
-                                {med.description && (
-                                  <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground">
-                                      Description
-                                    </h4>
-                                    <p className="text-sm">{med.description}</p>
-                                  </div>
-                                )}
-
-                                {med.side_effects &&
-                                  med.side_effects.length > 0 && (
-                                    <div>
-                                      <h4 className="text-sm font-medium text-muted-foreground">
-                                        Possible Side Effects
-                                      </h4>
-                                      <ul className="list-disc pl-5 text-sm">
-                                        {med.side_effects.map((effect) => (
-                                          <li key={effect}>{effect}</li>
-                                        ))}
-                                      </ul>
+                              <SheetHeader>
+                                <SheetTitle className="flex items-center gap-2">
+                                  <TypeIcon className="h-5 w-5" />
+                                  {med.name}
+                                </SheetTitle>
+                              </SheetHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="aspect-square w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                                  {med.image ? (
+                                    <img
+                                      src={med.image}
+                                      alt={med.name}
+                                      className="object-contain w-full h-full"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                                      <Pill className="h-20 w-20" />
                                     </div>
                                   )}
-
-                                {med.prescription_required && (
-                                  <Badge variant="destructive" className="mt-4">
-                                    Prescription Required
-                                  </Badge>
-                                )}
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  <p>
+                                    <span className="text-muted-foreground">
+                                      Manufacturer:
+                                    </span>{' '}
+                                    {med.manufacturer}
+                                  </p>
+                                  <p>
+                                    <span className="text-muted-foreground">
+                                      Dosage:
+                                    </span>{' '}
+                                    {med.dosage}
+                                  </p>
+                                  <p>
+                                    <span className="text-muted-foreground">
+                                      Description:
+                                    </span>{' '}
+                                    {med.description}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </SheetContent>
-                        </Sheet>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                            </SheetContent>
+                          </Sheet>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

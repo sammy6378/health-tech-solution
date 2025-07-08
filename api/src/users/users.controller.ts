@@ -27,25 +27,25 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Param('id') id?: string) {
+    return this.usersService.findAll(id);
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Get('doctors')
   findAllDoctors() {
     return this.usersService.findAllDoctors();
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
-  @Roles(Role.ADMIN, Role.USER)
+  @Roles(Role.ADMIN, Role.PATIENT)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);

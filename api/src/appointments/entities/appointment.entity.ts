@@ -3,6 +3,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
@@ -11,6 +12,7 @@ import {
   ConsultationType,
 } from '../dto/create-appointment.dto';
 import { User } from 'src/users/entities/user.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Entity('appointments')
 export class Appointment {
@@ -41,9 +43,12 @@ export class Appointment {
   @JoinColumn()
   patient: Relation<User>;
 
-  @ManyToOne(() => User, (user) => user.doctorAppointments, {
+  @ManyToOne(() => User, (user) => user.appointments, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
   doctor: Relation<User>;
+
+  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.appointment)
+  diagnoses: Relation<Diagnosis[]>;
 }

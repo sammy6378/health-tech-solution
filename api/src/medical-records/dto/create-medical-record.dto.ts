@@ -13,11 +13,6 @@ import {
 import { Transform } from 'class-transformer';
 
 export class CreateMedicalRecordDto {
-  @IsNotEmpty()
-  @IsInt()
-  @IsPositive()
-  patient_id: string;
-
   @IsOptional()
   @IsDateString()
   record_date?: string;
@@ -77,4 +72,9 @@ export class CreateMedicalRecordDto {
   @IsArray()
   @IsString({ each: true })
   docs?: string[];
+
+  @IsNotEmpty()
+  @IsInt()
+  @IsPositive()
+  patient_id: string;
 }

@@ -27,7 +27,7 @@ export class StocksController {
     return this.StocksService.create(createMedicationDto);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.USER)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get()
   findAll() {
     return this.StocksService.findAll();

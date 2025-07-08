@@ -8,7 +8,7 @@ import {
   Relation,
 } from 'typeorm';
 
-@Entity('doctor_profiles')
+@Entity('doctorProfile')
 export class DoctorProfile {
   @PrimaryGeneratedColumn('uuid')
   profile_id: string;
@@ -27,6 +27,15 @@ export class DoctorProfile {
 
   @Column({ type: 'text' })
   department: string;
+
+  @Column({ type: 'text', array: true })
+  days: string[];
+
+  @Column()
+  start_time: string;
+
+  @Column()
+  end_time: string;
 
   @Column({ type: 'text' })
   availability: boolean;

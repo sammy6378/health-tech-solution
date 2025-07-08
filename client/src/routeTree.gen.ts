@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardProfileRouteImport } from './routes/dashboard/profile'
 import { Route as DashboardPharmacyRouteImport } from './routes/dashboard/pharmacy'
 import { Route as DashboardOrdersRouteImport } from './routes/dashboard/orders'
 import { Route as DashboardMyPrescriptionsRouteImport } from './routes/dashboard/my-prescriptions'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardProfileRoute = DashboardProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardPharmacyRoute = DashboardPharmacyRouteImport.update({
   id: '/pharmacy',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/my-prescriptions': typeof DashboardMyPrescriptionsRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/pharmacy': typeof DashboardPharmacyRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/dashboard/my-prescriptions': typeof DashboardMyPrescriptionsRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/pharmacy': typeof DashboardPharmacyRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/dashboard/my-prescriptions': typeof DashboardMyPrescriptionsRoute
   '/dashboard/orders': typeof DashboardOrdersRoute
   '/dashboard/pharmacy': typeof DashboardPharmacyRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/dashboard/my-prescriptions'
     | '/dashboard/orders'
     | '/dashboard/pharmacy'
+    | '/dashboard/profile'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/dashboard/my-prescriptions'
     | '/dashboard/orders'
     | '/dashboard/pharmacy'
+    | '/dashboard/profile'
   id:
     | '__root__'
     | '/'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/dashboard/my-prescriptions'
     | '/dashboard/orders'
     | '/dashboard/pharmacy'
+    | '/dashboard/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -182,6 +194,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/profile': {
+      id: '/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/dashboard/pharmacy': {
       id: '/dashboard/pharmacy'
@@ -257,6 +276,7 @@ interface DashboardRouteChildren {
   DashboardMyPrescriptionsRoute: typeof DashboardMyPrescriptionsRoute
   DashboardOrdersRoute: typeof DashboardOrdersRoute
   DashboardPharmacyRoute: typeof DashboardPharmacyRoute
+  DashboardProfileRoute: typeof DashboardProfileRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -267,6 +287,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardMyPrescriptionsRoute: DashboardMyPrescriptionsRoute,
   DashboardOrdersRoute: DashboardOrdersRoute,
   DashboardPharmacyRoute: DashboardPharmacyRoute,
+  DashboardProfileRoute: DashboardProfileRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

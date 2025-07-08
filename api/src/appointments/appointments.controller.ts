@@ -25,31 +25,43 @@ import { Role } from 'src/users/dto/create-user.dto';
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  @Roles(Role.DOCTOR, Role.USER)
+  @Roles(Role.DOCTOR, Role.PATIENT)
   @Post()
   create(@Body() createAppointmentDto: CreateAppointmentDto) {
     return this.appointmentsService.create(createAppointmentDto);
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN, Role.USER)
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get()
   findAll() {
     return this.appointmentsService.findAll();
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN, Role.USER)
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get(':status')
   findByStatus(@Param('status') status: AppointmentStatus) {
     return this.appointmentsService.appointmentsByStatus(status);
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN, Role.USER)
+  @Roles(Role.DOCTOR, Role.ADMIN)
+  @Get('user')
+  findAppointmentsByDoctor(@Query('doctorId') doctorId: string) {
+    return this.appointmentsService.findAppointmentsByDoctor(doctorId);
+  }
+
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
+  @Get('patient')
+  findAppointmentsByPatient(@Query('patientId') patientId: string) {
+    return this.appointmentsService.findAppointmentsByPatient(patientId);
+  }
+
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get(':userId')
   getAppointments(@Query('userId') userId: string) {
     return this.appointmentsService.findByUser(userId);
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN, Role.USER)
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.appointmentsService.findOne(id);

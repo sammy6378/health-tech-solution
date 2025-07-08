@@ -9,7 +9,7 @@ import {
 
 export enum Role {
   ADMIN = 'admin',
-  USER = 'user',
+  PATIENT = 'patient',
   DOCTOR = 'doctor',
   PHARMACY = 'pharmacy',
 }
@@ -60,10 +60,10 @@ export class CreateUserDto {
     example: 'user',
     required: false,
     enum: Role,
-    default: Role.USER,
+    default: Role.PATIENT,
   })
   @IsEnum(Role)
-  role: Role = Role.USER;
+  role: Role = Role.PATIENT;
 
   @IsOptional()
   @IsString()

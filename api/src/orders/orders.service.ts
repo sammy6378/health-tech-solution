@@ -36,76 +36,76 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto): Promise<ApiResponse<Order>> {
     try {
-      // Validate prescription exists and is not already ordered
       const prescription = await this.prescriptionRepository.findOne({
         where: { prescription_id: createOrderDto.prescription_id },
-        relations: ['medication', 'doctor'],
+        relations: ['medication', 'doctor', 'patient', 'order'],
       });
 
       if (!prescription) {
         throw new NotFoundException('Prescription not found');
       }
 
-      // Check if prescription is already converted to an order
-      const existingOrder = await this.orderRepository.findOne({
-        where: { prescription_id: createOrderDto.prescription_id },
+      if (prescription.order) {
+        throw new BadRequestException('This prescription already has an order');
+      }
+
+      if (prescription.status === PrescriptionStatus.CANCELLED) {
+        throw new BadRequestException('Cannot order a cancelled prescription');
+      }
+
+      const medication = prescription.medication;
+      if (!medication) {
+        throw new NotFoundException('Prescription medication not found');
+      }
+
+      const currentStock = await this.stockRepository.findOne({
+        where: { medication_id: medication.medication_id },
       });
 
-      if (existingOrder) {
-        throw new BadRequestException('Prescription already has an order');
-      }
-
-      // Check prescription status
-      if (prescription.status === PrescriptionStatus.CANCELLED) {
+      if (
+        !currentStock ||
+        currentStock.stock_quantity < prescription.quantity_prescribed
+      ) {
         throw new BadRequestException(
-          'Cannot create order for cancelled prescription',
+          `Insufficient stock for ${medication.name}. Required: ${prescription.quantity_prescribed}, Available: ${currentStock?.stock_quantity || 0}`,
         );
       }
 
-      // Generate unique order number from prescription
-      const orderNumber =
-        this.uniqueNumberGenerator.generateOrderNumberFromPrescription(
-          prescription.prescription_number,
-        );
+      const orderNumber = this.uniqueNumberGenerator.generateOrderNumber();
 
-      // Create order
       const order = this.orderRepository.create({
-        ...createOrderDto,
         order_number: orderNumber,
         prescription,
         patient: prescription.patient,
-        patient_id: prescription.patient_id,
-        amount: prescription.total_price,
+        amount: Number(prescription.total_price || 0),
+        delivery_method: createOrderDto.delivery_method,
+        delivery_address: createOrderDto.delivery_address,
+        delivery_time: createOrderDto.delivery_time,
+        payment_method: createOrderDto.payment_method,
+        payment_status: PaymentStatus.PENDING,
+        delivery_status: DeliveryStatus.PENDING,
         estimated_delivery: this.calculateEstimatedDelivery(
           createOrderDto.delivery_method,
         ),
+        notes: createOrderDto.notes,
       });
 
       const savedOrder = await this.orderRepository.save(order);
 
-      // Update prescription status to indicate it has an order
-      await this.prescriptionRepository.update(prescription.prescription_id, {
-        status: PrescriptionStatus.FILLED,
-      });
+      // Update prescription status
+      prescription.status = PrescriptionStatus.FILLED;
+      await this.prescriptionRepository.save(prescription);
 
-      // Return order with all relations
-      const result = await this.orderRepository.findOne({
+      const fullOrder = await this.orderRepository.findOne({
         where: { order_id: savedOrder.order_id },
-        relations: [
-          'prescription',
-          'prescription.medication',
-          'prescription.doctor',
-        ],
+        relations: ['prescription', 'prescription.medication', 'patient'],
       });
 
-      if (!result) {
-        throw new NotFoundException('Failed to create order');
+      if (!fullOrder) {
+        throw new NotFoundException('Failed to retrieve saved order');
       }
 
-      return createResponse(
-        result,
-        'Order created successfully from prescription',
-      );
+      return createResponse(fullOrder, 'Order created successfully');
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -113,19 +113,21 @@ export class OrdersService {
       ) {
         throw error;
       }
-      console.error('Error creating order:', error);
+      console.error('Order creation failed:', error);
       throw new BadRequestException('Failed to create order');
     }
   }
 
-  async confirmPayment(orderId: string): Promise<ApiResponse<Order>> {
-    // Use database transaction for atomicity
+  async confirmPayment(
+    orderId: string,
+    amount: number,
+    transcationId: string,
+  ): Promise<ApiResponse<Order>> {
     return await this.dataSource.transaction(async (manager) => {
       try {
-        // 1. Get order with lock to prevent concurrent updates
+        // 1. Lock the order row ONLY (no relations)
         const order = await manager.findOne(Order, {
           where: { order_id: orderId },
-          relations: ['prescription', 'prescription.medication'],
           lock: { mode: 'pessimistic_write' },
         });
 
@@ -133,9 +135,21 @@ export class OrdersService {
           throw new NotFoundException('Order not found');
         }
 
-        // 2. Check if payment already confirmed (prevent repetition)
+        // 2. Load related data separately (without lock)
+        const fullOrder = await manager.findOne(Order, {
+          where: { order_id: orderId },
+          relations: ['prescription', 'prescription.medication', 'patient'],
+        });
+
+        if (!fullOrder) {
+          throw new NotFoundException('Failed to load full order data');
+        }
+
+        const prescription = fullOrder.prescription;
+
+        // 3. Check for existing payment
         const existingPayment = await manager.findOne(Payment, {
-          where: { order_number: order.order_number },
+          where: { order_number: fullOrder.order_number },
         });
 
         if (existingPayment) {
@@ -144,22 +158,49 @@ export class OrdersService {
           );
         }
 
-        // 3. Check if order is in valid state for payment
-        if (order.delivery_status === DeliveryStatus.CANCELLED) {
+        // 4. Validate order state
+        if (fullOrder.delivery_status === DeliveryStatus.CANCELLED) {
           throw new BadRequestException(
             'Cannot confirm payment for cancelled order',
           );
         }
 
-        if (order.delivery_status === DeliveryStatus.DELIVERED) {
+        if (fullOrder.delivery_status === DeliveryStatus.DELIVERED) {
           throw new BadRequestException('Order already completed');
         }
 
-        // 4. Check and update stock atomically
-        const medication = order.prescription.medication;
-        const quantityPrescribed = order.prescription.quantity_prescribed;
+        if (fullOrder.amount <= 0 || isNaN(fullOrder.amount)) {
+          throw new BadRequestException('Invalid order amount');
+        }
 
-        // Get current stock with lock
+        const expectedAmount = parseFloat(fullOrder.amount.toString());
+        const receivedAmount = parseFloat(amount.toString());
+
+        if (Math.abs(expectedAmount - receivedAmount) > 0.01) {
+          throw new BadRequestException(
+            `Payment amount mismatch. Expected: ${expectedAmount.toFixed(
+              2,
+            )}, Received: ${receivedAmount.toFixed(2)}`,
+          );
+        }
+
+        if (!prescription) {
+          throw new NotFoundException(
+            'Prescription data not found for this order',
+          );
+        }
+
+        // 5. Check if prescription is filled
+        if (prescription.status !== PrescriptionStatus.FILLED) {
+          throw new BadRequestException(
+            'Cannot confirm payment for an unfilled prescription',
+          );
+        }
+
+        // 5. Check stock
+        const medication = prescription.medication;
+        const quantityPrescribed = prescription.quantity_prescribed;
+
         const currentStock = await manager.findOne(Stock, {
           where: { medication_id: medication.medication_id },
           lock: { mode: 'pessimistic_write' },
@@ -171,38 +212,40 @@ export class OrdersService {
           );
         }
 
-        // 5. Update stock quantity
+        // 6. Deduct stock
         await manager.update(Stock, medication.medication_id, {
           stock_quantity: currentStock.stock_quantity - quantityPrescribed,
           updated_at: new Date(),
         });
 
-        // 6. Update order status
-        await manager.update(Order, orderId, {
+        // 7. Update order status
+        await manager.update(Order, fullOrder.order_id, {
           delivery_status: DeliveryStatus.PROCESSING,
           updated_at: new Date(),
         });
 
-        // 7. Create payment record
+        // 8. Create payment
         const payment = manager.create(Payment, {
-          order_number: order.order_number,
-          amount: order.amount,
+          order_number: fullOrder.order_number,
+          amount: fullOrder.amount,
+          transcation_id: transcationId,
           payment_status: PaymentStatus.PAID,
-          payment_method: order.payment_method,
-          order_id: orderId,
-          patient_id: order.patient_id,
+          payment_method: fullOrder.payment_method,
+          order_id: fullOrder.order_id,
+          patient_id: fullOrder.patient.user_id,
           payment_date: new Date(),
         });
 
         await manager.save(Payment, payment);
 
-        // 8. Get updated order with all relations
+        // 9. Return updated order with relations
         const updatedOrder = await manager.findOne(Order, {
-          where: { order_id: orderId },
+          where: { order_id: fullOrder.order_id },
           relations: [
             'prescription',
             'prescription.medication',
             'prescription.doctor',
+            'patient',
           ],
         });
 
@@ -215,7 +258,6 @@ export class OrdersService {
           'Payment confirmed and stock updated successfully',
         );
       } catch (error) {
-        // Transaction will auto-rollback on error
         if (
           error instanceof NotFoundException ||
           error instanceof BadRequestException
@@ -384,9 +426,12 @@ export class OrdersService {
       });
 
       // Reset prescription status
-      await this.prescriptionRepository.update(order.prescription_id, {
-        status: PrescriptionStatus.PENDING, // Reset to pending
-      });
+      await this.prescriptionRepository.update(
+        order.prescription.prescription_id,
+        {
+          status: PrescriptionStatus.PENDING, // Reset to pending
+        },
+      );
 
       const updatedOrder = await this.orderRepository.findOne({
         where: { order_id: orderId },

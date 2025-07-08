@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Role } from '../dto/create-user.dto';
 import * as Bcrypt from 'bcrypt';
-import { UserProfile } from 'src/user-profile/entities/user-profile.entity';
+import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
 import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
 import { Appointment } from 'src/appointments/entities/appointment.entity';
 import { Pharmacy } from 'src/pharmacy/entities/pharmacy.entity';
@@ -37,10 +37,10 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  @Column({ type: 'enum', enum: Role, default: Role.PATIENT })
   role: Role;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   refresh_token: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -66,12 +66,12 @@ export class User {
     return await Bcrypt.compare(plainPassword, this.password);
   }
 
-  @OneToOne(() => UserProfile, (userProfile) => userProfile.user, {
+  @OneToOne(() => PatientProfile, (patientProfile) => patientProfile.patient, {
     eager: true,
     cascade: true,
   })
   @JoinColumn()
-  profile: UserProfile;
+  patientProfile: PatientProfile;
 
   @OneToOne(() => DoctorProfile, (doctorProfile) => doctorProfile.user, {
     eager: true,
@@ -80,8 +80,18 @@ export class User {
   @JoinColumn()
   doctorProfile: DoctorProfile;
 
+  @OneToOne(() => MedicalRecord, (medicalRecord) => medicalRecord.patient, {
+    onDelete: 'CASCADE',
+  })
+  medicalRecord: MedicalRecord;
+
   @OneToMany(() => Appointment, (appointment) => appointment.patient)
   appointments: Appointment[];
+
+  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.doctor, {
+    onDelete: 'CASCADE',
+  })
+  diagnoses: Diagnosis[];
 
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   doctorAppointments: Appointment[];
@@ -101,23 +111,8 @@ export class User {
   })
   orders: Order[];
 
-  @OneToMany(() => MedicalRecord, (medicalRecord) => medicalRecord.patient, {
-    onDelete: 'CASCADE',
-  })
-  medicalRecord: MedicalRecord;
-
   @OneToMany(() => Notification, (notification) => notification.user, {
     onDelete: 'CASCADE',
   })
   notifications: Notification[];
-
-  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.patient, {
-    onDelete: 'CASCADE',
-  })
-  patientDiagnoses: Diagnosis[];
-
-  @OneToMany(() => Diagnosis, (diagnosis) => diagnosis.doctor, {
-    onDelete: 'CASCADE',
-  })
-  doctorDiagnoses: Diagnosis[];
 }

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
-import { CacheableMemory } from 'cacheable';
-import { createKeyv, Keyv } from '@keyv/redis';
+import { ConfigModule } from '@nestjs/config';
+// import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+// import { CacheableMemory } from 'cacheable';
+// import { createKeyv, Keyv } from '@keyv/redis';
 import { DbModule } from './db/db.module';
 import { UserProfileModule } from './user-profile/user-profile.module';
 import { DoctorProfileModule } from './doctor-profile/doctor-profile.module';
@@ -31,23 +31,23 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
       envFilePath: '.env',
     }),
     // global cache
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      isGlobal: true,
-      useFactory: (configService: ConfigService) => {
-        return {
-          ttl: 30000, // 30 seconds
-          stores: [
-            new Keyv({
-              store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
-            }),
-            createKeyv(configService.getOrThrow<string>('REDIS_URL')),
-          ],
-          Logger: true,
-        };
-      },
-    }),
+    // CacheModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   isGlobal: true,
+    //   useFactory: (configService: ConfigService) => {
+    //     return {
+    //       ttl: 30000, // 30 seconds
+    //       stores: [
+    //         new Keyv({
+    //           store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
+    //         }),
+    //         createKeyv(configService.getOrThrow<string>('REDIS_URL')),
+    //       ],
+    //       Logger: true,
+    //     };
+    //   },
+    // }),
     UsersModule,
     DbModule,
     UserProfileModule,
@@ -68,10 +68,10 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
   controllers: [],
   providers: [
     AppService,
-    {
-      provide: 'APP_INTERCEPTOR',
-      useClass: CacheInterceptor, // global cache interceptor
-    },
+    // {
+    //   provide: 'APP_INTERCEPTOR',
+    //   useClass: CacheInterceptor, // global cache interceptor
+    // },
     {
       provide: APP_GUARD,
       useClass: AtGuard, // protected routes
