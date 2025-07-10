@@ -8,13 +8,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { checkRole, Role } from '@/components/utils/roles-nav'
+import { checkRole} from '@/components/utils/roles-nav'
 
 import { LayoutDashboard } from 'lucide-react'
 import { navGroups } from '../utils/roles-nav'
 import { Link } from '@tanstack/react-router'
 import { authSlice } from '@/store/store'
 import { useRouterState } from '@tanstack/react-router'
+import type { Role } from '@/types/Tuser'
 
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {

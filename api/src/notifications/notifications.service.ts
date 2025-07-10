@@ -50,6 +50,28 @@ export class NotificationsService {
     });
   }
 
+  // find by patient id
+  async findByPatientId(
+    patientId: string,
+  ): Promise<ApiResponse<Notification[]>> {
+    return await this.notificationRepository
+      .find({
+        where: { user: { user_id: patientId } },
+        relations: ['user'],
+      })
+      .then((notifications) => {
+        if (notifications.length === 0) {
+          throw new NotFoundException(
+            `No notifications found for patient with ID ${patientId}`,
+          );
+        }
+        return createResponse(
+          notifications,
+          'Notifications retrieved successfully',
+        );
+      });
+  }
+
   async findOne(id: string): Promise<ApiResponse<Notification>> {
     return await this.notificationRepository
       .findOne({

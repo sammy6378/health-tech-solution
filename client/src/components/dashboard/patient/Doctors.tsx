@@ -1,9 +1,7 @@
 import { useGetDoctors} from '@/hooks/useUserHook'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Star } from 'lucide-react'
 import { useState } from 'react'
@@ -12,12 +10,9 @@ import { AppointmentModal } from '@/components/modals/AppointmentModal'
 export default function DoctorsPage() {
   const { data, isLoading } = useGetDoctors()
   const [search, setSearch] = useState('')
-   const [openModal, setOpenModal] = useState(false)
+  const [openModal, setOpenModal] = useState(false)
   const doctors = data?.data || []
 
-  console.log('Doctors data:', doctors)
-
-  // Filter only those users who have doctor info
   const filteredDoctors = doctors.filter((user) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     const specialization =
@@ -27,12 +22,24 @@ export default function DoctorsPage() {
       specialization.includes(search.toLowerCase())
     )
   })
-  
+
   const handleAddAppointment = (data: any) => {
     console.log('New Appointment:', data)
     // ✅ Send to API here
   }
 
+  const validateAvailability = (doctor:any) =>{
+    const days = doctor.days || []
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+    const isAvailableToday = days.map((d: string) => d.toLowerCase()).includes(today)
+    const currentTime = new Date()
+    const startTime = doctor.start_time ? new Date(`1970-01-01T${doctor.start_time}`) : null
+    const endTime = doctor.end_time ? new Date(`1970-01-01T${doctor.end_time}`) : null
+
+    const isWithinTimeRange = startTime && endTime && currentTime >= startTime && currentTime <= endTime 
+    return isAvailableToday && isWithinTimeRange
+
+  }
 
   return (
     <div className="container py-12 px-4 min-h-screen">
@@ -53,7 +60,7 @@ export default function DoctorsPage() {
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton
               key={i}
-              className="h-48 w-full rounded-xl bg-white dark:bg-gray-800"
+              className="h-64 w-full rounded-xl bg-white dark:bg-gray-800"
             />
           ))}
         </div>
@@ -65,83 +72,101 @@ export default function DoctorsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {filteredDoctors.map((user, i) => {
-              const doctor = user.doctorProfile
-              if (!doctor) return null
-              return (
-                <Card
-                  key={user.doctorProfile?.profile_id || i}
-                  className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition bg-white dark:bg-gray-900"
-                >
-                  <CardContent className="p-6 flex flex-col items-center text-center">
-                    <Avatar className="w-20 h-20 mb-4">
-                      <AvatarImage
-                        src={doctor.avatar}
-                        alt={`${user.first_name} ${user.last_name}`}
-                      />
-                      <AvatarFallback>
-                        {user.first_name[0]}
-                        {user.last_name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Dr. {user.first_name} {user.last_name}
-                    </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {doctor.specialization}
+            const doctor = user.doctorProfile
+            if (!doctor) return null
+
+            const avgRating = doctor.ratings?.length
+              ? (
+                  doctor.ratings.reduce((a, b) => a + b, 0) /
+                  doctor.ratings.length
+                ).toFixed(1)
+              : null
+
+            return (
+              <Card
+                key={doctor.profile_id || i}
+                className="rounded-2xl p-0 overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition bg-white dark:bg-gray-900"
+              >
+                {/* Large Image Section */}
+                <div className="relative w-full">
+                  <img
+                    src={doctor.avatar}
+                    alt={`${user.first_name} ${user.last_name}`}
+                    className="w-full h-56 object-cover object-top"
+                    style={{ display: 'block' }}
+                  />
+                  {(!doctor.availability ||
+                    (Array.isArray(doctor.days) &&
+                      !doctor.days
+                        .map((d: string) => d.toLowerCase())
+                        .includes(
+                          new Date()
+                            .toLocaleDateString('en-US', { weekday: 'long' })
+                            .toLowerCase(),
+                        ))) && (
+                    <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                      Unavailable
+                    </div>
+                  )}
+                </div>
+
+                <CardContent className="px-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Dr. {user.first_name} {user.last_name}
+                  </h2>
+
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {doctor.specialization}
+                  </p>
+
+                  <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                    <p>
+                      <strong>Dept:</strong> {doctor.department}
                     </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      {doctor.ratings?.length ? (
-                        <>
-                          <Star className="w-4 h-4 text-yellow-400" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {(
-                              doctor.ratings.reduce((a, b) => a + b, 0) /
-                              doctor.ratings.length
-                            ).toFixed(1)}{' '}
-                            ⭐
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-400 italic">
-                          No ratings
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2 justify-center">
-                      <Badge variant="outline">{doctor.department}</Badge>
-                      <Badge
-                        className={
-                          doctor.availability ? 'bg-green-500' : 'bg-red-500'
-                        }
-                      >
-                        {doctor.availability ? 'Available' : 'Unavailable'}
-                      </Badge>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Button variant="outline" size="sm">
-                        View Profile
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={!doctor.availability}
-                        onClick={() => setOpenModal(true)}
-                        className='cursor-pointer'
-                      >
-                        Book Appointment
-                      </Button>
-                    </div>
-                    <AppointmentModal
-                      open={openModal}
-                      onClose={() => setOpenModal(false)}
-                      onSubmit={handleAddAppointment}
-                    />
-                  </CardContent>
-                </Card>
-              )
-              
+                    <p>
+                      <strong>Experience:</strong> {doctor.years_of_experience}{' '}
+                      yrs
+                    </p>
+                    {avgRating && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        <span>{avgRating} ⭐</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="my-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="cursor-pointer"
+                      size="sm"
+                    >
+                      View Profile
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={
+                        !doctor.availability || !validateAvailability(doctor)
+                      }
+                      onClick={() => setOpenModal(true)}
+                      className="cursor-pointer"
+                    >
+                      Book Appointment
+                    </Button>
+                  </div>
+
+                  <AppointmentModal
+                    open={openModal}
+                    onClose={() => setOpenModal(false)}
+                    onSubmit={handleAddAppointment}
+                  />
+                </CardContent>
+              </Card>
+            )
           })}
         </div>
       )}
     </div>
   )
 }
+

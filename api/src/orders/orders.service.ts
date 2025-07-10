@@ -36,9 +36,16 @@ export class OrdersService {
 
   async create(createOrderDto: CreateOrderDto): Promise<ApiResponse<Order>> {
     try {
+      // Load prescription with diagnosis (which has patient/doctor) and medications
       const prescription = await this.prescriptionRepository.findOne({
         where: { prescription_id: createOrderDto.prescription_id },
-        relations: ['medication', 'doctor', 'patient', 'order'],
+        relations: [
+          'diagnosis',
+          'diagnosis.patient',
+          'diagnosis.doctor',
+          'medications',
+          'order',
+        ],
       });
 
       if (!prescription) {
@@ -53,30 +60,53 @@ export class OrdersService {
         throw new BadRequestException('Cannot order a cancelled prescription');
       }
 
-      const medication = prescription.medication;
-      if (!medication) {
-        throw new NotFoundException('Prescription medication not found');
+      // Check if prescription has medications
+      if (!prescription.medications || prescription.medications.length === 0) {
+        throw new NotFoundException('Prescription has no medications');
       }
 
-      const currentStock = await this.stockRepository.findOne({
-        where: { medication_id: medication.medication_id },
-      });
+      // Check stock availability for all medications
+      const stockValidation = await Promise.all(
+        prescription.medications.map(async (medication) => {
+          const currentStock = await this.stockRepository.findOne({
+            where: { medication_id: medication.medication_id },
+          });
 
-      if (
-        !currentStock ||
-        currentStock.stock_quantity < prescription.quantity_prescribed
-      ) {
+          if (
+            !currentStock ||
+            currentStock.stock_quantity < prescription.quantity_prescribed
+          ) {
+            return {
+              valid: false,
+              medication: medication.name,
+              required: prescription.quantity_prescribed,
+              available: currentStock?.stock_quantity || 0,
+            };
+          }
+
+          return { valid: true, medication: medication.name };
+        }),
+      );
+
+      // Check if any medication has insufficient stock
+      const insufficientStock = stockValidation.filter((item) => !item.valid);
+      if (insufficientStock.length > 0) {
+        const stockMessages = insufficientStock.map(
+          (item) =>
+            `${item.medication}: Required ${item.required}, Available ${item.available}`,
+        );
         throw new BadRequestException(
-          `Insufficient stock for ${medication.name}. Required: ${prescription.quantity_prescribed}, Available: ${currentStock?.stock_quantity || 0}`,
+          `Insufficient stock for: ${stockMessages.join(', ')}`,
         );
       }
 
       const orderNumber = this.uniqueNumberGenerator.generateOrderNumber();
 
+      // Create order with patient from diagnosis
       const order = this.orderRepository.create({
         order_number: orderNumber,
         prescription,
-        patient: prescription.patient,
+        patient: prescription.diagnosis.patient, // Get patient from diagnosis
         amount: Number(prescription.total_price || 0),
         delivery_method: createOrderDto.delivery_method,
         delivery_address: createOrderDto.delivery_address,
@@ -92,13 +122,21 @@ export class OrdersService {
 
       const savedOrder = await this.orderRepository.save(order);
 
-      // Update prescription status
+      // Update prescription status to FILLED
       prescription.status = PrescriptionStatus.FILLED;
       await this.prescriptionRepository.save(prescription);
 
+      // Load full order with all relations
       const fullOrder = await this.orderRepository.findOne({
         where: { order_id: savedOrder.order_id },
-        relations: ['prescription', 'prescription.medication', 'patient'],
+        relations: [
+          'prescription',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
+        ],
       });
 
       if (!fullOrder) {
@@ -125,7 +163,7 @@ export class OrdersService {
   ): Promise<ApiResponse<Order>> {
     return await this.dataSource.transaction(async (manager) => {
       try {
-        // 1. Lock the order row ONLY (no relations)
+        // 1. Lock the order row ONLY
         const order = await manager.findOne(Order, {
           where: { order_id: orderId },
           lock: { mode: 'pessimistic_write' },
@@ -138,7 +176,14 @@ export class OrdersService {
         // 2. Load related data separately (without lock)
         const fullOrder = await manager.findOne(Order, {
           where: { order_id: orderId },
-          relations: ['prescription', 'prescription.medication', 'patient'],
+          relations: [
+            'prescription',
+            'prescription.diagnosis',
+            'prescription.diagnosis.patient',
+            'prescription.diagnosis.doctor',
+            'prescription.medications',
+            'patient',
+          ],
         });
 
         if (!fullOrder) {
@@ -197,34 +242,57 @@ export class OrdersService {
           );
         }
 
-        // 5. Check stock
-        const medication = prescription.medication;
-        const quantityPrescribed = prescription.quantity_prescribed;
-
-        const currentStock = await manager.findOne(Stock, {
-          where: { medication_id: medication.medication_id },
-          lock: { mode: 'pessimistic_write' },
-        });
-
-        if (!currentStock || currentStock.stock_quantity < quantityPrescribed) {
-          throw new BadRequestException(
-            `Insufficient stock for ${medication.name}. Available: ${currentStock?.stock_quantity || 0}, Required: ${quantityPrescribed}`,
-          );
+        // 6. Check if prescription has medications
+        if (
+          !prescription.medications ||
+          prescription.medications.length === 0
+        ) {
+          throw new BadRequestException('Prescription has no medications');
         }
 
-        // 6. Deduct stock
-        await manager.update(Stock, medication.medication_id, {
-          stock_quantity: currentStock.stock_quantity - quantityPrescribed,
-          updated_at: new Date(),
-        });
+        // 7. Check and update stock for each medication
+        const stockUpdates = await Promise.all(
+          prescription.medications.map(async (medication) => {
+            const currentStock = await manager.findOne(Stock, {
+              where: { medication_id: medication.medication_id },
+              lock: { mode: 'pessimistic_write' },
+            });
 
-        // 7. Update order status
+            if (
+              !currentStock ||
+              currentStock.stock_quantity < prescription.quantity_prescribed
+            ) {
+              throw new BadRequestException(
+                `Insufficient stock for ${medication.name}. Available: ${currentStock?.stock_quantity || 0}, Required: ${prescription.quantity_prescribed}`,
+              );
+            }
+
+            return {
+              medication_id: medication.medication_id,
+              current_stock: currentStock.stock_quantity,
+              new_stock:
+                currentStock.stock_quantity - prescription.quantity_prescribed,
+            };
+          }),
+        );
+
+        // 8. Update stock for all medications
+        await Promise.all(
+          stockUpdates.map(async (update) => {
+            await manager.update(Stock, update.medication_id, {
+              stock_quantity: update.new_stock,
+              updated_at: new Date(),
+            });
+          }),
+        );
+
+        // 9. Update order status
         await manager.update(Order, fullOrder.order_id, {
           delivery_status: DeliveryStatus.PROCESSING,
           updated_at: new Date(),
         });
 
-        // 8. Create payment
+        // 10. Create payment record
         const payment = manager.create(Payment, {
           order_number: fullOrder.order_number,
           amount: fullOrder.amount,
@@ -232,19 +300,27 @@ export class OrdersService {
           payment_status: PaymentStatus.PAID,
           payment_method: fullOrder.payment_method,
           order_id: fullOrder.order_id,
-          patient_id: fullOrder.patient.user_id,
+          patient_id: fullOrder.prescription.diagnosis.patient.user_id, // Get patient ID from diagnosis
           payment_date: new Date(),
         });
 
         await manager.save(Payment, payment);
 
-        // 9. Return updated order with relations
+        // 9.5 update payment status
+        await manager.update(Order, fullOrder.order_id, {
+          payment_status: PaymentStatus.PAID,
+          updated_at: new Date(),
+        });
+
+        // 11. Return updated order with all relations
         const updatedOrder = await manager.findOne(Order, {
           where: { order_id: fullOrder.order_id },
           relations: [
             'prescription',
-            'prescription.medication',
-            'prescription.doctor',
+            'prescription.diagnosis',
+            'prescription.diagnosis.patient',
+            'prescription.diagnosis.doctor',
+            'prescription.medications',
             'patient',
           ],
         });
@@ -270,13 +346,17 @@ export class OrdersService {
     });
   }
 
+  // Update other methods to use the new prescription structure
   async findAll(): Promise<ApiResponse<Order[]>> {
     try {
       const orders = await this.orderRepository.find({
         relations: [
           'prescription',
-          'prescription.medication',
-          'prescription.doctor',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
         ],
         order: { created_at: 'DESC' },
       });
@@ -288,70 +368,17 @@ export class OrdersService {
     }
   }
 
-  // update order delivery status
-  async updateDeliveryStatus(id: string, status: DeliveryStatus) {
-    try {
-      const orders = await this.orderRepository.find({
-        where: { order_id: id },
-        relations: [
-          'prescription',
-          'prescription.medication',
-          'prescription.doctor',
-        ],
-        order: { created_at: 'DESC' },
-      });
-
-      if (orders.length === 0) {
-        return createResponse([], `No orders found with status ${status}`);
-      }
-
-      if (orders[0].delivery_status === status) {
-        throw new BadRequestException(
-          `Order already has status ${status}. No update needed.`,
-        );
-      }
-
-      return createResponse(orders, `Orders with status ${status} retrieved`);
-    } catch (error) {
-      console.error('Error retrieving orders by delivery status:', error);
-      throw new BadRequestException(
-        'Failed to retrieve orders by delivery status',
-      );
-    }
-  }
-
-  // find by status
-  async findByStatus(status: DeliveryStatus): Promise<ApiResponse<Order[]>> {
-    try {
-      const orders = await this.orderRepository.find({
-        where: { delivery_status: status },
-        relations: [
-          'prescription',
-          'prescription.medication',
-          'prescription.doctor',
-        ],
-        order: { created_at: 'DESC' },
-      });
-
-      if (orders.length === 0) {
-        return createResponse([], `No orders found with status ${status}`);
-      }
-
-      return createResponse(orders, `Orders with status ${status} retrieved`);
-    } catch (error) {
-      console.error('Error retrieving orders by status:', error);
-      throw new BadRequestException('Failed to retrieve orders by status');
-    }
-  }
-
   async findOne(id: string): Promise<ApiResponse<Order | null>> {
     try {
       const order = await this.orderRepository.findOne({
         where: { order_id: id },
         relations: [
           'prescription',
-          'prescription.medication',
-          'prescription.doctor',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
         ],
       });
 
@@ -372,8 +399,11 @@ export class OrdersService {
         where: { patient: { user_id: patientId } },
         relations: [
           'prescription',
-          'prescription.medication',
-          'prescription.doctor',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
         ],
         order: { created_at: 'DESC' },
       });
@@ -393,8 +423,11 @@ export class OrdersService {
         where: { prescription: { prescription_id: prescriptionId } },
         relations: [
           'prescription',
-          'prescription.medication',
-          'prescription.doctor',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
         ],
       });
 
@@ -406,6 +439,80 @@ export class OrdersService {
     } catch (error) {
       console.error('Error retrieving order by prescription:', error);
       throw new BadRequestException('Failed to retrieve order');
+    }
+  }
+
+  async updateDeliveryStatus(id: string, status: DeliveryStatus) {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: { order_id: id },
+        relations: [
+          'prescription',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
+        ],
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      if (order.delivery_status === status) {
+        throw new BadRequestException(
+          `Order already has status ${status}. No update needed.`,
+        );
+      }
+
+      await this.orderRepository.update(id, {
+        delivery_status: status,
+        updated_at: new Date(),
+      });
+
+      const updatedOrder = await this.orderRepository.findOne({
+        where: { order_id: id },
+        relations: [
+          'prescription',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
+        ],
+      });
+
+      return createResponse(updatedOrder, `Order status updated to ${status}`);
+    } catch (error) {
+      console.error('Error updating delivery status:', error);
+      throw new BadRequestException('Failed to update delivery status');
+    }
+  }
+
+  async findByStatus(status: DeliveryStatus): Promise<ApiResponse<Order[]>> {
+    try {
+      const orders = await this.orderRepository.find({
+        where: { delivery_status: status },
+        relations: [
+          'prescription',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
+        ],
+        order: { created_at: 'DESC' },
+      });
+
+      if (orders.length === 0) {
+        return createResponse([], `No orders found with status ${status}`);
+      }
+
+      return createResponse(orders, `Orders with status ${status} retrieved`);
+    } catch (error) {
+      console.error('Error retrieving orders by status:', error);
+      throw new BadRequestException('Failed to retrieve orders by status');
     }
   }
 
@@ -423,6 +530,7 @@ export class OrdersService {
       // Update order status
       await this.orderRepository.update(orderId, {
         delivery_status: DeliveryStatus.CANCELLED,
+        updated_at: new Date(),
       });
 
       // Reset prescription status
@@ -437,8 +545,11 @@ export class OrdersService {
         where: { order_id: orderId },
         relations: [
           'prescription',
-          'prescription.medication',
-          'prescription.doctor',
+          'prescription.diagnosis',
+          'prescription.diagnosis.patient',
+          'prescription.diagnosis.doctor',
+          'prescription.medications',
+          'patient',
         ],
       });
 

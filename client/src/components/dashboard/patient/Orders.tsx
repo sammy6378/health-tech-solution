@@ -13,11 +13,9 @@ import {
   ShoppingCart,
   Eye,
 } from 'lucide-react'
-import { useGetOrders } from '@/hooks/useOrders'
-import {
-  DeliveryStatus,
-  type TOrder,
-} from '@/types/api-types'
+import { DeliveryStatus, formatCurrency, formatDate } from '@/types/api-types'
+import { useUserData } from '@/hooks/useUserHook'
+import { Link } from '@tanstack/react-router'
 
 const statusColors = {
   pending:
@@ -47,8 +45,7 @@ const statusIcons = {
 }
 
 function Orders() {
-  const { data } = useGetOrders()
-  const orders: TOrder[] = data?.data || []
+  const { orders } = useUserData()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -56,7 +53,7 @@ function Orders() {
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.prescription_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.delivery_address.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus =
@@ -69,25 +66,6 @@ function Orders() {
     if (!status) return null
     const Icon = statusIcons[status]
     return Icon ? <Icon className="w-4 h-4" /> : null
-  }
-
-  const formatDate = (dateString?: string | Date) => {
-    if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  const formatCurrency = (amount?: number) => {
-    if (!amount) return 'KES 0.00'
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-    }).format(amount)
   }
 
   const totalOrders = orders.length
@@ -194,27 +172,33 @@ function Orders() {
 
         {/* Orders List */}
         <div className="space-y-6">
-          {/* Orders List */}
           {filteredOrders.length > 0 ? (
             <div className="space-y-6">
               {filteredOrders.map((order) => (
                 <div
                   key={order.order_id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
+                  className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300"
                 >
                   <div className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
-                      <div className="flex items-center gap-3 mb-2 lg:mb-0">
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    {/* Header */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
                           {getStatusIcon(
                             order.delivery_status as DeliveryStatus,
                           )}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                          <Link
+                            to="/dashboard/orders/$order"
+                            params={{
+                              order: String(order.order_number ?? 'N/A'),
+                            }}
+                            className="text-blue-600 hover:underline dark:text-blue-400"
+                          >
                             Order #{order.order_number || 'N/A'}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          </Link>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Placed on{' '}
                             {order.order_date
                               ? formatDate(order.order_date)
@@ -222,8 +206,9 @@ function Orders() {
                           </p>
                         </div>
                       </div>
+
                       <span
-                        className={`text-sm font-medium px-3 py-1 rounded-full ${
+                        className={`text-sm font-medium px-3 py-1 rounded-full capitalize mt-3 lg:mt-0 ${
                           statusColors[order.delivery_status || 'pending']
                         }`}
                       >
@@ -231,34 +216,38 @@ function Orders() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-700 dark:text-gray-300">
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-4">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        {order.delivery_address}
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                        <span>{order.delivery_address}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        {order.delivery_time}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4" />
-                        {order.payment_method}
+                        <CreditCard className="w-4 h-4 text-green-500" />
+                        <span>{order.payment_method}</span>
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center mt-4">
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {/* Footer */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-t pt-4 border-gray-200 dark:border-gray-700">
+                      <div className="mb-3 sm:mb-0">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Total
                         </p>
-                        <p className="font-semibold text-gray-900 dark:text-white">
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
                           {order.amount ? formatCurrency(order.amount) : 'N/A'}
                         </p>
                       </div>
-                      <button className="flex items-center cursor-pointer text-blue-600 hover:underline dark:text-blue-400">
+                      <Link
+                        to="/dashboard/orders/$order"
+                        params={{
+                          order: String(order.order_number ?? 'N/A'),
+                        }}
+                        className="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition"
+                      >
                         <Eye className="w-4 h-4 mr-1" />
                         View Details
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </div>

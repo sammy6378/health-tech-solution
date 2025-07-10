@@ -3,8 +3,8 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import Tobbar from '@/components/dashboard/Tobbar'
 import { AppSidebar } from '@/components/dashboard/Sidebar'
 import { Outlet } from '@tanstack/react-router'
-import { Role } from '@/components/utils/roles-nav'
 import { authStore, useAuthStore } from '@/store/store'
+import type { Role } from '@/types/Tuser'
 
 export const Route = createFileRoute('/dashboard')({
     beforeLoad: ({location}) =>{

@@ -39,7 +39,7 @@ function Signin() {
       <div className="w-full md:w-1/2 flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Sign Up
+            Sign In
           </h2>
           <form
             onSubmit={(e) => {

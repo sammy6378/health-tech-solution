@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 
 export enum PrescriptionStatus {
+  ACTIVE = 'active',
   PENDING = 'pending',
   FILLED = 'filled',
   CANCELLED = 'cancelled',
@@ -17,14 +18,9 @@ export enum PrescriptionStatus {
 }
 
 export class CreatePrescriptionDto {
-  @IsUUID()
-  patient_id: string;
-
-  @IsUUID()
-  doctor_id: string;
-
-  @IsUUID()
-  medication_id: string;
+  @IsArray()
+  @IsUUID(4, { each: true })
+  medication_ids: string[];
 
   @IsUUID()
   diagnosis_id: string;

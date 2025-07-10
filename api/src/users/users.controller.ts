@@ -8,13 +8,14 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { DashboardData, UsersService } from './users.service';
 import { CreateUserDto, Role } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AtGuard } from 'src/auth/guards/at.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { ApiResponse } from 'src/utils/apiResponse';
 
 @UseGuards(AtGuard, RolesGuard)
 @Controller('users')
@@ -27,7 +28,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Roles(Role.ADMIN, Role.PATIENT)
+  @Roles(Role.ADMIN, Role.PATIENT, Role.DOCTOR)
   @Get()
   findAll(@Param('id') id?: string) {
     return this.usersService.findAll(id);
@@ -37,6 +38,13 @@ export class UsersController {
   @Get('doctors')
   findAllDoctors() {
     return this.usersService.findAllDoctors();
+  }
+
+  @Get(':id/dashboard')
+  getDashboardData(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<DashboardData | null>> {
+    return this.usersService.getUserDashboardData(id);
   }
 
   @Roles(Role.ADMIN, Role.PATIENT)

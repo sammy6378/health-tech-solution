@@ -23,21 +23,24 @@ import {
   FileText,
   Calendar1,
 } from 'lucide-react'
-import {  useGetAppointmentsByUser } from '@/hooks/useAppointments'
 import { AppointmentStatus, formatDate } from '@/types/api-types'
 import { InfoRow } from '@/components/utils/Labels'
-import { useAuthStore } from '@/store/store'
+import { useUserData } from '@/hooks/useUserHook'
 
 export function MyCalendar() {
   const [date, setDate] = React.useState<Date | undefined>(
     new Date(2025, 5, 12),
   )
 
-   const {user} = useAuthStore()
-      const userId = user?.userId || '';
+  const { appointments,user } = useUserData()
 
-  const { data } = useGetAppointmentsByUser(userId)
-  const appointments = data?.data || []
+  if(!appointments || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">Loading appointments...</p>
+      </div>
+    )
+  }
 
   // Get appointments for selected date
   const getAppointmentsForDate = (selectedDate: Date | undefined) => {
@@ -159,22 +162,29 @@ export function MyCalendar() {
                               <div className="flex justify-between items-start mb-2">
                                 <div>
                                   <h3 className="font-semibold text-gray-900 dark:text-white">
-                                    {appointment.doctor?.first_name}{' '}
-                                    {appointment.doctor?.last_name}
+                                    {user.role === 'doctor'
+                                      ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
+                                      : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
                                   </h3>
-                                  {/* <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {appointment.specialty}
-                                  </p> */}
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {user.role === 'patient'
+                                      ? appointment.doctor?.doctorProfile
+                                          ?.specialization
+                                      : appointment.patient?.email}
+                                  </p>
                                 </div>
                                 <Badge
-                                  className={getStatusColor(appointment.status ?? AppointmentStatus.PENDING)}
+                                  className={getStatusColor(
+                                    appointment.status ??
+                                      AppointmentStatus.PENDING,
+                                  )}
                                 >
                                   {appointment.status}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                 <Clock className="w-4 h-4" />
-                                {appointment.appointment_time}
+                                {formatDate(appointment.appointment_date)}
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 <MapPin className="w-4 h-4" />
@@ -193,8 +203,9 @@ export function MyCalendar() {
                               </div>
                               <div>
                                 <h3 className="font-semibold text-gray-900 dark:text-white">
-                                  {appointment.doctor?.first_name}{' '}
-                                  {appointment.doctor?.last_name}
+                                  {user.role === 'doctor'
+                                    ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
+                                    : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
                                 </h3>
                               </div>
                             </div>
@@ -209,8 +220,8 @@ export function MyCalendar() {
                                 }
                                 label="Date & Time"
                               >
-                                {formatDate(appointment.appointment_date)}{' '}
-                                at {appointment.appointment_time}
+                                {formatDate(appointment.appointment_date)} at{' '}
+                                {appointment.appointment_time}
                               </InfoRow>
 
                               <InfoRow
@@ -253,14 +264,14 @@ export function MyCalendar() {
                                   <Phone className="w-4 h-4 text-gray-400" />
                                 }
                               >
-                                {appointment.doctor?.first_name}
+                                {user.role === 'doctor' ? appointment.patient?.patientProfile?.phone_number : appointment.doctor?.doctorProfile?.phone_number}
                               </InfoRow>
                               <InfoRow
                                 icon={
                                   <Mail className="w-4 h-4 text-gray-400" />
                                 }
                               >
-                                {appointment.doctor?.email}
+                                {user.role === 'doctor' ? appointment.patient?.email : appointment.doctor?.email}
                               </InfoRow>
                             </div>
 

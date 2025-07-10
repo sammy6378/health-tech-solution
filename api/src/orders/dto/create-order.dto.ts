@@ -1,7 +1,5 @@
-// filepath: d:\tech-health-solution\api\src\orders\dto\create-order.dto.ts
 import {
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -36,8 +34,8 @@ export enum PaymentStatus {
 
 export class CreateOrderDto {
   @IsUUID()
-  @IsNotEmpty()
-  prescription_id: string;
+  @IsOptional()
+  prescription_id?: string;
 
   @IsString()
   order_number: string;
@@ -51,6 +49,7 @@ export class CreateOrderDto {
   @IsEnum(DeliveryMethod)
   delivery_method: DeliveryMethod;
 
+  @IsOptional()
   @IsString()
   delivery_time: string;
 

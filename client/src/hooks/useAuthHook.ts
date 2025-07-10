@@ -6,22 +6,40 @@ import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 
-// use login hook
-export const useLogin = () =>{
+export const useLogin = () => {
   const navigate = useNavigate()
-    return useMutation<TLoginResponse,Error,TLoginRequest>({
-        mutationKey: ['login'],
-        mutationFn: authLogin,
-        onSuccess: (data) => {
-            authSlice.login(data.data)
-            toast.success('Login successful!')
-            navigate({to: '/dashboard/home'})
-        },
-        onError: (error) => {
-            console.error('Login failed:', error)
-            toast.error(`Login failed: ${error.message}`)
+
+  return useMutation<TLoginResponse, Error, TLoginRequest>({
+    mutationKey: ['login'],
+    mutationFn: authLogin,
+    onSuccess: (data) => {
+      const user = data.data.user 
+      const role = user?.role ?? ''
+
+      const getRedirectPath = (role: string) => {
+        switch (role) {
+          case 'admin':
+            return '/dashboard'
+          case 'doctor':
+            return '/dashboard/doctor'
+          case 'patient':
+            return '/dashboard/home'
+          case 'pharmacy':
+            return '/dashboard/pharmacy'
+          default:
+            return '/dashboard/home'
         }
-    })
+      }
+
+      authSlice.login(data.data) // update store AFTER redirect path is determined
+      toast.success('Login successful!')
+      navigate({ to: getRedirectPath(role) })
+    },
+    onError: (error) => {
+      console.error('Login failed:', error)
+      toast.error(`Login failed: ${error.message}`)
+    },
+  })
 }
 
 

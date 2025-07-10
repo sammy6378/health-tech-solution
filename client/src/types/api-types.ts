@@ -1,28 +1,47 @@
 import type { TUser } from './Tuser'
 
+// dates
 export const formatDate = (date: Date | string) => {
   const parsedDate = new Date(date)
+  if (!date) return 'No date'
   if (isNaN(parsedDate.getTime())) return 'Invalid date'
 
   return parsedDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
+
+// currency
+ export const formatCurrency = (amount?: number) => {
+    if (!amount) return 'KES 0.00'
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+    }).format(amount)
+  }
 
 // diagnosis
 export interface TDiagnosis {
   diagnosis_id?: string
-  patient?: TUser
-  doctor?: TUser
-  prescription?: TPrescription
-  diagnosis: string
-  record_date: Date
+  diagnosis_name: string
+  treatment_plan: string
+  diagnosis_date: Date
+  notes?: string[]
   docs?: string[]
   tests?: string[]
   allergies?: string[]
   symptoms?: string[]
+  created_at?: Date
+  patient?: TUser
+  doctor?: TUser
+  prescriptions?: TPrescription[]
+  appointment?: TAppointment
+  appointment_id?: string
+  prescription_ids?: string[]
 }
 
 // prescriptions
@@ -36,23 +55,26 @@ export enum PrescriptionStatus {
 }
 
 export interface TPrescription {
-  medication_id: string
-  medication_name: string
-  patient?: TUser
-  doctor?: TUser
-  diagnosis?: TDiagnosis
-  prescription_date: string
-  expiry_date: string
+  prescription_id: string
   prescription_number: string
-  quantity_prescribed: number
-  dosage_instructions: string[]
-  status: PrescriptionStatus
+  prescription_date: Date
   duration_days?: number
   frequency_per_day?: number
-  notes?: string
+  quantity_prescribed: number
+  quantity_dispensed?: number
   unit_price?: number
-  total_price?: number // Calculated field
-  createdAt?: string
+  total_price?: number
+  dosage_instructions: string[]
+  notes?: string
+  status: PrescriptionStatus
+  created_at?: string
+  diagnosis?: TDiagnosis
+  doctor?: TUser
+  patient?: TUser
+  diagnosis_id?: string
+  patient_id?: string
+  doctor_id?: string
+  medications?: TMedication[]
 }
 
 // appointments
@@ -70,14 +92,18 @@ export enum ConsultationType {
 
 export interface TAppointment {
   appointment_id?: string
-  patient?: TUser
-  doctor?: TUser
   appointment_date: Date
   appointment_time: string
   duration_minutes: number
   consultation_type: ConsultationType
   status?: AppointmentStatus
+  meeting_link?: string
   notes?: string
+  patient?: TUser
+  doctor?: TUser
+  diagnosis?: TDiagnosis[]
+  created_at?: Date
+  updated_at?: Date
 }
 
 // medicines
@@ -123,12 +149,12 @@ export interface TMedication {
   medication_code: string
   medication_type: StockType
   manufacturer_contact?: string
-  image: string
+  image?: string
   stock_quantity: number
   total_price?: number // Calculated field
   prescription_required: boolean
-  createdAt?: string
-  updatedAt?: string
+  created_at?: string
+  updated_at?: string
 }
 
 // orders
@@ -159,26 +185,29 @@ export enum PaymentStatus {
 }
 
 export interface TOrder {
-  prescription_id: string
+  order_id?: string 
+  order_number?: string
+  amount?: number 
+  order_date?: Date 
   delivery_address: string
   delivery_method: DeliveryMethod
-  delivery_status?: DeliveryStatus
-  payment_status?: PaymentStatus // Optional, can be set to PENDING by default
-  estimated_delivery?: string // Optional, can be calculated based on delivery method
-  amount?: number // Optional, can be calculated based on medications in the order
-  order_number?: string // Optional, can be generated automatically
-  order_date?: string // Optional, can be set to current date if not provided
-  order_id?: string // Optional, can be generated automatically
   delivery_time: string
+  estimated_delivery?: string 
+  delivery_status?: DeliveryStatus
   payment_method: PaymentMethod
+  payment_status?: PaymentStatus 
   notes?: string
   created_at?: Date
+  updated_at?: Date
+  prescription: TPrescription
+  payment?: TPayment
 }
 
 // medical records
 export interface TMedicalrecord {
-  patient?: TUser
-  record_date?: string
+  record_id?: string
+  patient_id?: string
+  record_date?: Date
   description?: string
   diagnosis?: string
   treatment_plan?: string
@@ -187,7 +216,24 @@ export interface TMedicalrecord {
   temperature?: number
   weight?: number
   height?: number
+  BMI?: number
   allergies?: string[]
   notes?: string
   docs?: string[]
+  patient?: TUser
+}
+
+
+
+export interface TPayment {
+  payment_id?: string
+  order_id?: string
+  order_number: string
+  amount: number
+  payment_date: Date
+  payment_method: PaymentMethod
+  payment_status: PaymentStatus
+  transaction_id?: string
+  created_at?: Date
+  updated_at?: Date
 }

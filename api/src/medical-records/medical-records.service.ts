@@ -69,6 +69,38 @@ export class MedicalRecordsService {
     }
   }
 
+  // find by patient id
+  async findByPatientId(
+    patientId: string,
+  ): Promise<ApiResponse<MedicalRecord[]>> {
+    try {
+      const patient = await this.userRepository.findOne({
+        where: { user_id: patientId },
+      });
+
+      if (!patient) {
+        throw new NotFoundException(`Patient with ID ${patientId} not found`);
+      }
+
+      const medicalRecords = await this.medicalRecordRepository.find({
+        where: { patient: { user_id: patientId } },
+        order: { record_date: 'DESC' },
+      });
+
+      return createResponse(
+        medicalRecords,
+        'Medical records for patient retrieved successfully',
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        'Failed to retrieve medical records for patient',
+      );
+    }
+  }
+
   async findOne(id: string): Promise<ApiResponse<MedicalRecord>> {
     try {
       const medicalRecord = await this.medicalRecordRepository.findOne({

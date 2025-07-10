@@ -34,6 +34,12 @@ export class NotificationsController {
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)
+  @Get('patient/:id')
+  findByPatientId(@Param('id') id: string) {
+    return this.notificationsService.findByPatientId(id);
+  }
+
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.notificationsService.findOne(id);

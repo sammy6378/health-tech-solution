@@ -13,6 +13,7 @@ import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
+import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
       MedicalRecord,
       Notification,
       Diagnosis,
+      Prescription,
     ]),
   ],
   controllers: [UsersController],

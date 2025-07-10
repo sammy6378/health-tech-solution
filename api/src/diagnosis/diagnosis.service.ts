@@ -58,7 +58,6 @@ export class DiagnosisService {
       patient,
       doctor,
       appointment,
-      prescriptions: prescription ? [prescription] : [],
     });
 
     const saved = await this.diagnosisRepository.save(diagnosis);
@@ -237,7 +236,7 @@ export class DiagnosisService {
       }
 
       // Update prescription to link with diagnosis
-      prescription.diagnosis_id = diagnosisId;
+      prescription.diagnosis = diagnosis;
       await this.prescriptionRepository.save(prescription);
 
       const updatedDiagnosis = await this.diagnosisRepository.findOne({

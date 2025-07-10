@@ -1,8 +1,9 @@
-import { User } from 'src/users/entities/user.entity';
 import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -10,8 +11,8 @@ import {
 } from 'typeorm';
 import { PrescriptionStatus } from '../dto/create-prescription.dto';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
-import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 import { Order } from 'src/orders/entities/order.entity';
+import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Entity('prescriptions')
 export class Prescription {
@@ -63,33 +64,30 @@ export class Prescription {
   })
   status: PrescriptionStatus;
 
-  // Who prescribed it (doctor)
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'doctor_id' })
-  doctor: Relation<User>;
-
-  // Who it's prescribed to (patient)
-  @ManyToOne(() => User, (user) => user.prescriptions, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'patient_id' })
-  patient: Relation<User>;
-
   // Reference to the medication in stock
-  @ManyToOne(() => Stock, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'medication_id' })
-  medication: Relation<Stock>;
-
-  @ManyToOne(() => Diagnosis, (diagnosis) => diagnosis.prescriptions, {
-    onDelete: 'CASCADE',
-    nullable: true, // Make it optional if prescriptions can exist without diagnosis
+  @ManyToMany(() => Stock, { onDelete: 'RESTRICT' })
+  @JoinTable({
+    name: 'prescription_medications',
+    joinColumn: {
+      name: 'prescription_id',
+      referencedColumnName: 'prescription_id',
+    },
+    inverseJoinColumn: {
+      name: 'medication_id',
+      referencedColumnName: 'medication_id',
+    },
   })
-  @JoinColumn({ name: 'diagnosis_id' })
-  diagnosis?: Relation<Diagnosis>;
+  medications: Relation<Stock[]>;
 
   @OneToOne(() => Order, (order) => order.prescription, { nullable: true })
   order: Order;
 
-  @Column({ nullable: true })
-  diagnosis_id?: string;
+  @Column()
+  diagnosis_id: string;
+
+  @ManyToOne(() => Diagnosis, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'diagnosis_id' })
+  diagnosis: Relation<Diagnosis>;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

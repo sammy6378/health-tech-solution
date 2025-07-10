@@ -37,6 +37,16 @@ export class Appointment {
   @Column({ nullable: true })
   notes: string;
 
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updated_at: Date;
+
   @ManyToOne(() => User, (user) => user.appointments, {
     onDelete: 'CASCADE',
   })

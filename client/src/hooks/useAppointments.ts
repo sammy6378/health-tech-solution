@@ -36,12 +36,21 @@ export const useAppointmentMetrics = () => {
             upcoming: [],
         };
     }
-    const completed = appointmnets.data?.filter(a => a.status === 'completed') || [];
-    const pending = appointmnets.data?.filter(a => a.status === 'pending') || [];
-    const cancelled = appointmnets.data?.filter(a => a.status === 'cancelled') || [];
-    const scheduled = appointmnets.data?.filter(a => a.status === 'scheduled').length || 0;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcomingAppointmentsList = appointmnets.data.filter(
+      (a: TAppointment) => new Date(a.appointment_date) >= today,
+      (a: TAppointment) => a.status === 'scheduled' || a.status === 'pending',
+    ).length || 0;
+
+    const completed = appointmnets.data?.filter((a: TAppointment) => a.status === 'completed') || [];
+    const pending = appointmnets.data?.filter((a: TAppointment) => a.status === 'pending') || [];
+    const cancelled = appointmnets.data?.filter((a: TAppointment) => a.status === 'cancelled') || [];
+    const scheduled = upcomingAppointmentsList
     const total = appointmnets.data?.length || 0;
-    const upcoming = appointmnets.data?.filter(a => new Date(a.appointment_date) > new Date()) || [];
+    const upcoming = appointmnets.data?.filter((a: TAppointment) => new Date(a.appointment_date) > new Date()) || [];
     return {
         completed,
         pending,

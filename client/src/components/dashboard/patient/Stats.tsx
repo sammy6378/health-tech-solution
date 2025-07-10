@@ -1,6 +1,5 @@
 
 import { useAppointmentMetrics } from '@/hooks/useAppointments';
-import { useGetPrescriptionMetrics } from '@/hooks/usePrescriptions';
 import {
   Calendar,
   Pill,
@@ -9,10 +8,17 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { UiStats } from '@/components/utils/uiStats';
+import BmiModal from '@/components/modals/Bmi';
+import { useState } from 'react';
+import { useAuthStore } from '@/store/store';
+import { useUserData } from '@/hooks/useUserHook';
 
 const PatientStatsPage = () => {
   const {scheduled} = useAppointmentMetrics();
-  const {activePrescriptions} = useGetPrescriptionMetrics();
+  const {activePrescriptions} = useUserData();
+  const [showBmiModal, setShowBmiModal] = useState(false)
+  const {user} = useAuthStore();
+  const patient_id = user?.userId || '';
 
 
   return (
@@ -61,7 +67,7 @@ const PatientStatsPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Active
                 </p>
-                <h3 className="text-2xl font-bold">{activePrescriptions}</h3>
+                <h3 className="text-2xl font-bold">{activePrescriptions?.length}</h3>
               </div>
               <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300">
                 <Pill size={24} />
@@ -114,53 +120,24 @@ const PatientStatsPage = () => {
             </div>
 
             {/* Recent Orders Section */}
-           <UiStats.RecentOrders />
+            <UiStats.RecentOrders />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             {/* Upcoming Appointments */}
-           <UiStats.upcomingAppointments />
+            <UiStats.upcomingAppointments />
 
             {/* Prescriptions */}
-           <UiStats.ActivePrescriptions />
+            <UiStats.ActivePrescriptions />
 
             {/* BMI Tracker */}
-            <div className="rounded-lg shadow bg-white dark:bg-gray-800 p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold flex items-center">
-                  <Activity className="mr-2" size={20} />
-                  BMI Tracker
-                </h2>
-                <button className="text-sm text-blue-600 dark:text-blue-400">
-                  Add Record
-                </button>
-              </div>
-              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-48 flex flex-col items-center justify-center">
-                <div className="relative w-full h-32">
-                  {/* BMI chart would go here */}
-                  <div
-                    className="absolute bottom-0 left-0 right-0 bg-blue-500 dark:bg-blue-600 rounded-t-lg"
-                    style={{ height: '60%' }}
-                  ></div>
-                  <div
-                    className="absolute bottom-0 left-1/4 right-0 bg-blue-400 dark:bg-blue-500 rounded-t-lg"
-                    style={{ height: '75%' }}
-                  ></div>
-                  <div
-                    className="absolute bottom-0 left-2/4 right-0 bg-blue-300 dark:bg-blue-400 rounded-t-lg"
-                    style={{ height: '50%' }}
-                  ></div>
-                  <div
-                    className="absolute bottom-0 left-3/4 right-0 bg-blue-200 dark:bg-blue-300 rounded-t-lg"
-                    style={{ height: '65%' }}
-                  ></div>
-                </div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm">
-                  Last 4 months
-                </p>
-              </div>
-            </div>
+            <UiStats.BmiTrackerCard onAddClick={() => setShowBmiModal(true)} />
+            <BmiModal
+              open={showBmiModal}
+              onOpenChange={setShowBmiModal}
+              patient_id={patient_id}
+            />
           </div>
         </div>
       </main>

@@ -1,3 +1,4 @@
+import { Role } from '@/types/Tuser'
 import {
   Home,
   ClipboardList,
@@ -14,21 +15,14 @@ import {
   Calendar
 } from 'lucide-react'
 
-export enum Role {
-  ADMIN = 'Admin',
-  DOCTOR = 'Doctor',
-  USER = 'user',
-  PHARMACY = 'Pharmacy',
-}
-
 export const checkRole = (role: Role) => {
   switch (role) {
     case Role.ADMIN:
       return navGroups.filter((group) => ['Admin'].includes(group.label))
     case Role.DOCTOR:
       return navGroups.filter((group) => ['Doctor'].includes(group.label))
-    case Role.USER:
-      return navGroups.filter((group) => ['User'].includes(group.label))
+    case Role.PATIENT:
+      return navGroups.filter((group) => ['Patient'].includes(group.label))
     case Role.PHARMACY:
       return navGroups.filter((group) => ['Pharmacy'].includes(group.label))
     default:
@@ -39,7 +33,7 @@ export const checkRole = (role: Role) => {
 // Navigation groups for different roles
 export const navGroups = [
   {
-    label: 'User',
+    label: 'Patient',
     links: [
       { title: 'Home', to: '/dashboard/home', icon: Home },
       {
@@ -62,11 +56,18 @@ export const navGroups = [
   {
     label: 'Doctor',
     links: [
-      { title: 'Dashboard', to: '/doctor/dashboard', icon: LayoutDashboard },
-      { title: 'Patients', to: '/doctor/patients', icon: BriefcaseMedical },
-      { title: 'Prescriptions', to: '/doctor/prescriptions', icon: FilePlus },
-      { title: 'Calendar', to: '/doctor/calendar', icon: Calendar },
-      { title: 'Pharmacy', to: '/doctor/pharmacy', icon: Warehouse },
+      { title: 'Dashboard', to: '/dashboard/doctor', icon: LayoutDashboard },
+      { title: 'Calendar', to: '/dashboard/doctor/calendar', icon: Calendar },
+      {
+        title: 'Appointments',
+        to: '/dashboard/doctor/appointments',
+        icon: ClipboardList,
+      },
+      { title: 'Diagnoses', to: '/dashboard/doctor/diagnoses', icon: Pill },
+      { title: 'Patients', to: '/dashboard/doctor/patients', icon: BriefcaseMedical },
+      { title: 'Prescriptions', to: '/dashboard/doctor/prescriptions', icon: FilePlus },
+      { title: 'Pharmacy', to: '/dashboard/doctor/pharmacy', icon: Warehouse },
+      { title: 'My Profile', to: '/dashboard/doctor/profile', icon: User2 },
     ],
   },
   {

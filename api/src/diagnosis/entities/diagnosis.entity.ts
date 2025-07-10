@@ -59,10 +59,7 @@ export class Diagnosis {
   doctor: Relation<User>;
 
   // One diagnosis can have multiple prescriptions
-  @OneToMany(() => Prescription, (prescription) => prescription.diagnosis, {
-    cascade: true,
-  })
-  @JoinColumn({ name: 'prescription_id' })
+  @OneToMany(() => Prescription, (prescription) => prescription.diagnosis)
   prescriptions: Relation<Prescription[]>;
 
   @ManyToOne(() => Appointment, (appointment) => appointment.diagnoses, {

@@ -34,6 +34,12 @@ export class MedicalRecordsController {
   }
 
   @Roles(Role.DOCTOR, Role.PATIENT, Role.ADMIN)
+  @Get('patient/:id')
+  findByPatientId(@Param('id') id: string) {
+    return this.medicalRecordsService.findByPatientId(id);
+  }
+
+  @Roles(Role.DOCTOR, Role.PATIENT, Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.medicalRecordsService.findOne(id);

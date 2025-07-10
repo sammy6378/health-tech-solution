@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Camera, Shield, Bell, CreditCard, User } from 'lucide-react'
+import { Camera, Shield, Bell, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/store/store'
 import { useGetUser } from '@/hooks/useUserHook'
 
 export default function ProfilePage() {
   const { user } = useAuthStore()
   const userId = user.userId
-  const { data, isLoading, refetch } = useGetUser(userId)
+  const { data, refetch } = useGetUser(userId)
   const profile = data?.data;
 
   const [profileData, setProfileData] = useState({
@@ -47,7 +45,7 @@ export default function ProfilePage() {
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
         email: profile.email || '',
-        profilePicture: '', // Add profile picture field to your backend if needed
+        profilePicture: profile.doctorProfile?.avatar || '',
       })
     }
   }, [profile])
@@ -180,7 +178,9 @@ export default function ProfilePage() {
           <div className="flex items-center gap-6">
             <Avatar className="h-20 w-20">
               <AvatarImage src={profileData.profilePicture} />
-              <AvatarFallback>{getUserInitials()}</AvatarFallback>
+              <AvatarFallback className="dark:bg-gray-700">
+                {getUserInitials()}
+              </AvatarFallback>
             </Avatar>
             <Button
               variant="outline"
@@ -261,7 +261,75 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Password fields... */}
+            {/* Current Password */}
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* New Password */}
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                className={`dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                  passwordStrength.strength === 1
+                    ? 'border-red-500'
+                    : passwordStrength.strength === 2
+                    ? 'border-yellow-500'
+                    : 'border-green-500'
+                }`}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
+              />
+              {passwordStrength.text && (
+                <p
+                  className={`text-sm ${
+                    passwordStrength.strength === 1
+                      ? 'text-red-500'
+                      : passwordStrength.strength === 2
+                      ? 'text-yellow-500'
+                      : 'text-green-500'
+                  }`}
+                >
+                  {passwordStrength.text}
+                </p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+              />
+            </div>
           </div>
 
           <Button onClick={handlePasswordChange} disabled={isUpdating}>

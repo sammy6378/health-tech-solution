@@ -2,41 +2,43 @@ import { useState } from 'react'
 import {
   Calendar,
   Clock,
-  Stethoscope,
   CheckCircle2,
   XCircle,
   ArrowUpDown,
   Filter,
   Search,
 } from 'lucide-react'
-import { useGetAppointmentsByUser } from '@/hooks/useAppointments'
 import {
   AppointmentStatus,
   ConsultationType,
   formatDate,
   type TAppointment,
 } from '@/types/api-types'
-import { useAuthStore } from '@/store/store'
+import { useUserData } from '@/hooks/useUserHook'
+import { Link } from '@tanstack/react-router'
 
 const AppointmentPage = () => {
   const [activeTab, setActiveTab] = useState<AppointmentStatus>(
     AppointmentStatus.SCHEDULED,
   )
- 
-  const {user} = useAuthStore()
-  const userId = user?.userId || '';
+
+  const { appointments,user } = useUserData();
+
+  if (!appointments || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 dark:text-gray-400">Loading appointments...</p>
+      </div>
+    )
+  }
 
 
 
-  const { data } = useGetAppointmentsByUser(userId);
   const [searchQuery, setSearchQuery] = useState('')
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TAppointment
     direction: 'ascending' | 'descending'
   } | null>(null)
-
-  // Sample data
-  const appointments = data?.data || []
 
   // Filter appointments based on active tab and search query
   const filteredAppointments = appointments
@@ -217,7 +219,7 @@ const AppointmentPage = () => {
                     onClick={() => requestSort('doctor')}
                   >
                     <div className="flex items-center">
-                      Doctor
+                      {user?.role === 'doctor' ? 'Patient' : 'Doctor'}
                       <ArrowUpDown size={14} className="ml-1" />
                     </div>
                   </th>
@@ -244,6 +246,12 @@ const AppointmentPage = () => {
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort('duration_minutes')}
                   >
                     <div className="flex items-center">
@@ -255,14 +263,16 @@ const AppointmentPage = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                   >
-                    Notes
+                    Meeting Link
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
+                  {user.role === 'doctor' && (
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -274,16 +284,11 @@ const AppointmentPage = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                            <Stethoscope
-                              size={18}
-                              className="text-blue-600 dark:text-blue-300"
-                            />
-                          </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium">
-                              {appointment.doctor?.first_name}{' '}
-                              {appointment.doctor?.last_name}
+                              {user?.role === 'doctor'
+                                ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
+                                : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
                             </div>
                           </div>
                         </div>
@@ -291,9 +296,6 @@ const AppointmentPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm">
                           {formatDate(appointment.appointment_date)}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {appointment.appointment_time}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -311,22 +313,39 @@ const AppointmentPage = () => {
                           {appointment.consultation_type}
                         </span>
                       </td>
+                      <td className='className="px-6 py-4 whitespace-nowrap text-sm"'>
+                        {appointment.status}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {appointment.duration_minutes} mins
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {appointment.notes}
+                          {appointment.meeting_link ? (
+                            <a
+                              href={appointment.meeting_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              Join Meeting
+                            </a>
+                          ) : (
+                            'No link yet'
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
-                          View
-                        </button>
-                        {/* <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                          <MoreHorizontal size={18} />
-                        </button> */}
-                      </td>
+                      {user.role === 'doctor' && (
+                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                         <Link
+                         to='/dashboard/doctor/appointments/$appointment/add-diagnosis'
+                          params={{ appointment: appointment.appointment_id ?? '' }}  
+                         className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                           Add Diagnosis
+                         </Link>
+                       </td>
+                      )}
+                     
                     </tr>
                   ))
                 ) : (

@@ -195,8 +195,6 @@
 
 
 import { useState } from 'react'
-import { useAuthStore } from '@/store/store'
-import { useGetPrescriptionsByPatient } from '@/hooks/usePrescriptions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -209,31 +207,18 @@ import {
   Info,
   Search,
 } from 'lucide-react'
-import { type TPrescription, PrescriptionStatus } from '@/types/api-types'
+import { type TPrescription, formatDate, PrescriptionStatus } from '@/types/api-types'
+import { useUserData } from '@/hooks/useUserHook'
 
 export default function PrescriptionsPage() {
-  const { user } = useAuthStore()
-  const userId = user?.userId || ''
-  const { data: prescriptionsResponse } = useGetPrescriptionsByPatient(userId)
-  const prescriptions = prescriptionsResponse?.data ?? []
-  console.log('Prescriptions data:', prescriptions)
+  const { prescriptions } = useUserData()
 
   const [searchTerm, setSearchTerm] = useState('')
 
-  // const filteredPrescriptions = prescriptions.filter(
-  //   (p) =>
-  //     p.medication_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     p.diagnosis?.diagnosis
-  //       ?.toLowerCase()
-  //       .includes(searchTerm.toLowerCase())
-  // )
-
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
+  const filteredPrescriptions = prescriptions.filter(
+    (p) =>
+      p.diagnosis?.diagnosis_name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const getStatusColor = (status: PrescriptionStatus) => {
     switch (status) {
@@ -274,9 +259,9 @@ export default function PrescriptionsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {prescriptions.map((prescription: TPrescription) => (
+          {filteredPrescriptions.map((prescription: TPrescription) => (
             <Card
-              key={prescription.medication_id}
+              key={prescription.prescription_id}
               className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all"
             >
               <CardHeader className="pb-2">
@@ -284,7 +269,7 @@ export default function PrescriptionsPage() {
                   <div className="flex items-center gap-3">
                     <Pill className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     <CardTitle className="text-lg text-gray-900 dark:text-white">
-                      {prescription.medication_name}
+                      {prescription.diagnosis?.diagnosis_name}
                     </CardTitle>
                   </div>
                   <Badge
@@ -295,22 +280,22 @@ export default function PrescriptionsPage() {
                 </div>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <User className="w-4 h-4" />
-                  Dr. {prescription.doctor?.first_name}{' '}
-                  {prescription.doctor?.last_name}
+                  Dr. {prescription.diagnosis?.doctor?.first_name}{' '}
+                  {prescription.diagnosis?.doctor?.last_name}
                 </p>
               </CardHeader>
 
               <CardContent className="text-sm text-gray-700 dark:text-gray-300 space-y-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-400" />
-                  <span className="font-medium">Prescription #:</span>{' '}
+                  <span className="font-medium">Prescription Order:</span>{' '}
                   {prescription.prescription_number}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <ClipboardList className="w-4 h-4 text-purple-500" />
                   <span className="font-medium">Diagnosis:</span>{' '}
-                  {prescription.diagnosis?.diagnosis || 'N/A'}
+                  {prescription.diagnosis?.diagnosis_name || 'N/A'}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

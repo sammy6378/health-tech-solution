@@ -1,4 +1,3 @@
-
 import * as React from 'react'
 import {
   Card,
@@ -8,7 +7,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -18,23 +16,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
-import {
   Search,
   Pill,
-  Syringe,
   SprayCan,
   Droplet,
   TestTube2,
   type LucideIcon,
 } from 'lucide-react'
 import { useGetMedications } from '@/hooks/useMedication'
-import { StockCategory, StockType, type TMedication } from '@/types/api-types'
+import {
+  StockCategory,
+  StockType,
+} from '@/types/api-types'
+import { useCartStore } from '@/store/cart/add'
 
 const Pharmacy = () => {
   const { data, isLoading } = useGetMedications()
@@ -45,34 +39,9 @@ const Pharmacy = () => {
   const [selectedType, setSelectedType] = React.useState<StockType | 'all'>(
     'all',
   )
-  const [selectedMed, setSelectedMed] = React.useState<TMedication | null>(null)
-    const medications = data?.data || []
+  const medications = data?.data || []
+  const { addToCart } = useCartStore()
 
-  // Calculate metrics
-  const metrics = {
-    total: medications.length,
-    categories: Object.values(StockCategory).reduce(
-      (acc, category) => {
-        acc[category] = medications.filter(
-          (m) => m.category === category,
-        ).length
-        return acc
-      },
-      {} as Record<StockCategory, number>,
-    ),
-    types: Object.values(StockType).reduce(
-      (acc, type) => {
-        acc[type] = medications.filter((m) => m.medication_type === type).length
-        return acc
-      },
-      {} as Record<StockType, number>,
-    ),
-    prescriptionRequired: medications.filter((m) => m.prescription_required)
-      .length,
-    lowStock: medications.filter((m) => m.stock_quantity < 10).length,
-  }
-
-  // Filter medications
   const filteredMeds = medications.filter((med) => {
     const matchesSearch =
       med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,11 +59,8 @@ const Pharmacy = () => {
   const getTypeIcon = (type: StockType): LucideIcon => {
     switch (type) {
       case StockType.TABLET:
-        return Pill
-      case StockType.CAPSULE:
       case StockType.CAPSULE:
         return Pill
-        return Syringe
       case StockType.SYRUP:
         return TestTube2
       case StockType.INHALER:
@@ -125,38 +91,37 @@ const Pharmacy = () => {
 
   return (
     <div className="w-full p-4">
-      {/* Medications List */}
-      <Card className="rounded-lg shadow bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <Card className="rounded-xl shadow-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <CardTitle>Medications</CardTitle>
+              <CardTitle className="text-xl md:text-2xl font-bold">
+                Medications
+              </CardTitle>
               <CardDescription>
                 Browse and search available medications
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search medications..."
-                  className="pl-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search medications..."
+                className="pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
             <Select
               value={selectedCategory}
               onValueChange={(v) =>
                 setSelectedCategory(v as StockCategory | 'all')
               }
             >
-              <SelectTrigger className="w-full md:w-64 dark:bg-gray-800 dark:border-gray-600">
+              <SelectTrigger className="w-full md:w-64 dark:bg-gray-800 dark:border-gray-700">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-gray-800">
@@ -177,7 +142,7 @@ const Pharmacy = () => {
               value={selectedType}
               onValueChange={(v) => setSelectedType(v as StockType | 'all')}
             >
-              <SelectTrigger className="w-full md:w-64 dark:bg-gray-800 dark:border-gray-600">
+              <SelectTrigger className="w-full md:w-64 dark:bg-gray-800 dark:border-gray-700">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-gray-800">
@@ -197,7 +162,7 @@ const Pharmacy = () => {
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
             </div>
           ) : filteredMeds.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
@@ -205,113 +170,57 @@ const Pharmacy = () => {
               <p>No medications found matching your criteria</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-300 dark:border-gray-600 rounded-lg">
-                <thead className="bg-gray-100 dark:bg-gray-700">
-                  <tr>
-                    <th className="p-3 text-left text-sm font-medium">Name</th>
-                    <th className="p-3 text-left text-sm font-medium">
-                      Manufacturer
-                    </th>
-                    <th className="p-3 text-left text-sm font-medium">
-                      Category
-                    </th>
-                    <th className="p-3 text-left text-sm font-medium">Type</th>
-                    <th className="p-3 text-left text-sm font-medium">
-                      Dosage
-                    </th>
-                    <th className="p-3 text-left text-sm font-medium">Price</th>
-                    <th className="p-3 text-left text-sm font-medium">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMeds.map((med) => {
-                    const TypeIcon = getTypeIcon(med.medication_type)
-                    return (
-                      <tr
-                        key={med.medication_id}
-                        className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <td className="p-3 font-medium">{med.name}</td>
-                        <td className="p-3">{med.manufacturer}</td>
-                        <td className="p-3">
-                          <Badge className={getCategoryColor(med.category)}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredMeds.map((med) => {
+                const TypeIcon = getTypeIcon(med.medication_type)
+                return (
+                  <Card
+                    key={med.medication_id}
+                    className="bg-white p-0 dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="h-35 w-full flex items-center justify-center overflow-hidden">
+                      <img
+                        src={med.image || '/placeholder.jpg'}
+                        alt={med.name}
+                        className="h-full w-full object-cover object-center"
+                      />
+                    </div>
+                    <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <TypeIcon className="h-5 w-5 text-primary" />
+                            <CardTitle className="text-sm font-semibold">
+                              {med.name}
+                            </CardTitle>
+                          </div>
+                          <Badge
+                            className={`text-xs ${getCategoryColor(med.category)}`}
+                          >
                             {med.category}
                           </Badge>
-                        </td>
-                        <td className="p-3 flex items-center gap-1">
-                          <TypeIcon className="h-4 w-4" />
-                          <span className="capitalize">
-                            {med.medication_type}
-                          </span>
-                        </td>
-                        <td className="p-3">{med.dosage}</td>
-                        <td className="p-3 font-semibold">${med.unit_price}</td>
-                        <td className="p-3">
-                          <Sheet>
-                            <SheetTrigger asChild>
-                              <button
-                                onClick={() => setSelectedMed(med)}
-                                className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
-                              >
-                                View
-                              </button>
-                            </SheetTrigger>
-                            <SheetContent
-                              side="right"
-                              className="w-full sm:max-w-md"
-                            >
-                              <SheetHeader>
-                                <SheetTitle className="flex items-center gap-2">
-                                  <TypeIcon className="h-5 w-5" />
-                                  {med.name}
-                                </SheetTitle>
-                              </SheetHeader>
-                              <div className="grid gap-4 py-4">
-                                <div className="aspect-square w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                                  {med.image ? (
-                                    <img
-                                      src={med.image}
-                                      alt={med.name}
-                                      className="object-contain w-full h-full"
-                                    />
-                                  ) : (
-                                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                                      <Pill className="h-20 w-20" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                  <p>
-                                    <span className="text-muted-foreground">
-                                      Manufacturer:
-                                    </span>{' '}
-                                    {med.manufacturer}
-                                  </p>
-                                  <p>
-                                    <span className="text-muted-foreground">
-                                      Dosage:
-                                    </span>{' '}
-                                    {med.dosage}
-                                  </p>
-                                  <p>
-                                    <span className="text-muted-foreground">
-                                      Description:
-                                    </span>{' '}
-                                    {med.description}
-                                  </p>
-                                </div>
-                              </div>
-                            </SheetContent>
-                          </Sheet>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                        </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {med.description || 'No description'}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Dosage:</span>{' '}
+                        {med.dosage}
+                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-green-600 font-bold dark:text-green-400">
+                          KES {med.unit_price}
+                        </p>
+                        <button
+                          onClick={() => addToCart(med)}
+                          className="px-3 py-1 text-sm border dark:border-gray-700 cursor-pointer text-white rounded-lg"
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </CardContent>
