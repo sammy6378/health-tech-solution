@@ -11,16 +11,22 @@ import {
 import {
   AppointmentStatus,
   ConsultationType,
-  formatDate,
+  formatTime,
   type TAppointment,
 } from '@/types/api-types'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
 
 const AppointmentPage = () => {
   const [activeTab, setActiveTab] = useState<AppointmentStatus>(
     AppointmentStatus.SCHEDULED,
   )
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof TAppointment
+    direction: 'ascending' | 'descending'
+  } | null>(null)
+
 
   const { appointments,user } = useUserData();
 
@@ -32,13 +38,6 @@ const AppointmentPage = () => {
     )
   }
 
-
-
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof TAppointment
-    direction: 'ascending' | 'descending'
-  } | null>(null)
 
   // Filter appointments based on active tab and search query
   const filteredAppointments = appointments
@@ -295,7 +294,7 @@ const AppointmentPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm">
-                          {formatDate(appointment.appointment_date)}
+                          {appointment.appointment_date} : {formatTime(appointment.start_time ?? '')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

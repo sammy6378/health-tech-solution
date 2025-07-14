@@ -24,4 +24,7 @@ export class CreatePaymentDto {
 
   @IsEnum(PaymentMethod)
   payment_method: PaymentMethod;
+
+  @IsString()
+  patient_id: string;
 }

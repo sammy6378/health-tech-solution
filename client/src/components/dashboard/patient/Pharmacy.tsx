@@ -186,19 +186,19 @@ const Pharmacy = () => {
                       />
                     </div>
                     <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <TypeIcon className="h-5 w-5 text-primary" />
-                            <CardTitle className="text-sm font-semibold">
-                              {med.name}
-                            </CardTitle>
-                          </div>
-                          <Badge
-                            className={`text-xs ${getCategoryColor(med.category)}`}
-                          >
-                            {med.category}
-                          </Badge>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <TypeIcon className="h-5 w-5 text-primary" />
+                          <CardTitle className="text-sm font-semibold">
+                            {med.name}
+                          </CardTitle>
                         </div>
+                        <Badge
+                          className={`text-xs ${getCategoryColor(med.category)}`}
+                        >
+                          {med.category}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {med.description || 'No description'}
                       </p>
@@ -206,6 +206,7 @@ const Pharmacy = () => {
                         <span className="font-medium">Dosage:</span>{' '}
                         {med.dosage}
                       </p>
+        
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-green-600 font-bold dark:text-green-400">
                           KES {med.unit_price}

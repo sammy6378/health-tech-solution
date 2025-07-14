@@ -57,6 +57,10 @@ export class CreateStockDto {
   @IsNotEmpty()
   manufacturer: string;
 
+  @IsString()
+  @IsNotEmpty()
+  manufacture_date: string;
+
   @IsDate()
   @IsNotEmpty()
   expiration_date: Date;

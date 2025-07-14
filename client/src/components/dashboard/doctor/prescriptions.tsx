@@ -1,4 +1,4 @@
-import { useDoctorData } from '@/hooks/useUserHook'
+import { useDoctorData } from '@/hooks/useDashboard'
 import { useState, useMemo } from 'react'
 import {
   Sheet,
@@ -136,7 +136,7 @@ export default function PatientPrescriptionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPrescriptions.map((prescription:TPrescription) => (
+                {filteredPrescriptions.map((prescription: TPrescription) => (
                   <TableRow
                     key={prescription.prescription_id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -154,7 +154,14 @@ export default function PatientPrescriptionsPage() {
                     <TableCell className="hidden md:table-cell">
                       {prescription.medications
                         ?.map((med) => med.name)
-                        .join(', ') || 'No medications'}
+                        .join(', ') || (
+                        <Button
+                          variant="outline"
+                          className="w-full text-blue-500"
+                        >
+                          Add Medications
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
@@ -234,7 +241,9 @@ export default function PatientPrescriptionsPage() {
                                   Medications
                                 </p>
                                 <div className="space-y-2">
-                                  {(selectedPrescription?.medications && selectedPrescription.medications.length > 0) ? (
+                                  {selectedPrescription?.medications &&
+                                  selectedPrescription.medications.length >
+                                    0 ? (
                                     selectedPrescription.medications.map(
                                       (med) => (
                                         <div

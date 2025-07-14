@@ -30,17 +30,17 @@ export class MedicalRecord {
   @Column({ type: 'int', nullable: true })
   heart_rate?: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ nullable: true })
   temperature?: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ nullable: true })
   weight?: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ nullable: true })
   height?: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  BMI?: number;
+  bmi?: number;
 
   @Column('text', { array: true, nullable: true })
   allergies?: string[];

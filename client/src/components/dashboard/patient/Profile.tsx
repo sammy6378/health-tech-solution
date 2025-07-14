@@ -6,14 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useAuthStore } from '@/store/store'
-import { useGetUser } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
+import { useUpdatePatientProfile } from '@/hooks/usePatientProfile'
 
 export default function ProfilePage() {
-  const { user } = useAuthStore()
-  const userId = user.userId
-  const { data, refetch } = useGetUser(userId)
-  const profile = data?.data;
+  const {profileData: profile} =useUserData()
+  const {mutateAsync: updateProfile} = useUpdatePatientProfile()
 
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -45,32 +43,23 @@ export default function ProfilePage() {
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
         email: profile.email || '',
-        profilePicture: profile.doctorProfile?.avatar || '',
+        profilePicture: profile.patientProfile?.avatar || '',
       })
     }
   }, [profile])
 
   const handleProfileUpdate = async () => {
-    if (!userId) return
 
     setIsUpdating(true)
     try {
-      // TODO: Implement your API call to update user profile
-      // Example:
-      // const response = await fetch(`/api/users/${userId}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     first_name: profileData.firstName,
-      //     last_name: profileData.lastName,
-      //     email: profileData.email,
-      //   }),
-      // })
-
-      // if (!response.ok) throw new Error('Failed to update profile')
-
-      // Refetch user data
-      await refetch()
+      await updateProfile({
+        id: profile?.patientProfile?.profile_id ?? '',
+        data: {
+          avatar: profileData.profilePicture,
+        },
+      })
+      setIsUpdating(false)
+    
     } catch (error) {
 
     } finally {

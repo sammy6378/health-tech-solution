@@ -23,23 +23,34 @@ export default function DoctorsPage() {
     )
   })
 
-  const handleAddAppointment = (data: any) => {
-    console.log('New Appointment:', data)
-    // ✅ Send to API here
-  }
 
-  const validateAvailability = (doctor:any) =>{
+  const validateAvailability = (doctor: any) => {
     const days = doctor.days || []
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-    const isAvailableToday = days.map((d: string) => d.toLowerCase()).includes(today)
-    const currentTime = new Date()
-    const startTime = doctor.start_time ? new Date(`1970-01-01T${doctor.start_time}`) : null
-    const endTime = doctor.end_time ? new Date(`1970-01-01T${doctor.end_time}`) : null
+    const today = new Date()
+      .toLocaleDateString('en-US', { weekday: 'long' })
+      .toLowerCase()
+    const isAvailableToday = days
+      .map((d: string) => d.toLowerCase())
+      .includes(today)
 
-    const isWithinTimeRange = startTime && endTime && currentTime >= startTime && currentTime <= endTime 
+    const now = new Date()
+    const currentHours = now.getHours()
+    const currentMinutes = now.getMinutes()
+
+    const [startHour, startMinute] =
+      doctor.start_time?.split(':').map(Number) || []
+    const [endHour, endMinute] = doctor.end_time?.split(':').map(Number) || []
+
+    const currentTotal = currentHours * 60 + currentMinutes
+    const startTotal = startHour * 60 + startMinute
+    const endTotal = endHour * 60 + endMinute
+
+    const isWithinTimeRange =
+      currentTotal >= startTotal && currentTotal <= endTotal
+
     return isAvailableToday && isWithinTimeRange
-
   }
+  
 
   return (
     <div className="container py-12 px-4 min-h-screen">
@@ -158,7 +169,12 @@ export default function DoctorsPage() {
                   <AppointmentModal
                     open={openModal}
                     onClose={() => setOpenModal(false)}
-                    onSubmit={handleAddAppointment}
+                    doctorId={user.user_id ?? ''}
+                    name={`${user.first_name} ${user.last_name}`}
+                    timeSlots={{
+                      start: doctor.start_time || '08:00',
+                      end: doctor.end_time || '17:00',
+                    }}
                   />
                 </CardContent>
               </Card>

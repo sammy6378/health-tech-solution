@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreatePrescription } from '@/hooks/usePrescriptions'
 import { toast } from 'sonner'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
 import { useGetMedications } from '@/hooks/useMedication'
 import { useGetDiagnosis } from '@/hooks/useDiagnosis'
 

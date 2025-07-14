@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to MediConnect</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: #1a73e8;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      color: white;
+      margin: 10px 0 0;
+      font-size: 24px;
+    }
+    .content {
+      padding: 30px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #1a73e8;
+      color: white !important;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    .footer {
+      background: #f1f3f4;
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #70757a;
+    }
+    .footer a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h1>MediConnect</h1>
+      <p style="color: white; margin: 5px 0 0;">Compassionate Care, Connected</p>
+    </div>
+
+    <div class="content">
+      <h2>Welcome, <%= name %>!</h2>
+
+      <p>
+        We're thrilled to welcome you to MediConnect, your new healthcare management platform.
+        Your account has been successfully created with the email: <strong><%= email %></strong>.
+      </p>
+
+      <p>With MediConnect, you can:</p>
+      <ul>
+        <li>Schedule and manage medical appointments</li>
+        <li>Access your health records securely</li>
+        <li>Receive personalized health reminders</li>
+        <li>Communicate with your care team</li>
+      </ul>
+
+      <% if (link) { %>
+        <p>To get started, please complete your registration:</p>
+        <a href="<%= link %>" class="button">Complete Registration</a>
+        <p style="font-size: 12px; color: #666;">
+          Or paste this link in your browser:<br />
+          <%= link %>
+        </p>
+      <% } %>
+
+      <p>If you have any questions or need assistance, our support team is available to help.</p>
+
+      <p>Welcome aboard,<br />
+      <strong>The MediConnect Team</strong></p>
+    </div>
+
+    <div class="footer">
+      <p>&copy; <%= new Date().getFullYear() %> MediConnect Hospital Management System. All rights reserved.</p>
+      <p>
+        <a href="https://mediconnect.example.com/contact">Contact Us</a> |
+        <a href="https://mediconnect.example.com/privacy">Privacy Policy</a> |
+        <a href="https://mediconnect.example.com/terms">Terms of Service</a>
+      </p>
+      <p>If you didn't request this account, please contact our support team immediately.</p>
+    </div>
+  </div>
+</body>
+</html>

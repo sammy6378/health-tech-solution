@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Calendar
 } from 'lucide-react'
+import { FaMoneyBill } from 'react-icons/fa'
 
 export const checkRole = (role: Role) => {
   switch (role) {
@@ -50,6 +51,7 @@ export const navGroups = [
       },
       { title: 'Pharmacy', to: '/dashboard/pharmacy', icon: Warehouse },
       { title: 'My Orders', to: '/dashboard/orders', icon: ClipboardList },
+      { title: 'Billing', to: '/dashboard/billing', icon: FaMoneyBill },
       { title: 'My Profile', to: '/dashboard/profile', icon: User2 },
     ],
   },
@@ -73,7 +75,7 @@ export const navGroups = [
   {
     label: 'Pharmacy',
     links: [
-      { title: 'Dashboard', to: '/pharmacy/dashboard', icon: LayoutDashboard },
+      { title: 'Dashboard', to: '/dashboard/pharmacy-dashboard', icon: LayoutDashboard },
       { title: 'Inventory', to: '/pharmacy/inventory', icon: Warehouse },
       { title: 'Orders', to: '/pharmacy/orders', icon: ClipboardList },
       { title: 'Medicines', to: '/pharmacy/medicines', icon: Pill },

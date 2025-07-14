@@ -1,5 +1,5 @@
 import { useParams } from '@tanstack/react-router'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
 import { DeliveryMethod, formatCurrency, formatDate } from '@/types/api-types'
 import { Truck, CheckCircle, Clock, Package, XCircle, MapPin, CreditCard, Info } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
@@ -36,6 +36,7 @@ export default function OrderInfo() {
   const { orders } = useUserData()
 
   const orderFound = orders.find((o) => o.order_number === order)
+  console.log('Order Found:', orderFound)
 
   if (!orderFound) {
     return null // or handle loading state
@@ -45,14 +46,13 @@ export default function OrderInfo() {
     invoiceNumber: orderFound.order_number,
     orderDate: formatDate(orderFound.order_date ?? ''),
     patientName: orderFound?.prescription?.patient?.first_name ?? 'Patient',
-    doctorName: orderFound.prescription.doctor?.first_name ?? 'Telemed Doctor',
-    service:  'Telemedicine Consultation',
+    service: 'Telemedicine Consultation',
     paymentMethod: orderFound.payment_method?.replace('_', ' ') || 'N/A',
     paymentStatus: orderFound.payment_status,
     deliveryMethod: orderFound.delivery_method?.replace('_', ' ') || 'N/A',
     deliveryAddress: orderFound.delivery_address || 'N/A',
     deliveryTime: orderFound.delivery_time || 'N/A',
-    amountPaid: orderFound.amount,
+    amountPaid: orderFound.total_amount,
     estimatedDelivery: formatDate(orderFound.estimated_delivery ?? ''),
     notes: 'Thank you for choosing our telemedicine services.',
   }
@@ -205,7 +205,7 @@ export default function OrderInfo() {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Amount</p>
                 <p className="font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(orderFound.amount || 0)}
+                  {formatCurrency(orderFound.total_amount || 0)}
                 </p>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function OrderInfo() {
             <div className="flex justify-between">
               <p className="text-gray-500 dark:text-gray-400">Subtotal</p>
               <p className="text-gray-800 dark:text-gray-200">
-                {formatCurrency(orderFound.amount || 0)}
+                {formatCurrency(orderFound.total_amount || 0)}
               </p>
             </div>
             <div className="flex justify-between">
@@ -268,7 +268,7 @@ export default function OrderInfo() {
                 Total
               </p>
               <p className="font-bold text-gray-900 dark:text-white">
-                {formatCurrency(orderFound.amount || 0)}
+                {formatCurrency(orderFound.total_amount || 0)}
               </p>
             </div>
             {orderFound.payment_status === 'paid' && (

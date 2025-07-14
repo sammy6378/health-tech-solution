@@ -1,13 +1,66 @@
-import type { TMedication } from "@/types/api-types";
-import { useCreate, useDelete, useGetList, useGetOne, useUpdate } from "./useApiHook";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { TMedication } from '@/types/api-types'
+import {
+  fetchList,
+  fetchOne,
+  createItem,
+  updateItem,
+  deleteItem,
+} from '@/services/api-call'
 
-const base = 'stocks';
+const base = 'stocks' // API base path
 
-export const useGetMedications = () => useGetList<TMedication>('medications', base)
+// ✅ Fetch all medications
+export const useGetMedications = () =>
+  useQuery({
+    queryKey: ['medications'],
+    queryFn: () => fetchList<TMedication>(base),
+  })
+
+// ✅ Fetch one medication
 export const useGetMedication = (id: string) =>
-  useGetOne<TMedication>('medication', `${base}/${id}`, !!id)
-export const useCreateMedication = () => useCreate<TMedication>('medications', base)
-export const useUpdateMedication = () =>
-  useUpdate<TMedication>('medications', (id: string) => `${base}/${id}`)
-export const useDeleteMedication = () =>
-  useDelete('medications', (id: string) => `${base}/${id}`)
+  useQuery({
+    queryKey: ['medication', id],
+    queryFn: () => fetchOne<TMedication>(`${base}/${id}`),
+    enabled: !!id,
+  })
+
+// ✅ Create a medication
+export const useCreateMedication = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<TMedication>) =>
+      createItem<TMedication>(base, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['medications'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Update a medication
+export const useUpdateMedication = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TMedication> }) =>
+      updateItem<TMedication>(`${base}/${id}`, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['medications'] })
+      queryClient.invalidateQueries({ queryKey: ['medication', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Delete a medication
+export const useDeleteMedication = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteItem(`${base}/${id}`),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['medications'] })
+      queryClient.invalidateQueries({ queryKey: ['medication', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}

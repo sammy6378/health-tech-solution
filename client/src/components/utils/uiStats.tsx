@@ -1,5 +1,5 @@
-import { useUserData } from '@/hooks/useUserHook'
-import { DeliveryStatus, formatDate } from '@/types/api-types'
+import { useUserData } from '@/hooks/useDashboard'
+import { DeliveryStatus, formatDate, formatTime } from '@/types/api-types'
 import { Link } from '@tanstack/react-router'
 import {
   Calendar,
@@ -12,6 +12,14 @@ import {
   Activity,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+const orderStatusColors = {
+  [DeliveryStatus.PENDING]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  [DeliveryStatus.DELIVERED]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  [DeliveryStatus.CANCELLED]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  [DeliveryStatus.SHIPPED]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  [DeliveryStatus.PROCESSING]: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+}
 
 const upcomingAppointments = () => {
   const { appointments } = useUserData()
@@ -56,7 +64,7 @@ const upcomingAppointments = () => {
                   className="mr-1 text-gray-500 dark:text-gray-400"
                 />
                 <span className="text-gray-500 dark:text-gray-400 mr-3">
-                  {formatDate(appointment.appointment_date)}
+                  {appointment.appointment_date} {formatTime(appointment.start_time ?? '')}
                 </span>
                 <Clock
                   size={14}
@@ -108,11 +116,7 @@ export const RecentOrders = () => {
                 </p>
               </div>
               <span
-                className={`px-2 py-1 text-xs rounded-full ${
-                  order.delivery_status === DeliveryStatus.DELIVERED
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                }`}
+                className={`px-2 py-1 text-xs rounded-full ${orderStatusColors[order.delivery_status ?? DeliveryStatus.PENDING] ?? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}
               >
                 {order.delivery_status}
               </span>
@@ -221,8 +225,8 @@ function getBmiCategory(bmi: number | null) {
 }: {
   onAddClick: () => void
 }) {
-  const { bmiRecord } = useUserData()
-  const bmi = bmiRecord?.BMI ?? null;
+  const {bmiRecord} = useUserData()
+  const bmi = bmiRecord?.bmi ?? null
 
   const category = bmi !== null ? getBmiCategory(bmi) : null
   const barHeight = bmi !== null ? Math.min((bmi / 40) * 100, 100) : 0

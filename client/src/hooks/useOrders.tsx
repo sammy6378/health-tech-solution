@@ -1,36 +1,65 @@
-import type { TOrder } from "@/types/api-types";
-import { useCreate, useDelete, useGetList, useGetOne, useUpdate } from "./useApiHook";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { TOrder } from '@/types/api-types'
+import {
+  fetchList,
+  fetchOne,
+  createItem,
+  updateItem,
+  deleteItem,
+} from '@/services/api-call'
 
-const base = 'orders';
+const base = 'orders'
 
-export const useGetOrders = () => useGetList<TOrder>('orders', base)
+// ✅ Get all orders
+export const useGetOrders = () =>
+  useQuery({
+    queryKey: ['orders'],
+    queryFn: () => fetchList<TOrder>(base),
+  })
+
+// ✅ Get a specific order by ID
 export const useGetOrder = (id: string) =>
-  useGetOne<TOrder>('order', `${base}/${id}`, !!id)
-export const useCreateOrder = () => useCreate<TOrder>('orders', base)
-export const useUpdateOrder = () =>
-  useUpdate<TOrder>('orders', (id: string) => `${base}/${id}`)
-export const useDeleteOrder = () =>
-  useDelete('orders', (id: string) => `${base}/${id}`)
+  useQuery({
+    queryKey: ['order', id],
+    queryFn: () => fetchOne<TOrder>(`${base}/${id}`),
+    enabled: !!id,
+  })
 
-export const useGetOrderMetrics = () => {
-  const { data } = useGetOrders();
-  const orders = data?.data || [];
-  const totalOrders = orders?.length || 0;
-  const pendingOrders = orders?.filter((o) => o.delivery_status === 'pending').length || 0;
-  const processingOrders = orders?.filter((o) => o.delivery_status === 'processing').length || 0;
-  const shippedOrders = orders?.filter((o) => o.delivery_status === 'shipped').length || 0;
-  const deliveredOrders = orders?.filter((o) => o.delivery_status === 'delivered').length || 0;
-  const cancelledOrders = orders?.filter((o) => o.delivery_status === 'cancelled').length || 0;
-  const recentOrders = orders?.slice(0, 5) || [];
+// ✅ Create a new order
+export const useCreateOrder = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<TOrder>) => createItem<TOrder>(base, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
 
-  return {
-    totalOrders,
-    pendingOrders,
-    processingOrders,
-    shippedOrders,
-    deliveredOrders,
-    cancelledOrders,
-    orders,
-    recentOrders,
-  };
+// ✅ Update an existing order
+export const useUpdateOrder = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TOrder> }) =>
+      updateItem<TOrder>(`${base}/${id}`, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Delete an order
+export const useDeleteOrder = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteItem(`${base}/${id}`),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
 }

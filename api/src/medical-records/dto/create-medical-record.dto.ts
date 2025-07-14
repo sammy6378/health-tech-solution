@@ -3,14 +3,13 @@ import {
   IsOptional,
   IsString,
   IsInt,
-  IsDecimal,
   IsArray,
   IsDateString,
   Min,
   Max,
   IsPositive,
+  IsNumber,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 export class CreateMedicalRecordDto {
   @IsOptional()
@@ -39,25 +38,27 @@ export class CreateMedicalRecordDto {
   heart_rate?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '0,2' })
+  @IsNumber()
   @Min(0)
-  @Max(50)
-  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @Max(300)
   temperature?: number;
 
   @IsOptional()
-  @IsDecimal({ decimal_digits: '0,2' })
-  @Min(0)
-  @Max(500)
-  @Transform(({ value }: { value: string }) => parseFloat(value))
-  weight?: number;
-
-  @IsOptional()
-  @IsDecimal({ decimal_digits: '0,2' })
+  @IsNumber()
   @Min(0)
   @Max(300)
-  @Transform(({ value }: { value: string }) => parseFloat(value))
   height?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(500)
+  weight?: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  BMI: number;
 
   @IsOptional()
   @IsArray()

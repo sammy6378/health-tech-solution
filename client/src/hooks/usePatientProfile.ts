@@ -1,17 +1,73 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { TPatient } from '@/types/Tuser'
+import {
+  fetchList,
+  fetchOne,
+  createItem,
+  updateItem,
+  deleteItem,
+} from '@/services/api-call'
 
+const base = 'user-profile'
 
-import { useCreate, useDelete, useGetList, useGetOne, useUpdate } from "./useApiHook";
-import type { TPatient } from "@/types/Tuser";
-
-const base = 'patient-profile'
-
+// ✅ Get all patient profiles
 export const useGetPatientProfiles = () =>
-  useGetList<TPatient>('patient-profiles', base)
+  useQuery({
+    queryKey: ['user-profiles'],
+    queryFn: () => fetchList<TPatient>(base),
+  })
+
+// ✅ Get a single patient profile by profile ID
 export const useGetPatientProfile = (id: string) =>
-  useGetOne<TPatient>('patient-profile', `${base}/${id}`, !!id)
-export const useCreatePatientProfile = () =>
-  useCreate<TPatient>('patient-profiles', base)
-export const useUpdatePatientProfile = () =>
-  useUpdate<TPatient>('patient-profiles', (id: string) => `${base}/${id}`)
-export const useDeletePatientProfile = () =>
-  useDelete('patient-profiles', (id: string) => `${base}/${id}`)
+  useQuery({
+    queryKey: ['user-profile', id],
+    queryFn: () => fetchOne<TPatient>(`${base}/${id}`),
+    enabled: !!id,
+  })
+
+// ✅ Get patient profile by user ID
+export const useGetPatientProfileByUserId = (userId: string) =>
+  useQuery({
+    queryKey: ['user-profile', 'user', userId],
+    queryFn: () => fetchOne<TPatient>(`${base}/profile/${userId}`),
+    enabled: !!userId,
+  })
+
+// ✅ Create patient profile
+export const useCreatePatientProfile = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<TPatient>) => createItem<TPatient>(base, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profiles'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Update patient profile
+export const useUpdatePatientProfile = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TPatient> }) =>
+      updateItem<TPatient>(`${base}/${id}`, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['user-profiles'] })
+      queryClient.invalidateQueries({ queryKey: ['user-profile', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Delete patient profile
+export const useDeletePatientProfile = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => deleteItem(`${base}/${id}`),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['user-profiles'] })
+      queryClient.invalidateQueries({ queryKey: ['user-profile', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}

@@ -23,6 +23,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { AtGuard } from './auth/guards/at.guard';
 import { DiagnosisModule } from './diagnosis/diagnosis.module';
+import { ChatbotService } from './chatbot/chatbot.service';
+import { ChatbotController } from './chatbot/chatbot.controller';
+import { ChatbotModule } from './chatbot/chatbot.module';
+import { ZoomService } from './zoom/zoom.service';
 
 @Module({
   imports: [
@@ -64,8 +68,9 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
     MailModule,
     LogsModule,
     DiagnosisModule,
+    ChatbotModule,
   ],
-  controllers: [],
+  controllers: [ChatbotController],
   providers: [
     AppService,
     // {
@@ -80,6 +85,8 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
       provide: APP_GUARD,
       useClass: RolesGuard, // roles guard for role-based access control
     },
+    ChatbotService,
+    ZoomService,
   ],
 })
 export class AppModule {}

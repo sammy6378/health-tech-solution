@@ -4,12 +4,12 @@ import {
     Pill,
     TrendingUp,
   } from 'lucide-react'
-  import { useUserData } from '@/hooks/useUserHook'
+  import { useUserData } from '@/hooks/useDashboard'
   import { Card } from '@/components/ui/card'
 import { MyCalendar } from '../patient/Calendar'
 import AppointmentsAnalytics from './Analytics'
 import type { JSX } from 'react'
-import { formatDate } from '@/types/api-types'
+import { formatTime } from '@/types/api-types'
   
   function DoctorDashboard() {
     const {
@@ -93,28 +93,50 @@ import { formatDate } from '@/types/api-types'
         </div>
 
         {/* appointmnet card */}
-        <Card className="p-4 max-w-xl bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+        <Card className="p-6 max-w-xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-xl">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">
             Upcoming Appointments
           </h2>
-          <ul className="space-y-2">
+
+          <ul className="space-y-4">
             {upcomingAppointments?.map((appointment) => (
               <li
                 key={appointment.appointment_id}
-                className="p-3 space-y-2 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm transition-colors"
+                className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
               >
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                 Date: {formatDate(appointment.appointment_date)}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {appointment.appointment_date} ·{' '}
+                    {formatTime(appointment.start_time ?? '')}
+                  </span>
+                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full capitalize">
+                    {appointment.consultation_type}
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                    Patient:
+                  </span>{' '}
+                  {appointment.patient?.first_name}{' '}
+                  {appointment.patient?.last_name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                 Patient: {appointment.patient?.first_name} {appointment.patient?.last_name}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                 Type: {appointment.consultation_type}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Meeting Link: {appointment.meeting_link}
-                </p>
+
+                {appointment.meeting_link && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
+                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                      Meeting Link:
+                    </span>{' '}
+                    <a
+                      href={appointment.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {appointment.meeting_link}
+                    </a>
+                  </p>
+                )}
               </li>
             ))}
           </ul>

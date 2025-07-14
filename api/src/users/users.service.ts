@@ -1,126 +1,3 @@
-// import { Injectable } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository, FindOptionsWhere } from 'typeorm';
-// import { User } from './entities/user.entity';
-// import { CreateUserDto, Role } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
-// import { ApiResponse, createResponse } from 'src/utils/apiResponse';
-
-// @Injectable()
-// export class UsersService {
-//   constructor(
-//     @InjectRepository(User)
-//     private readonly userRepository: Repository<User>,
-//   ) {}
-
-//   async create(createUserDto: CreateUserDto): Promise<ApiResponse<User>> {
-//     const user = this.userRepository.create(createUserDto);
-//     const savedUser = await this.userRepository.save(user);
-//     return createResponse(savedUser, 'User created successfully');
-//   }
-
-//   async findAll(userId?: string): Promise<ApiResponse<User[]>> {
-//     const baseRelations = [
-//       'doctorProfile',
-//       'patientProfile',
-//       'medicalRecord',
-//       'appointments',
-//       'appointments.patient',
-//       'appointments.doctor',
-//       'doctorAppointments',
-//       'patientDiagnoses',
-//       'patientDiagnoses.prescriptions',
-//       'patientDiagnoses.prescriptions.medications',
-//       'doctorDiagnoses',
-//       'doctorDiagnoses.prescriptions',
-//       'doctorDiagnoses.prescriptions.medications',
-//       'orders',
-//     ];
-
-//     const where: FindOptionsWhere<User> | undefined = userId
-//       ? { user_id: userId }
-//       : undefined;
-
-//     const users = await this.userRepository.find({
-//       where,
-//       relations: baseRelations,
-//       order: { created_at: 'DESC' },
-//     });
-
-//     if (users.length === 0) {
-//       return createResponse([], userId ? 'User not found' : 'No users found');
-//     }
-
-//     return createResponse(users, userId ? 'User fetched' : 'Users fetched');
-//   }
-
-//   async findOne(id: string): Promise<ApiResponse<User | null>> {
-//     const user = await this.userRepository.findOne({
-//       where: { user_id: id },
-//       relations: [
-//         'doctorProfile',
-//         'patientProfile',
-//         'medicalRecord',
-//         'appointments',
-//         'doctorAppointments',
-//         'patientDiagnoses',
-//         'patientDiagnoses.prescriptions',
-//         'patientDiagnoses.prescriptions.medications',
-//         'doctorDiagnoses',
-//         'doctorDiagnoses.prescriptions',
-//         'doctorDiagnoses.prescriptions.medications',
-//         'orders',
-//       ],
-//     });
-
-//     if (!user) {
-//       return createResponse(null, 'User not found');
-//     }
-
-//     return createResponse(user, 'User retrieved successfully');
-//   }
-
-//   async update(
-//     id: string,
-//     updateUserDto: UpdateUserDto,
-//   ): Promise<ApiResponse<User | null>> {
-//     await this.userRepository.update(id, updateUserDto);
-//     return this.findOne(id).then((response) => {
-//       if (response.data) {
-//         return createResponse(response.data, 'User updated successfully');
-//       }
-//       return createResponse(null, 'User not found');
-//     });
-//   }
-
-//   async remove(id: string): Promise<ApiResponse<null>> {
-//     const result = await this.userRepository.delete(id);
-//     if (result.affected === 0) {
-//       return createResponse(null, 'User not found');
-//     }
-//     return createResponse(null, 'User deleted successfully');
-//   }
-
-//   async findAllDoctors(): Promise<ApiResponse<User[]>> {
-//     const doctors = await this.userRepository.find({
-//       where: { role: Role.DOCTOR },
-//       relations: [
-//         'doctorProfile',
-//         'doctorAppointments',
-//         'doctorDiagnoses',
-//         'doctorDiagnoses.prescriptions',
-//         'doctorDiagnoses.prescriptions.medications',
-//       ],
-//     });
-
-//     if (doctors.length === 0) {
-//       return createResponse([], 'No doctors found');
-//     }
-
-//     return createResponse(doctors, 'Doctors retrieved successfully');
-//   }
-// }
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, In } from 'typeorm';
@@ -136,6 +13,9 @@ import { AppointmentStatus } from 'src/appointments/dto/create-appointment.dto';
 import { PrescriptionStatus } from 'src/prescriptions/dto/create-prescription.dto';
 import { PaymentStatus } from 'src/orders/dto/create-order.dto';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
+import { MailService } from 'src/mails/mails.service';
+import { Mailer } from 'src/mails/helperEmail';
 
 // ✅ NEW: Role-based data retrieval
 interface DashboardStats {
@@ -145,9 +25,13 @@ interface DashboardStats {
   totalDiagnoses: number;
   totalPrescriptions: number;
   activePrescriptions: number;
-  totalOrders: number;
-  pendingOrders: number;
+  totalOrders?: number;
+  pendingOrders?: number;
   totalMedications?: number;
+  totalPatients?: number;
+  totalPayments?: number;
+  totalRevenue?: number;
+  lowStockItems?: number;
 }
 
 export interface DashboardData {
@@ -159,6 +43,7 @@ export interface DashboardData {
   orders: Order[];
   patients?: User[];
   medications?: Stock[];
+  payments?: Payment[];
   stats: DashboardStats;
 }
 
@@ -177,11 +62,22 @@ export class UsersService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Stock)
     private readonly medicationRepository: Repository<Stock>,
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+    private readonly mailService: MailService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ApiResponse<User>> {
     const user = this.userRepository.create(createUserDto);
     const savedUser = await this.userRepository.save(user);
+
+    // send welcome email
+    const mailer = Mailer(this.mailService);
+    await mailer.welcomeEmail({
+      name: savedUser.first_name,
+      email: savedUser.email,
+    });
+
     return createResponse(savedUser, 'User created successfully');
   }
 
@@ -279,6 +175,11 @@ export class UsersService {
     userId: string,
     baseData: DashboardData,
   ): Promise<DashboardData> {
+    // patient profile
+    const patientProfile = await this.userRepository.findOne({
+      where: { user_id: userId },
+      relations: ['patientProfile'],
+    });
     // 1. Get patient appointments
     const appointments = await this.appointmentRepository.find({
       where: { patient: { user_id: userId } },
@@ -313,8 +214,14 @@ export class UsersService {
     // 4. Get patient orders
     const orders = await this.orderRepository.find({
       where: { patient: { user_id: userId } },
-      relations: ['prescription', 'prescription.medications'],
       order: { created_at: 'DESC' },
+      relations: ['orderMedications', 'orderMedications.medication'],
+    });
+
+    // patient payments
+    const payments = await this.paymentRepository.find({
+      where: { patient_id: userId },
+      order: { payment_date: 'DESC' },
     });
 
     // Filter appointments to only include those from today and onward
@@ -327,12 +234,12 @@ export class UsersService {
 
     return {
       ...baseData,
-      // Only show upcoming appointments (today and onward)
       appointments: upcomingAppointmentsList,
       diagnoses,
       prescriptions,
       orders,
-      // Aggregated stats (based on all appointments)
+      profileData: patientProfile ?? baseData.user,
+      payments,
       stats: {
         totalAppointments: appointments.length,
         upcomingAppointments: upcomingAppointmentsList.filter(
@@ -393,33 +300,14 @@ export class UsersService {
 
     const patients = await this.userRepository.find({
       where: { user_id: In(Array.from(patientIds)) },
-      relations: ['patientProfile'],
+      relations: ['patientProfile', 'medicalRecord'],
     });
-
-    // 5. Get orders for prescriptions created by this doctor
-    const prescriptionIds = prescriptions.map((p) => p.prescription_id);
-    const orders =
-      prescriptionIds.length > 0
-        ? await this.orderRepository.find({
-            where: {
-              prescription: { prescription_id: In(prescriptionIds) },
-            },
-            relations: [
-              'patient',
-              'patient.patientProfile',
-              'prescription',
-              'prescription.medications',
-            ],
-            order: { created_at: 'DESC' },
-          })
-        : [];
 
     return {
       ...baseData,
       appointments,
       diagnoses,
       prescriptions,
-      orders,
       patients,
       // Aggregated stats
       stats: {
@@ -435,10 +323,6 @@ export class UsersService {
         activePrescriptions: prescriptions.filter(
           (p) => p.status === PrescriptionStatus.ACTIVE,
         ).length,
-        totalOrders: orders.length,
-        pendingOrders: orders.filter(
-          (o) => o.payment_status === PaymentStatus.PENDING,
-        ).length,
       },
     };
   }
@@ -446,30 +330,98 @@ export class UsersService {
   private async getPharmacyDashboardData(
     baseData: DashboardData,
   ): Promise<DashboardData> {
+    // 1. Get all orders with full relations
     const orders = await this.orderRepository.find({
       relations: [
-        'prescription',
-        'prescription.diagnosis',
-        'prescription.medications',
+        'orderMedications',
+        'orderMedications.medication',
+        'patient',
+        'patient.patientProfile',
       ],
       order: { created_at: 'DESC' },
     });
 
+    // 2. Get all medications/stock
     const medications = await this.medicationRepository.find({
       order: { created_at: 'DESC' },
     });
+
+    // 3. Get all patients for medicine recommendations
+    const patients = await this.userRepository.find({
+      where: { role: Role.PATIENT },
+      relations: ['patientProfile'],
+      order: { created_at: 'DESC' },
+    });
+
+    // 4. Get all diagnoses to understand patient conditions and recommend stock
+    const diagnoses = await this.diagnosisRepository.find({
+      relations: [
+        'patient',
+        'patient.patientProfile',
+        'doctor',
+        'doctor.doctorProfile',
+        'prescriptions',
+        'prescriptions.medications',
+      ],
+      order: { created_at: 'DESC' },
+    });
+
+    // 5. Get all prescriptions for medicine demand analysis
+    const prescriptions = await this.prescriptionRepository.find({
+      relations: [
+        'medications',
+        'diagnosis',
+        'diagnosis.patient',
+        'diagnosis.patient.patientProfile',
+        'diagnosis.doctor',
+        'diagnosis.doctor.doctorProfile',
+      ],
+      order: { created_at: 'DESC' },
+    });
+
+    // 6. Get all payments for financial tracking
+    const payments = await this.paymentRepository.find({
+      order: { payment_date: 'DESC' },
+    });
+
+    // 7. Calculate financial metrics
+    const totalRevenue = payments.reduce(
+      (sum, payment) => sum + parseFloat(payment.amount.toString()),
+      0,
+    );
+
+    // 8. Calculate low stock items (threshold: 10 or less)
+    const lowStockItems = medications.filter(
+      (med) => med.stock_quantity <= 10,
+    ).length;
+
+    // 9. Get pending orders count
+    const pendingOrders = orders.filter(
+      (order) => order.payment_status === PaymentStatus.PENDING,
+    ).length;
 
     return {
       ...baseData,
       orders,
       medications,
+      patients,
+      diagnoses,
+      prescriptions,
+      payments,
       stats: {
         ...baseData.stats,
         totalOrders: orders.length,
-        pendingOrders: orders.filter(
-          (order) => order.payment_status === PaymentStatus.PENDING,
-        ).length,
+        pendingOrders,
         totalMedications: medications.length,
+        totalPatients: patients.length,
+        totalDiagnoses: diagnoses.length,
+        totalPrescriptions: prescriptions.length,
+        activePrescriptions: prescriptions.filter(
+          (p) => p.status === PrescriptionStatus.ACTIVE,
+        ).length,
+        totalPayments: payments.length,
+        totalRevenue,
+        lowStockItems,
       },
     };
   }

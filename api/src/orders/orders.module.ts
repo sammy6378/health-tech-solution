@@ -10,6 +10,7 @@ import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Payment } from 'src/payments/entities/payment.entity';
+import { OrderMedication } from './entities/order-medications.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Payment } from 'src/payments/entities/payment.entity';
       Stock,
       Prescription,
       Payment,
+      OrderMedication,
     ]),
   ],
   controllers: [OrdersController],

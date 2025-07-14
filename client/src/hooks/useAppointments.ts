@@ -1,62 +1,91 @@
-import type { TAppointment } from "@/types/api-types";
-import { useCreate, useDelete, useGetList, useGetOne, useUpdate } from "./useApiHook";
-import { useAuthStore } from "@/store/store";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { TAppointment } from '@/types/api-types'
+import {
+  fetchList,
+  fetchOne,
+  createItem,
+  updateItem,
+  deleteItem,
+} from '@/services/api-call'
 
-const base = 'appointments';
+// Base path
+const base = 'appointments'
 
-export const useGetAppointments = () => useGetList<TAppointment>('appointments', base)
+// ✅ Get all appointments
+export const useGetAppointments = () =>
+  useQuery({
+    queryKey: ['appointments'],
+    queryFn: () => fetchList<TAppointment>(base),
+  })
+
+// ✅ Get appointments for a specific user
 export const useGetAppointmentsByUser = (userId: string) =>
-  useGetList<TAppointment>('appointments', `${base}?userId=${userId}`)
+  useQuery({
+    queryKey: ['appointments', 'user', userId],
+    queryFn: () => fetchList<TAppointment>(`${base}?userId=${userId}`),
+    enabled: !!userId,
+  })
 
+// ✅ Get a single appointment
 export const useGetAppointment = (id: string) =>
-  useGetOne<TAppointment>('appointment', `${base}/${id}`, !!id)
-export const useCreateAppointment = () =>
-  useCreate<TAppointment>('appointments', base)
-  
-export const useUpdateAppointment = () => useUpdate<TAppointment>(
-  'appointments',
-  (id: string) => `${base}/${id}`,
-)
-export const useDeleteAppointment = () => useDelete(
-  'appointments',
-  (id: string) => `${base}/${id}`,
-)
+  useQuery({
+    queryKey: ['appointment', id],
+    queryFn: () => fetchOne<TAppointment>(`${base}/${id}`),
+    enabled: !!id,
+  })
 
-export const useAppointmentMetrics = () => {
-   const {user} = useAuthStore()
-    const userId = user?.userId || '';
-    const { data: appointmnets } = useGetAppointmentsByUser(userId)
-    if( !appointmnets || !appointmnets.data) {
-        return {
-            completed: [],
-            pending: [],
-            cancelled: [],
-            scheduled: [],
-            total: 0,
-            upcoming: [],
-        };
-    }
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+ // ✅ Get appointments by time slots for a specific doctor
+export const useGetAppointmentsByTimeSlots = (appointmentDate: string,doctor_id:string) => {
+  return useQuery({
+    queryKey: ['appointments', 'available-slots', doctor_id, appointmentDate],
+    queryFn: () =>
+      fetchList<TAppointment>(
+        `${base}/available-slots?doctor_id=${doctor_id}&appointment_date=${appointmentDate}`,
+      ),
+    enabled: !!appointmentDate && !!doctor_id,
+  })
+}
 
-    const upcomingAppointmentsList = appointmnets.data.filter(
-      (a: TAppointment) => new Date(a.appointment_date) >= today,
-      (a: TAppointment) => a.status === 'scheduled' || a.status === 'pending',
-    ).length || 0;
 
-    const completed = appointmnets.data?.filter((a: TAppointment) => a.status === 'completed') || [];
-    const pending = appointmnets.data?.filter((a: TAppointment) => a.status === 'pending') || [];
-    const cancelled = appointmnets.data?.filter((a: TAppointment) => a.status === 'cancelled') || [];
-    const scheduled = upcomingAppointmentsList
-    const total = appointmnets.data?.length || 0;
-    const upcoming = appointmnets.data?.filter((a: TAppointment) => new Date(a.appointment_date) > new Date()) || [];
-    return {
-        completed,
-        pending,
-        cancelled,
-        scheduled,
-        total,
-        upcoming,
-    };
+// ✅ Create an appointment
+export const useCreateAppointment = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: Partial<TAppointment>) =>
+      createItem<TAppointment>(base, data),
+    onSuccess: (_, __, context) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false }) // All dashboards
+    },
+  })
+}
+
+// ✅ Update an appointment
+export const useUpdateAppointment = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TAppointment> }) =>
+      updateItem<TAppointment>(`${base}/${id}`, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointment', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// ✅ Delete an appointment
+export const useDeleteAppointment = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteItem(`${base}/${id}`),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointment', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
 }

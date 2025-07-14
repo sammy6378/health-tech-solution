@@ -37,11 +37,11 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto);
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
-  @Get('/status/:status')
-  async findByStatus(@Param('status') status: DeliveryStatus) {
-    return this.ordersService.findByStatus(status);
-  }
+  // @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
+  // @Get('/status/:status')
+  // async findByStatus(@Param('status') status: DeliveryStatus) {
+  //   return await this.ordersService.findByStatus(status);
+  // }
 
   @Roles(Role.PHARMACY, Role.ADMIN)
   @Patch(':id/update-status')
@@ -60,18 +60,6 @@ export class OrdersController {
     @Body('transcation_id') transcationId: string,
   ) {
     return this.ordersService.confirmPayment(id, amount, transcationId);
-  }
-
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
-  @Patch(':id/cancel')
-  async cancelOrder(@Param('id') id: string) {
-    return this.ordersService.cancelOrder(id);
-  }
-
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
-  @Get('prescription/:prescriptionId')
-  async findByPrescription(@Param('prescriptionId') prescriptionId: string) {
-    return this.ordersService.findByPrescription(prescriptionId);
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)

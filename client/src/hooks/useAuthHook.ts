@@ -25,7 +25,7 @@ export const useLogin = () => {
           case 'patient':
             return '/dashboard/home'
           case 'pharmacy':
-            return '/dashboard/pharmacy'
+            return '/dashboard/pharmacy-dashboard'
           default:
             return '/dashboard/home'
         }

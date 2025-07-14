@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/dashboard/Sidebar'
 import { Outlet } from '@tanstack/react-router'
 import { authStore, useAuthStore } from '@/store/store'
 import type { Role } from '@/types/Tuser'
+import Chatbot from '@/components/modals/chatbot'
 
 export const Route = createFileRoute('/dashboard')({
     beforeLoad: ({location}) =>{
@@ -70,6 +71,7 @@ function RouteComponent() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <Outlet />
+              <Chatbot />
             </div>
           </div>
         </div>

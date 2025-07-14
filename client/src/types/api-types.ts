@@ -16,13 +16,23 @@ export const formatDate = (date: Date | string) => {
 }
 
 // currency
- export const formatCurrency = (amount?: number) => {
-    if (!amount) return 'KES 0.00'
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-    }).format(amount)
-  }
+export const formatCurrency = (amount?: number | string) => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+  if (!numAmount || isNaN(numAmount)) return 'KES 0.00'
+  return new Intl.NumberFormat('en-KE', {
+    style: 'currency',
+    currency: 'KES',
+  }).format(numAmount)
+}
+
+// time
+export const formatTime = (time: string) => {
+  if (!time) return 'No time'
+  const [hours, minutes] = time.split(':').map(Number)
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const formattedHours = hours % 12 || 12 // Convert to 12-hour format
+  return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`
+}
 
 // diagnosis
 export interface TDiagnosis {
@@ -92,18 +102,27 @@ export enum ConsultationType {
 
 export interface TAppointment {
   appointment_id?: string
-  appointment_date: Date
+  appointment_date: string
   appointment_time: string
   duration_minutes: number
+  start_time?: string
+  end_time?: string
+  time_slots?: string[]
   consultation_type: ConsultationType
   status?: AppointmentStatus
   meeting_link?: string
+  start_url?: string
+  join_url?: string
+  zoom_meeting_id?: string
+  reason: string
   notes?: string
   patient?: TUser
   doctor?: TUser
   diagnosis?: TDiagnosis[]
   created_at?: Date
   updated_at?: Date
+  doctor_id?: string
+  patient_id: string
 }
 
 // medicines
@@ -185,22 +204,36 @@ export enum PaymentStatus {
 }
 
 export interface TOrder {
-  order_id?: string 
+  order_id?: string
   order_number?: string
-  amount?: number 
-  order_date?: Date 
+  total_amount?: number
+  order_date?: Date
   delivery_address: string
   delivery_method: DeliveryMethod
   delivery_time: string
-  estimated_delivery?: string 
+  estimated_delivery?: string
   delivery_status?: DeliveryStatus
   payment_method: PaymentMethod
-  payment_status?: PaymentStatus 
+  payment_status?: PaymentStatus
   notes?: string
   created_at?: Date
   updated_at?: Date
   prescription: TPrescription
   payment?: TPayment
+  orderMedications: TOrderMedication[]
+  patient?: TUser
+  patient_id?: string
+}
+
+// order medications
+export interface TOrderMedication {
+  id?: string
+  quantity: number
+  unit_price: number
+  total_amount: number
+  medication_id: string
+  created_at?: Date
+  medication?: TMedication
 }
 
 // medical records
@@ -216,7 +249,7 @@ export interface TMedicalrecord {
   temperature?: number
   weight?: number
   height?: number
-  BMI?: number
+  bmi?: number
   allergies?: string[]
   notes?: string
   docs?: string[]

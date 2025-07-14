@@ -23,9 +23,9 @@ import {
   FileText,
   Calendar1,
 } from 'lucide-react'
-import { AppointmentStatus, formatDate } from '@/types/api-types'
+import { AppointmentStatus, formatDate, formatTime } from '@/types/api-types'
 import { InfoRow } from '@/components/utils/Labels'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
 
 export function MyCalendar() {
   const [date, setDate] = React.useState<Date | undefined>(
@@ -184,7 +184,7 @@ export function MyCalendar() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                 <Clock className="w-4 h-4" />
-                                {formatDate(appointment.appointment_date)}
+                                {appointment.appointment_date} {formatTime(appointment.start_time ?? '')}
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 <MapPin className="w-4 h-4" />

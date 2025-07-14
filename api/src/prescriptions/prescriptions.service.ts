@@ -139,7 +139,6 @@ export class PrescriptionsService {
           'diagnosis.patient',
           'diagnosis.doctor',
           'medications',
-          'order',
         ],
         order: { created_at: 'DESC' },
       });
@@ -163,7 +162,6 @@ export class PrescriptionsService {
           'diagnosis.patient',
           'diagnosis.doctor',
           'medications',
-          'order',
         ],
       });
 
@@ -192,7 +190,6 @@ export class PrescriptionsService {
           'diagnosis.patient',
           'diagnosis.doctor',
           'medications',
-          'order',
         ],
         order: { created_at: 'DESC' },
       });

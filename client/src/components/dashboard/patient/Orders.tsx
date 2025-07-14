@@ -14,7 +14,7 @@ import {
   Eye,
 } from 'lucide-react'
 import { DeliveryStatus, formatCurrency, formatDate } from '@/types/api-types'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
 
 const statusColors = {
@@ -46,6 +46,8 @@ const statusIcons = {
 
 function Orders() {
   const { orders } = useUserData()
+
+  console.log('orders',orders)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -79,7 +81,8 @@ function Orders() {
   const completedOrders = orders.filter(
     (order) => order.delivery_status === DeliveryStatus.DELIVERED,
   ).length
-  const totalSpent = orders.reduce((sum, order) => sum + (order.amount || 0), 0)
+  const totalSpent = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0)
+  console.log('totalSpent', totalSpent)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
@@ -235,7 +238,9 @@ function Orders() {
                           Total
                         </p>
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {order.amount ? formatCurrency(order.amount) : 'N/A'}
+                          {order.total_amount
+                            ? formatCurrency(order.total_amount)
+                            : 'N/A'}
                         </p>
                       </div>
                       <Link

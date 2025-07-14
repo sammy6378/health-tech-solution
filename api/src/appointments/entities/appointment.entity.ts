@@ -20,18 +20,40 @@ export class Appointment {
   appointment_id: string;
 
   @Column()
-  appointment_date: Date;
+  appointment_date: string;
 
-  @Column()
-  appointment_time: string;
-
-  @Column()
+  @Column({ default: 60 })
   duration_minutes: number;
+
+  @Column()
+  reason: string;
+
+  @Column({ type: 'simple-array', nullable: true })
+  time_slots: string[];
+
+  @Column()
+  start_time: string;
+
+  @Column()
+  end_time: string;
+
+  @Column({ nullable: true })
+  meeting_link: string;
+
+  @Column('varchar', { nullable: true })
+  zoom_meeting_id?: string;
+
+  @Column()
+  start_url: string;
 
   @Column({ type: 'enum', enum: ConsultationType })
   consultation_type: ConsultationType;
 
-  @Column({ type: 'enum', enum: AppointmentStatus })
+  @Column({
+    type: 'enum',
+    enum: AppointmentStatus,
+    default: AppointmentStatus.SCHEDULED,
+  })
   status: AppointmentStatus;
 
   @Column({ nullable: true })

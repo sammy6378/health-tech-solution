@@ -1,5 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Relation,
+} from 'typeorm';
 import { StockCategory, StockType } from '../dto/create-stock.dto';
+import { OrderMedication } from 'src/orders/entities/order-medications.entity';
 
 @Entity('stocks')
 export class Stock {
@@ -20,6 +27,9 @@ export class Stock {
 
   @Column({ type: 'text' })
   manufacturer: string;
+
+  @Column({ type: 'text' })
+  manufacture_date: string;
 
   @Column({ type: 'date' })
   expiration_date: Date;
@@ -60,4 +70,10 @@ export class Stock {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updated_at: Date;
+
+  @OneToMany(
+    () => OrderMedication,
+    (orderMedication) => orderMedication.medication,
+  )
+  orderMedications: Relation<OrderMedication[]>;
 }

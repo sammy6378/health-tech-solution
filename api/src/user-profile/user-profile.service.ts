@@ -67,6 +67,26 @@ export class UserProfileService {
       });
   }
 
+  // find by patient id
+  async findByPatientId(
+    patientId: string,
+  ): Promise<ApiResponse<PatientProfile | null>> {
+    return this.userProfileRepository
+      .findOne({
+        where: { patient: { user_id: patientId } },
+      })
+      .then((profile) => {
+        if (!profile) {
+          return createResponse(null, 'User profile not found');
+        }
+        return createResponse(profile, 'User profile retrieved successfully');
+      })
+      .catch((error) => {
+        console.error('Error retrieving user profile by patient ID:', error);
+        throw new Error('Failed to retrieve user profile by patient ID');
+      });
+  }
+
   async findOne(id: string): Promise<ApiResponse<PatientProfile | null>> {
     return this.userProfileRepository
       .findOneBy({ profile_id: id })

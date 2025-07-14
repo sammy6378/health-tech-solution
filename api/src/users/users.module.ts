@@ -14,6 +14,8 @@ import { MedicalRecord } from 'src/medical-records/entities/medical-record.entit
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
+import { MailService } from 'src/mails/mails.service';
 
 @Module({
   imports: [
@@ -30,9 +32,10 @@ import { Prescription } from 'src/prescriptions/entities/prescription.entity';
       Notification,
       Diagnosis,
       Prescription,
+      Payment,
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, MailService],
 })
 export class UsersModule {}

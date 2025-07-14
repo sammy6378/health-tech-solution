@@ -72,7 +72,7 @@ export class MedicalRecordsService {
   // find by patient id
   async findByPatientId(
     patientId: string,
-  ): Promise<ApiResponse<MedicalRecord[]>> {
+  ): Promise<ApiResponse<MedicalRecord | null>> {
     try {
       const patient = await this.userRepository.findOne({
         where: { user_id: patientId },
@@ -82,7 +82,7 @@ export class MedicalRecordsService {
         throw new NotFoundException(`Patient with ID ${patientId} not found`);
       }
 
-      const medicalRecords = await this.medicalRecordRepository.find({
+      const medicalRecords = await this.medicalRecordRepository.findOne({
         where: { patient: { user_id: patientId } },
         order: { record_date: 'DESC' },
       });
@@ -127,6 +127,7 @@ export class MedicalRecordsService {
     id: string,
     updateMedicalRecordDto: UpdateMedicalRecordDto,
   ): Promise<ApiResponse<MedicalRecord>> {
+    console.log('data', updateMedicalRecordDto);
     try {
       const existingRecord = await this.medicalRecordRepository.findOne({
         where: { record_id: id },
@@ -166,6 +167,7 @@ export class MedicalRecordsService {
       if (error instanceof NotFoundException) {
         throw error;
       }
+      console.error('record', error);
       throw new BadRequestException('Failed to update medical record');
     }
   }

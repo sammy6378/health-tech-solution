@@ -9,7 +9,8 @@ import {
   Tooltip,
 } from 'recharts'
 import dayjs from 'dayjs'
-import { useUserData } from '@/hooks/useUserHook'
+import { useUserData } from '@/hooks/useDashboard'
+
 
 type ChartData = {
   name: string

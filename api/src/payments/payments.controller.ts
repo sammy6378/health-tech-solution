@@ -17,6 +17,12 @@ export class PaymentsController {
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.paymentsService.findByUser(userId);
+  }
+
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.paymentsService.findOne(id);

@@ -28,7 +28,7 @@ import { join } from 'path';
           },
         },
         defaults: {
-          from: `"No Reply" <${configService.getOrThrow<string>('SMTP_EMAIL')}>`,
+          from: `"No Reply" <${configService.get<string>('SMTP_EMAIL')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'), // mail/templates/…

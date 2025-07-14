@@ -1,9 +1,15 @@
 import { format } from 'date-fns'
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart/add'
+import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, totalAmount } = useCartStore()
+  const [deliveryMethod, setDeliveryMethod] = useState<'home' | 'pickup'>(
+    'pickup',
+  )
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -158,9 +164,36 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition">
-                  Secure Checkout
-                </button>
+                {/* order delivery */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                  Delivery
+                  </h3>
+                  <div>
+                  <Button
+                    variant={deliveryMethod === 'home' ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => setDeliveryMethod('home')}
+                  >
+                    Home Delivery
+                  </Button>
+                  <Button
+                    variant={deliveryMethod === 'pickup' ? 'default' : 'outline'}
+                    className="ml-2 cursor-pointer"
+                    onClick={() => setDeliveryMethod('pickup')}
+                  >
+                    Pickup
+                  </Button>
+                  </div>
+                </div>
+
+                <Link
+                  to={deliveryMethod === 'home' ? '/dashboard/cart/new-order' : '/dashboard/cart'}
+                  className={
+                    `block w-full cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition text-center`}
+                >
+                  {deliveryMethod === 'home' ? 'Create Order' : 'Checkout'}
+                </Link>
               </div>
             </div>
           </div>

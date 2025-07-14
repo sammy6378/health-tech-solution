@@ -1,4 +1,4 @@
-import { useUserData } from '@/hooks/useUserHook'
+import { useDoctorData } from "@/hooks/useDashboard"
 import {
   Clock,
   MapPin,
@@ -13,10 +13,9 @@ import {
 } from 'lucide-react'
 
 const DoctorProfile = () => {
-  const { profileData,doctors,user } = useUserData()
+  const { profile } = useDoctorData()
 
-  const doctor = profileData?.doctorProfile;
-  const doctorName = doctors.find((doc) => doc.user_id === user.userId);
+  const doctor = profile?.doctorProfile;
 
   if (!doctor) {
     return (
@@ -137,7 +136,7 @@ const DoctorProfile = () => {
               <div className="flex-1 space-y-4">
                 <div>
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Dr. {doctorName?.first_name} {doctorName?.last_name}
+                    Dr. {doctor.user?.first_name} {doctor.user?.last_name}
                   </h2>
                   <p className="text-lg text-blue-600 dark:text-blue-400 font-medium">
                     {doctor.specialization}

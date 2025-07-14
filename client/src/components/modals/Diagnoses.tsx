@@ -20,7 +20,9 @@ const validationSchema = Yup.object({
 
 export default function DiagnosesPage() {
   const { mutate, isSuccess, isPending } = useCreateDiagnosis()
-  const { appointment: appointmentId } = useParams({ strict: false })
+  const { dgs: appointmentId } = useParams({ strict: false })
+
+  // console.log('dgs', appointmentId)
 
   const formik = useFormik({
     initialValues: {
@@ -50,8 +52,10 @@ export default function DiagnosesPage() {
           ? values.symptoms.split(',').map((s) => s.trim())
           : [],
       }
+      
       mutate(payload)
     },
+    
     // reset after submission
     enableReinitialize: true,
     validateOnMount: true,

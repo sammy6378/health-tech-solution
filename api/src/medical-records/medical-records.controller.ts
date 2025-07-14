@@ -27,7 +27,7 @@ export class MedicalRecordsController {
     return this.medicalRecordsService.create(createMedicalRecordDto);
   }
 
-  @Roles(Role.DOCTOR, Role.ADMIN)
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get()
   findAll() {
     return this.medicalRecordsService.findAll();

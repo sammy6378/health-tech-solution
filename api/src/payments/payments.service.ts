@@ -17,7 +17,16 @@ export class PaymentsService {
     });
   }
 
-  findOne(id: string): Promise<ApiResponse<Payment>> {
+  // get by user
+  async findByUser(userId: string): Promise<ApiResponse<Payment[]>> {
+    return this.paymentRepository
+      .find({ where: { patient_id: userId } })
+      .then((payments) => {
+        return createResponse(payments, 'Payments retrieved successfully');
+      });
+  }
+
+  async findOne(id: string): Promise<ApiResponse<Payment>> {
     return this.paymentRepository
       .findOne({ where: { payment_id: id } })
       .then((payment) => {
@@ -28,7 +37,7 @@ export class PaymentsService {
       });
   }
 
-  remove(id: string): Promise<ApiResponse<null>> {
+  async remove(id: string): Promise<ApiResponse<null>> {
     return this.paymentRepository.delete({ payment_id: id }).then((result) => {
       if (result.affected === 0) {
         throw new NotFoundException(`Payment with ID ${id} not found`);

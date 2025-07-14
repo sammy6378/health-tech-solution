@@ -73,6 +73,7 @@ export interface TDoctor {
   avatar: string
   bio?: string
   created_at?: Date
+  user?: TUser
 }
 
 
@@ -99,8 +100,8 @@ export interface TPatient {
   patient_id?: string
   phone_number: string
   address: string
-  sex: Gender
-  date_of_birth: Date
+  sex?: Gender
+  date_of_birth?: Date
   age: number
   city?: string
   state?: string
@@ -108,4 +109,5 @@ export interface TPatient {
   postal_code?: string
   avatar?: string
   created_at?: Date
+  user?: TUser
 }

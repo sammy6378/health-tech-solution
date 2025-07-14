@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react'
 import {
   useCreateMedicalRecord,
   useUpdateMedicalRecord,
-  useFetchMedicalrecord,
+  useFetchMedicalRecordByUser,
 } from '@/hooks/useRecords'
 import { toast } from 'sonner'
 
@@ -31,8 +31,8 @@ export default function BmiModal({
   onOpenChange,
   patient_id,
 }: BmiModalProps) {
-  const { data: existingRecord, refetch } = useFetchMedicalrecord(patient_id)
-  console.log('Existing Record:', existingRecord)
+  const { data: existingRecord, refetch } =
+    useFetchMedicalRecordByUser(patient_id)
   const { mutateAsync: createRecord } = useCreateMedicalRecord()
   const { mutateAsync: updateRecord } = useUpdateMedicalRecord()
 
@@ -79,27 +79,32 @@ export default function BmiModal({
         setLoading(true)
 
         const payload = {
-          BMI: roundedBmi,
+          bmi: roundedBmi,
           height: Number(values.height),
-          weight: Number(values.weight),
-          patient_id,
+          weight: Number(values.weight)
         }
 
-        const record = existingRecord?.data?.[0]
+        const record = existingRecord?.data;
         const recordId = record?.record_id
 
         if (recordId) {
           await updateRecord({ id: recordId, data: payload })
           toast.success('BMI record updated successfully')
+          // close modal
+          onOpenChange(false)
+
         } else {
           await createRecord(payload)
           toast.success('BMI record created successfully')
+          // close modal
+          onOpenChange(false)
         }
       } catch (err) {
         console.error('Failed to save BMI record:', err)
         toast.error('Failed to save BMI record')
       } finally {
         setLoading(false)
+        resetForm()
       }
     },
   })

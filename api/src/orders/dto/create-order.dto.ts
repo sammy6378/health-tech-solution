@@ -1,10 +1,14 @@
 import {
+  IsArray,
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
+import { CreateOrderMedicationDto } from './order-medication.dto';
+import { Type } from 'class-transformer';
 
 export enum DeliveryMethod {
   HOME_DELIVERY = 'home_delivery',
@@ -33,10 +37,6 @@ export enum PaymentStatus {
 }
 
 export class CreateOrderDto {
-  @IsUUID()
-  @IsOptional()
-  prescription_id?: string;
-
   @IsString()
   order_number: string;
 
@@ -65,4 +65,13 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  patient_id: string;
+
+  @IsArray()
+  @IsNotEmpty()
+  @Type(() => CreateOrderMedicationDto)
+  medications: CreateOrderMedicationDto[];
 }

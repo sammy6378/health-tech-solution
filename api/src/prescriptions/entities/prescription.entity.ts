@@ -5,13 +5,11 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
 import { PrescriptionStatus } from '../dto/create-prescription.dto';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
-import { Order } from 'src/orders/entities/order.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 
 @Entity('prescriptions')
@@ -78,9 +76,6 @@ export class Prescription {
     },
   })
   medications: Relation<Stock[]>;
-
-  @OneToOne(() => Order, (order) => order.prescription, { nullable: true })
-  order: Order;
 
   @Column()
   diagnosis_id: string;

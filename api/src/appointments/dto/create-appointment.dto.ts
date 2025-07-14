@@ -1,5 +1,5 @@
 import {
-  IsDate,
+  IsArray,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -20,14 +20,36 @@ export enum ConsultationType {
 }
 
 export class CreateAppointmentDto {
-  @IsDate()
-  appointment_date: Date;
+  @IsString()
+  appointment_date: string;
 
   @IsString()
-  appointment_time: string;
+  start_time: string;
+
+  @IsString()
+  @IsOptional()
+  end_time: string;
 
   @IsNumber()
-  duration_minutes: number;
+  @IsOptional()
+  duration_minutes?: number;
+
+  @IsString()
+  reason: string;
+
+  @IsArray({ each: true })
+  time_slots?: string[];
+
+  @IsString()
+  @IsOptional()
+  meeting_link?: string;
+
+  @IsString()
+  @IsOptional()
+  zoom_meeting_id?: string;
+
+  @IsString()
+  start_url: string;
 
   @IsEnum(ConsultationType)
   consultation_type: ConsultationType;

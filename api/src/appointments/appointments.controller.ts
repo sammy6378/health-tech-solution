@@ -19,6 +19,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AtGuard } from 'src/auth/guards/at.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/users/dto/create-user.dto';
+import { ApiResponse, createResponse } from 'src/utils/apiResponse';
 
 @UseGuards(AtGuard, RolesGuard)
 @Controller('appointments')
@@ -35,6 +36,19 @@ export class AppointmentsController {
   @Get()
   findAll() {
     return this.appointmentsService.findAll();
+  }
+
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
+  @Get('available-slots')
+  async getAvailableSlots(
+    @Query('doctor_id') doctorId: string,
+    @Query('appointment_date') appointmentDate: string,
+  ): Promise<ApiResponse<string[]>> {
+    const slots = await this.appointmentsService.getAvailableSlots(
+      doctorId,
+      appointmentDate,
+    );
+    return createResponse(slots, 'Available slots fetched successfully');
   }
 
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
