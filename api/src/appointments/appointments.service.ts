@@ -393,4 +393,43 @@ export class AppointmentsService {
 
     return createResponse(appointments, 'Patient appointments fetched');
   }
+
+  // update appointment status
+  async updateAppointmentStatus(
+    id: string,
+    status: AppointmentStatus,
+  ): Promise<ApiResponse<Appointment>> {
+    const appointment = await this.appointmentRepository.findOne({
+      where: { appointment_id: id },
+      relations: ['patient', 'doctor'],
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    // Only allow certain status transitions
+    const validTransitions: Record<AppointmentStatus, AppointmentStatus[]> = {
+      [AppointmentStatus.SCHEDULED]: [
+        AppointmentStatus.COMPLETED,
+        AppointmentStatus.CANCELLED,
+      ],
+      [AppointmentStatus.COMPLETED]: [],
+      [AppointmentStatus.CANCELLED]: [],
+      [AppointmentStatus.PENDING]: [AppointmentStatus.SCHEDULED],
+    };
+
+    if (
+      !validTransitions[appointment.status].includes(status) &&
+      status !== AppointmentStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        `Cannot change status from ${appointment.status} to ${status}`,
+      );
+    }
+
+    appointment.status = status;
+    const updated = await this.appointmentRepository.save(appointment);
+    return createResponse(updated, 'Appointment status updated');
+  }
 }

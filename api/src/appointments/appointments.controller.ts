@@ -38,6 +38,8 @@ export class AppointmentsController {
     return this.appointmentsService.findAll();
   }
 
+  // ✅ 1. Use unique paths for each kind of route
+
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get('available-slots')
   async getAvailableSlots(
@@ -51,30 +53,43 @@ export class AppointmentsController {
     return createResponse(slots, 'Available slots fetched successfully');
   }
 
+  // ✅ 2. Make status filtering explicit
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
-  @Get(':status')
+  @Get('status/:status')
   findByStatus(@Param('status') status: AppointmentStatus) {
     return this.appointmentsService.appointmentsByStatus(status);
   }
 
+  // ✅ 3. Use clear names for doctor/patient/user-based filters
   @Roles(Role.DOCTOR, Role.ADMIN)
-  @Get('user')
+  @Get('by-doctor')
   findAppointmentsByDoctor(@Query('doctorId') doctorId: string) {
     return this.appointmentsService.findAppointmentsByDoctor(doctorId);
   }
 
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
-  @Get('patient')
+  @Get('by-patient')
   findAppointmentsByPatient(@Query('patientId') patientId: string) {
     return this.appointmentsService.findAppointmentsByPatient(patientId);
   }
 
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
-  @Get(':userId')
+  @Get('by-user')
   getAppointments(@Query('userId') userId: string) {
     return this.appointmentsService.findByUser(userId);
   }
 
+  // update status
+  @Roles(Role.DOCTOR, Role.ADMIN)
+  @Patch(':id/status')
+  updateAppointmentStatus(
+    @Param('id') id: string,
+    @Body('status') status: AppointmentStatus,
+  ) {
+    return this.appointmentsService.updateAppointmentStatus(id, status);
+  }
+
+  // ✅ 4. Find appointment by ID — must be last
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
