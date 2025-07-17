@@ -1,4 +1,3 @@
-// src/socket/socket.service.ts
 import { Injectable } from '@nestjs/common';
 import { SocketGateway } from './socket.gateway';
 

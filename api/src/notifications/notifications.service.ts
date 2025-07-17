@@ -6,6 +6,7 @@ import { Notification } from './entities/notification.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { createResponse, ApiResponse } from 'src/utils/apiResponse';
+import { SocketsService } from 'src/sockets/sockets.service';
 
 @Injectable()
 export class NotificationsService {
@@ -14,6 +15,7 @@ export class NotificationsService {
     private readonly notificationRepository: Repository<Notification>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly socketService: SocketsService,
   ) {}
   async create(
     createNotificationDto: CreateNotificationDto,
@@ -34,6 +36,13 @@ export class NotificationsService {
     });
 
     const res = await this.notificationRepository.save(notification);
+
+    // Emit notification to the user via WebSocket
+    this.socketService.sendNotification(
+      user.user_id,
+      createNotificationDto.title,
+      createNotificationDto.content,
+    );
 
     return createResponse(res, 'Notification created successfully');
   }

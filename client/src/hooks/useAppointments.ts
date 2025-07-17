@@ -54,7 +54,7 @@ export const useCreateAppointment = () => {
   return useMutation({
     mutationFn: (data: Partial<TAppointment>) =>
       createItem<TAppointment>(base, data),
-    onSuccess: (_, __, context) => {
+    onSuccess: (_, __,) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false }) // All dashboards
     },

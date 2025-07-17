@@ -53,6 +53,7 @@ export default function PrescriptionFormSheet({
     },
     onSubmit: async (values) => {
       // Validate each prescription item
+      console.log('values',values)
       const hasErrors = prescriptionItems.some((item) => {
         return (
           !item.medication_id ||

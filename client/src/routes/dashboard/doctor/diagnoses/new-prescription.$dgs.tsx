@@ -9,5 +9,6 @@ export const Route = createFileRoute(
 })
 
 function RouteComponent() {
-  return <PrescriptionCreatePage />
+  const { dgs } = Route.useParams();
+  return <PrescriptionCreatePage diagnosisId={dgs} />;
 }
