@@ -18,6 +18,7 @@ import { Order } from 'src/orders/entities/order.entity';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 
 @Entity('users')
 export class User {
@@ -114,6 +115,11 @@ export class User {
     onDelete: 'CASCADE',
   })
   orders: Order[];
+
+  @OneToMany(() => Payment, (payment) => payment.user, {
+    onDelete: 'CASCADE',
+  })
+  payments: Payment[];
 
   @OneToMany(() => Notification, (notification) => notification.user, {
     onDelete: 'CASCADE',

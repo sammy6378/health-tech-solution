@@ -27,17 +27,20 @@ export class UserProfileService {
       throw new NotFoundException('User not found');
     }
 
-    const existingProfile = await this.userProfileRepository.findOneBy({
-      patient: { user_id: createUserProfileDto.user_id },
+    const existingProfile = await this.userProfileRepository.findOne({
+      where: { patient: { user_id: createUserProfileDto.user_id } },
+      relations: ['patient'],
     });
 
     if (existingProfile) {
       throw new NotFoundException('User profile already exists');
     }
+
     const profile = this.userProfileRepository.create({
       ...createUserProfileDto,
       patient: user,
     });
+
     return this.userProfileRepository
       .save(profile)
       .then((savedProfile) => {

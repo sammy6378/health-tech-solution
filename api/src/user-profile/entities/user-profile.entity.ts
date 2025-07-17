@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
   Relation,
@@ -19,10 +20,10 @@ export class PatientProfile {
   @Column()
   address: string;
 
-  @Column({ type: 'enum', enum: Gender })
-  sex: Gender;
+  @Column({ type: 'enum', enum: Gender, nullable: true })
+  sex?: Gender;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   date_of_birth: Date;
 
   @Column({ type: 'int' })
@@ -47,5 +48,6 @@ export class PatientProfile {
   created_at: Date;
 
   @OneToOne(() => User, (user) => user.patientProfile)
+  @JoinColumn({ name: 'user_id' })
   patient: Relation<User>;
 }

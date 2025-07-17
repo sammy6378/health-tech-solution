@@ -16,6 +16,8 @@ import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { MailService } from 'src/mails/mails.service';
 import { Mailer } from 'src/mails/helperEmail';
+import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
+import * as dayjs from 'dayjs';
 
 // ✅ NEW: Role-based data retrieval
 interface DashboardStats {
@@ -32,6 +34,9 @@ interface DashboardStats {
   totalPayments?: number;
   totalRevenue?: number;
   lowStockItems?: number;
+  prescriptionsChangePercent?: number;
+  paymentsChangePercent?: number;
+  ordersChangePercent?: number;
 }
 
 export interface DashboardData {
@@ -44,6 +49,7 @@ export interface DashboardData {
   patients?: User[];
   medications?: Stock[];
   payments?: Payment[];
+  medicalRecord?: MedicalRecord;
   stats: DashboardStats;
 }
 
@@ -64,6 +70,8 @@ export class UsersService {
     private readonly medicationRepository: Repository<Stock>,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(MedicalRecord)
+    private readonly medicalRecordRepository: Repository<MedicalRecord>,
     private readonly mailService: MailService,
   ) {}
 
@@ -194,10 +202,8 @@ export class UsersService {
         'doctor',
         'doctor.doctorProfile',
         'prescriptions',
-        'prescriptions.medications',
-        'prescriptions.diagnosis',
-        'prescriptions.diagnosis.patient',
-        'prescriptions.diagnosis.doctor',
+        'prescriptions.prescriptionMedications', // ✅ Correct relation name
+        'prescriptions.prescriptionMedications.medication',
       ],
       order: { created_at: 'DESC' },
     });
@@ -205,22 +211,49 @@ export class UsersService {
     console.log('Diagnoses:', diagnoses);
 
     // 3. Get patient prescriptions (flattened from diagnoses)
-    const prescriptions = diagnoses.flatMap(
-      (diagnosis) => diagnosis.prescriptions,
-    );
+    const prescriptions = await this.prescriptionRepository.find({
+      where: {
+        diagnosis: {
+          patient: { user_id: userId },
+        },
+      },
+      relations: [
+        'prescriptionMedications',
+        'prescriptionMedications.medication',
+        'diagnosis',
+        'diagnosis.patient',
+        'diagnosis.patient.patientProfile',
+        'diagnosis.doctor',
+        'diagnosis.doctor.doctorProfile',
+      ],
+      order: { created_at: 'DESC' },
+    });
 
     console.log('Prescriptions:', prescriptions);
+
+    // medical records
+    const medicalRecord = await this.medicalRecordRepository.findOne({
+      where: { patient: { user_id: userId } },
+      relations: ['patient'],
+    });
+
+    console.log('medical records', medicalRecord);
 
     // 4. Get patient orders
     const orders = await this.orderRepository.find({
       where: { patient: { user_id: userId } },
       order: { created_at: 'DESC' },
-      relations: ['orderMedications', 'orderMedications.medication'],
+      relations: [
+        'orderMedications',
+        'orderMedications.medication',
+        'patient',
+        'patient.patientProfile',
+      ],
     });
 
     // patient payments
     const payments = await this.paymentRepository.find({
-      where: { patient_id: userId },
+      where: { user: { user_id: userId } },
       order: { payment_date: 'DESC' },
     });
 
@@ -238,6 +271,7 @@ export class UsersService {
       diagnoses,
       prescriptions,
       orders,
+      medicalRecord: medicalRecord ?? undefined,
       profileData: patientProfile ?? baseData.user,
       payments,
       stats: {
@@ -279,18 +313,30 @@ export class UsersService {
         'patient',
         'patient.patientProfile',
         'prescriptions',
-        'prescriptions.medications',
-        'prescriptions.diagnosis',
-        'prescriptions.diagnosis.patient',
-        'prescriptions.diagnosis.doctor',
+        'prescriptions.prescriptionMedications', // ✅ Correct relation name
+        'prescriptions.prescriptionMedications.medication',
       ],
       order: { created_at: 'DESC' },
     });
 
     // 3. Get doctor prescriptions (flattened from diagnoses)
-    const prescriptions = diagnoses.flatMap(
-      (diagnosis) => diagnosis.prescriptions,
-    );
+    const prescriptions = await this.prescriptionRepository.find({
+      where: {
+        diagnosis: {
+          doctor: { user_id: userId },
+        },
+      },
+      relations: [
+        'prescriptionMedications',
+        'prescriptionMedications.medication',
+        'diagnosis',
+        'diagnosis.patient',
+        'diagnosis.patient.patientProfile',
+        'diagnosis.doctor',
+        'diagnosis.doctor.doctorProfile',
+      ],
+      order: { created_at: 'DESC' },
+    });
 
     // 4. Get unique patients treated by this doctor
     const patientIds = new Set([
@@ -361,7 +407,8 @@ export class UsersService {
         'doctor',
         'doctor.doctorProfile',
         'prescriptions',
-        'prescriptions.medications',
+        'prescriptions.prescriptionMedications', // ✅ Correct relation name
+        'prescriptions.prescriptionMedications.medication',
       ],
       order: { created_at: 'DESC' },
     });
@@ -369,7 +416,8 @@ export class UsersService {
     // 5. Get all prescriptions for medicine demand analysis
     const prescriptions = await this.prescriptionRepository.find({
       relations: [
-        'medications',
+        'prescriptionMedications', // ✅ Correct relation name
+        'prescriptionMedications.medication',
         'diagnosis',
         'diagnosis.patient',
         'diagnosis.patient.patientProfile',
@@ -400,6 +448,47 @@ export class UsersService {
       (order) => order.payment_status === PaymentStatus.PENDING,
     ).length;
 
+    // 11
+    const now = dayjs();
+    const currentMonth = now.month();
+    const currentYear = now.year();
+    const lastMonth = now.subtract(1, 'month').month();
+    const lastMonthYear = now.subtract(1, 'month').year();
+
+    // Helper to check month and year
+    const isInMonth = (date: Date, month: number, year: number) =>
+      dayjs(date).month() === month && dayjs(date).year() === year;
+
+    const prescriptionsThisMonth = prescriptions.filter((p) =>
+      isInMonth(p.prescription_date, currentMonth, currentYear),
+    ).length;
+
+    const prescriptionsLastMonth = prescriptions.filter((p) =>
+      isInMonth(p.prescription_date, lastMonth, lastMonthYear),
+    ).length;
+
+    const ordersThisMonth = orders.filter((o) =>
+      isInMonth(o.created_at, currentMonth, currentYear),
+    ).length;
+
+    const ordersLastMonth = orders.filter((o) =>
+      isInMonth(o.created_at, lastMonth, lastMonthYear),
+    ).length;
+
+    const paymentsThisMonth = payments.filter((p) =>
+      isInMonth(p.payment_date, currentMonth, currentYear),
+    ).length;
+
+    const paymentsLastMonth = payments.filter((p) =>
+      isInMonth(p.payment_date, lastMonth, lastMonthYear),
+    ).length;
+
+    // Safe percent change calculation
+    const getPercentChange = (current: number, previous: number) => {
+      if (previous === 0) return current === 0 ? 0 : 100;
+      return ((current - previous) / previous) * 100;
+    };
+
     return {
       ...baseData,
       orders,
@@ -422,6 +511,15 @@ export class UsersService {
         totalPayments: payments.length,
         totalRevenue,
         lowStockItems,
+        prescriptionsChangePercent: getPercentChange(
+          prescriptionsThisMonth,
+          prescriptionsLastMonth,
+        ),
+        ordersChangePercent: getPercentChange(ordersThisMonth, ordersLastMonth),
+        paymentsChangePercent: getPercentChange(
+          paymentsThisMonth,
+          paymentsLastMonth,
+        ),
       },
     };
   }

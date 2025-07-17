@@ -16,6 +16,7 @@ import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { MailService } from 'src/mails/mails.service';
+import { PrescriptionMedication } from 'src/prescriptions/entities/prescription_medications.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MailService } from 'src/mails/mails.service';
       Diagnosis,
       Prescription,
       Payment,
+      PrescriptionMedication,
     ]),
   ],
   controllers: [UsersController],

@@ -2,6 +2,7 @@ import {
   IsDate,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsPhoneNumber,
   IsString,
   IsUUID,
@@ -22,26 +23,33 @@ export class CreateUserProfileDto {
   address: string;
 
   @IsEnum(Gender)
-  sex: Gender;
+  @IsOptional()
+  sex?: Gender;
 
   @IsDate()
+  @IsOptional()
   date_of_birth: Date;
 
   @IsNumber()
   age: number;
 
   @IsString()
+  @IsOptional()
   city?: string;
 
   @IsString()
+  @IsOptional()
   state?: string;
 
   @IsString()
+  @IsOptional()
   country?: string;
 
   @IsString()
+  @IsOptional()
   postal_code?: string;
 
   @IsString()
+  @IsOptional()
   avatar?: string;
 }
