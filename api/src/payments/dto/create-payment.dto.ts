@@ -1,4 +1,11 @@
-import { IsDate, IsDecimal, IsEnum, IsNumber, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsDecimal,
+  IsEnum,
+  IsNumber,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { PaymentMethod, PaymentStatus } from 'src/orders/dto/create-order.dto';
 import { PrimaryGeneratedColumn } from 'typeorm';
 
@@ -14,7 +21,22 @@ export class CreatePaymentDto {
   amount: number;
 
   @IsString()
-  transcation_id: string;
+  full_name: string;
+
+  @IsString()
+  email: string;
+
+  @IsString()
+  phone_number: string;
+
+  @IsString()
+  paystack_checkout_url: string;
+
+  @IsString()
+  paystack_reference: string;
+
+  @IsString()
+  paystack_access_code: string;
 
   @IsDate()
   payment_date: Date;
@@ -25,6 +47,6 @@ export class CreatePaymentDto {
   @IsEnum(PaymentMethod)
   payment_method: PaymentMethod;
 
-  @IsString()
-  patient_id: string;
+  @IsUUID()
+  user_id: string;
 }

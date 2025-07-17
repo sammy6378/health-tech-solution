@@ -1,9 +1,15 @@
 import { PaymentMethod, PaymentStatus } from 'src/orders/dto/create-order.dto';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from 'src/users/entities/user.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('payments')
 export class Payment {
-  // Primary key for the payment
   @PrimaryGeneratedColumn('uuid')
   payment_id: string;
 
@@ -17,8 +23,23 @@ export class Payment {
   @Column({ type: 'enum', enum: PaymentMethod })
   payment_method: PaymentMethod;
 
-  @Column({ unique: true })
-  transcation_id: string;
+  @Column()
+  full_name: string;
+
+  @Column()
+  email: string;
+
+  @Column()
+  phone_number: string;
+
+  @Column()
+  paystack_checkout_url: string;
+
+  @Column()
+  paystack_reference: string;
+
+  @Column()
+  paystack_access_code: string;
 
   @Column({ type: 'date' })
   payment_date: Date;
@@ -26,9 +47,7 @@ export class Payment {
   @Column()
   order_number: string;
 
-  @Column({ type: 'uuid' })
-  order_id: string;
-
-  @Column({ type: 'uuid' })
-  patient_id: string;
+  @ManyToOne(() => User, (user) => user.payments)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }
