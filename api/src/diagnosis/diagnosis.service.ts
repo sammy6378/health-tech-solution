@@ -82,12 +82,7 @@ export class DiagnosisService {
     try {
       const diagnosis = await this.diagnosisRepository.findOne({
         where: { diagnosis_id: id },
-        relations: [
-          'patient',
-          'doctor',
-          'prescriptions',
-          'prescriptions.medication',
-        ],
+        relations: ['patient', 'doctor'],
       });
 
       if (!diagnosis) {
