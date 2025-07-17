@@ -27,6 +27,9 @@ import { ChatbotService } from './chatbot/chatbot.service';
 import { ChatbotController } from './chatbot/chatbot.controller';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { ZoomService } from './zoom/zoom.service';
+import { UploadService } from './upload/upload.service';
+import { UploadModule } from './upload/upload.module';
+import { SocketsModule } from './sockets/sockets.module';
 
 @Module({
   imports: [
@@ -69,6 +72,8 @@ import { ZoomService } from './zoom/zoom.service';
     LogsModule,
     DiagnosisModule,
     ChatbotModule,
+    UploadModule,
+    SocketsModule,
   ],
   controllers: [ChatbotController],
   providers: [
@@ -87,6 +92,7 @@ import { ZoomService } from './zoom/zoom.service';
     },
     ChatbotService,
     ZoomService,
+    UploadService,
   ],
 })
 export class AppModule {}

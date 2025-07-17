@@ -7,6 +7,7 @@ import { join } from 'path';
 import { Logger } from '@nestjs/common';
 import { AllExceptionsFilter } from './http-exceptions.filter';
 import helmet from 'helmet';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -73,9 +74,14 @@ async function bootstrap() {
     customSiteTitle: 'MediConnect API Documentation',
   });
 
+  // templating
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');
+
+  // uploads
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   // port configuration
   const configService = app.get(ConfigService);
