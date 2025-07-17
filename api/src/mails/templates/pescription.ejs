@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Prescription Details - MediConnect</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: #1a73e8;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 10px 0 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .prescription-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .prescription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .prescription-id {
+            color: #1a73e8;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .prescription-date {
+            color: #70757a;
+            font-size: 14px;
+        }
+        .medication-details {
+            margin-bottom: 25px;
+        }
+        .medication-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #1a73e8;
+            margin-bottom: 5px;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .detail-label {
+            width: 150px;
+            font-weight: bold;
+            color: #5f6368;
+        }
+        .detail-value {
+            flex: 1;
+        }
+        .instructions {
+            background-color: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .instructions ul {
+            padding-left: 20px;
+            margin: 10px 0 0;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        .important-note {
+            background-color: #fef7e0;
+            border-left: 4px solid #f9ab00;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background: #f1f3f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #70757a;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 25px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1a73e8;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            flex: 1;
+        }
+        .button.outline {
+            background: transparent;
+            border: 2px solid #1a73e8;
+            color: #1a73e8 !important;
+        }
+        .disclaimer {
+            font-size: 12px;
+            color: #70757a;
+            margin-top: 25px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .doctor-signature {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #e0e0e0;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>MediConnect Pharmacy</h1>
+            <p style="color: white; margin: 5px 0 0;">Your Prescription Details</p>
+        </div>
+        
+        <div class="content">
+            <h2>Your Prescription Information</h2>
+            
+            <p>Dear <%= patientName %>,</p>
+            
+            <p>Your healthcare provider has issued a new prescription through MediConnect. Below are the details of your prescribed medications. Please review carefully.</p>
+            
+            <div class="important-note">
+                <strong>Important:</strong> This prescription has been electronically transmitted to MediConnect Pharmacy. 
+                You can fill this prescription at any time within the next 30 days.
+            </div>
+            
+            <% prescriptionDetails.forEach(function(prescription, index) { %>
+                <div class="prescription-card">
+                    <div class="prescription-header">
+                        <div class="prescription-id">Prescription #<%= index + 1 %></div>
+                        <div class="prescription-date">Issued: <%= new Date().toLocaleDateString() %></div>
+                    </div>
+                    
+                    <div class="medication-details">
+                        <div class="medication-name"><%= prescription.medication %></div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Dosage:</div>
+                            <div class="detail-value"><%= prescription.dosage %></div>
+                        </div>
+                        
+                        <% if (prescription.frequency) { %>
+                            <div class="detail-row">
+                                <div class="detail-label">Frequency:</div>
+                                <div class="detail-value"><%= prescription.frequency %> times per day</div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (prescription.duration_days) { %>
+                            <div class="detail-row">
+                                <div class="detail-label">Duration:</div>
+                                <div class="detail-value"><%= prescription.duration_days %> days</div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (prescription.quantity) { %>
+                            <div class="detail-row">
+                                <div class="detail-label">Quantity:</div>
+                                <div class="detail-value"><%= prescription.quantity %></div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (prescription.dosage_instructions && prescription.dosage_instructions.length > 0) { %>
+                            <div class="instructions">
+                                <strong>Dosage Instructions:</strong>
+                                <ul>
+                                    <% prescription.dosage_instructions.forEach(function(instruction) { %>
+                                        <li><%= instruction %></li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+            
+            <div class="action-buttons">
+                <a href="https://mediconnect.example.com/pharmacy" class="button">Fill Prescription Now</a>
+                <a href="https://mediconnect.example.com/prescriptions" class="button outline">View All Prescriptions</a>
+            </div>
+            
+            <div class="doctor-signature">
+                <p>Prescribed by: <strong>Dr. Jane Smith</strong></p>
+                <p>MediConnect Healthcare Provider</p>
+            </div>
+            
+            <h3>Important Information</h3>
+            <ul>
+                <li>Take your medication exactly as prescribed</li>
+                <li>Do not share your medication with others</li>
+                <li>Store medications properly as instructed</li>
+                <li>Report any side effects to your healthcare provider</li>
+            </ul>
+            
+            <div class="disclaimer">
+                <p><strong>Disclaimer:</strong> This electronic prescription is valid for 30 days from the date of issue. 
+                This is not a substitute for professional medical advice. Always consult with your healthcare provider 
+                regarding any medical concerns.</p>
+            </div>
+            
+            <p>If you have any questions about your prescription, contact our pharmacy team:</p>
+            <p>
+                <strong>Phone:</strong> (800) 123-4567<br>
+                <strong>Email:</strong> pharmacy@mediconnect.example.com<br>
+                <strong>Hours:</strong> Monday-Friday 8am-8pm, Saturday 9am-5pm
+            </p>
+            
+            <p>Your health is our priority,<br>
+            <strong>The MediConnect Pharmacy Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> MediConnect Hospital Management System. All rights reserved.</p>
+            <p>
+                <a href="https://mediconnect.example.com/contact">Contact Us</a> | 
+                <a href="https://mediconnect.example.com/privacy">Privacy Policy</a> | 
+                <a href="https://mediconnect.example.com/terms">Terms of Service</a>
+            </p>
+            <p>This email contains confidential health information. If received in error, please delete immediately.</p>
+        </div>
+    </div>
+</body>
+</html>

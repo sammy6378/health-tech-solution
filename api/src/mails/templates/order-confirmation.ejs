@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - MediConnect</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: #1a73e8;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 10px 0 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .order-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #1a73e8;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .order-table th {
+            background-color: #f1f3f4;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #ddd;
+        }
+        .order-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .order-table tr:last-child td {
+            border-bottom: none;
+        }
+        .highlight {
+            background-color: #e8f0fe;
+            font-weight: bold;
+        }
+        .delivery-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 25px 0;
+        }
+        .info-box {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+        .info-box:first-child {
+            margin-left: 0;
+        }
+        .info-box:last-child {
+            margin-right: 0;
+        }
+        .footer {
+            background: #f1f3f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #70757a;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #e6f4ea;
+            color: #137333;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>MediConnect Pharmacy</h1>
+            <p style="color: white; margin: 5px 0 0;">Your Health, Our Priority</p>
+        </div>
+        
+        <div class="content">
+            <h2>Order Confirmation</h2>
+            
+            <p>Dear Valued Customer,</p>
+            
+            <p>Thank you for your order with MediConnect Pharmacy. We're processing your order and will update you when it's on the way.</p>
+            
+            <div class="order-summary">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Order #<%= order_number %></h3>
+                    <span class="status-badge">Processing</span>
+                </div>
+                <p style="margin: 5px 0; color: #666;">Order placed on <%= order_date %></p>
+            </div>
+            
+            <h3>Order Details</h3>
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>Medication</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orderMedications.forEach(function(item) { %>
+                        <tr>
+                            <td><%= item.medication %></td>
+                            <td><%= item.quantity %></td>
+                            <td>$<%= item.unit_price %></td>
+                            <td>$<%= item.total_amount %></td>
+                        </tr>
+                    <% }); %>
+                    <tr class="highlight">
+                        <td colspan="3" style="text-align: right;">Subtotal:</td>
+                        <td>$<%= (total_amount * 0.9) %></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="text-align: right;">Shipping:</td>
+                        <td>$<%= (delivery_method === 'home_delivery' ? 9.99 : 4.99) %></td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">Total:</td>
+                        <td>$<%= total_amount %></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="delivery-info">
+                <div class="info-box">
+                    <h4 style="margin-top: 0;">Delivery Method</h4>
+                    <p><strong><%= delivery_method %></strong></p>
+                    <p>Estimated delivery: 
+                        <% if (delivery_method === 'pickup') { %>
+                            1-2 business days
+                        <% } else { %>
+                            3-5 business days
+                        <% } %>
+                    </p>
+                </div>
+                <div class="info-box">
+                    <h4 style="margin-top: 0;">Payment Method</h4>
+                    <p><strong><%= payment_method %></strong></p>
+                    <p>Payment status: <span style="color: #137333;"><%= payment_status %></span></p>
+                    <%= if (payment_status === 'Paid') { %>
+                        <p>Thank you for your payment!</p>
+                    <% } else { %>
+                        <p>Please complete your payment to avoid delays.</p>
+                    <% } %>
+
+                </div>
+            </div>
+            
+            <h3>What's Next?</h3>
+            <ol>
+                <li>Our pharmacy team is reviewing your order</li>
+                <li>We'll notify you when your order ships</li>
+                <li>Track your order through our patient portal</li>
+            </ol>
+            
+            <p style="background-color: #e8f0fe; padding: 15px; border-radius: 8px;">
+                <strong>Important:</strong> Some medications require a valid prescription. 
+                If we need additional information, our pharmacy team will contact you.
+            </p>
+            
+            <p>If you have any questions about your order, contact our pharmacy support team:</p>
+            <p>
+                <strong>Email:</strong> pharmacy@mediconnect.example.com<br>
+                <strong>Phone:</strong> (800) 123-4567<br>
+                <strong>Hours:</strong> Monday-Friday, 8am-8pm EST
+            </p>
+            
+            <p>Thank you for choosing MediConnect Pharmacy,<br>
+            <strong>The MediConnect Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> MediConnect Hospital Management System. All rights reserved.</p>
+            <p>
+                <a href="https://mediconnect.example.com/contact">Contact Us</a> | 
+                <a href="https://mediconnect.example.com/privacy">Privacy Policy</a> | 
+                <a href="https://mediconnect.example.com/terms">Terms of Service</a>
+            </p>
+            <p>This email contains confidential health information. If received in error, please delete it.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -28,7 +28,7 @@ import { join } from 'path';
           },
         },
         defaults: {
-          from: `"No Reply" <${configService.get<string>('SMTP_EMAIL')}>`,
+          from: `MediConnect`,
         },
         template: {
           dir: join(__dirname, 'templates'), // mail/templates/…
