@@ -51,6 +51,7 @@ export interface DashboardData {
   payments?: Payment[];
   medicalRecord?: MedicalRecord;
   stats: DashboardStats;
+  myDoctorsList?: User[];
 }
 
 @Injectable()
@@ -231,6 +232,20 @@ export class UsersService {
 
     console.log('Prescriptions:', prescriptions);
 
+    // my doctors [interacted with in appintments, prescrption or diagnoses]
+    const myDoctors = new Set([
+      ...appointments.map((a) => a.doctor),
+      ...diagnoses.map((d) => d.doctor),
+      ...prescriptions.map((p) => p.diagnosis.doctor),
+    ]);
+
+    const myDoctorsList = await this.userRepository.find({
+      where: { user_id: In(Array.from(myDoctors).map((d) => d.user_id)) },
+      relations: ['doctorProfile'],
+    });
+
+    console.log('My Doctors:', myDoctorsList);
+
     // medical records
     const medicalRecord = await this.medicalRecordRepository.findOne({
       where: { patient: { user_id: userId } },
@@ -273,6 +288,7 @@ export class UsersService {
       orders,
       medicalRecord: medicalRecord ?? undefined,
       profileData: patientProfile ?? baseData.user,
+      myDoctorsList,
       payments,
       stats: {
         totalAppointments: appointments.length,

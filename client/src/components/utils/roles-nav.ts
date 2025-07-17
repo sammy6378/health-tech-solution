@@ -12,9 +12,9 @@ import {
   HelpCircle,
   Search,
   LayoutDashboard,
-  Calendar
+  Calendar,
+  BriefcaseBusiness
 } from 'lucide-react'
-import { FaMoneyBill } from 'react-icons/fa'
 
 export const checkRole = (role: Role) => {
   switch (role) {
@@ -43,6 +43,7 @@ export const navGroups = [
         icon: ClipboardList,
       },
       { title: 'Calendar', to: '/dashboard/my-calendar', icon: Calendar },
+      { title: 'Messages', to: '/dashboard/chat', icon: Users },
       { title: 'Doctors', to: '/dashboard/doctors', icon: BriefcaseMedical },
       {
         title: 'Prescriptions',
@@ -51,7 +52,7 @@ export const navGroups = [
       },
       { title: 'Pharmacy', to: '/dashboard/pharmacy', icon: Warehouse },
       { title: 'My Orders', to: '/dashboard/orders', icon: ClipboardList },
-      { title: 'Billing', to: '/dashboard/billing', icon: FaMoneyBill },
+      { title: 'Billing', to: '/dashboard/billing', icon: BriefcaseBusiness },
       { title: 'My Profile', to: '/dashboard/profile', icon: User2 },
     ],
   },
@@ -60,6 +61,7 @@ export const navGroups = [
     links: [
       { title: 'Dashboard', to: '/dashboard/doctor', icon: LayoutDashboard },
       { title: 'Calendar', to: '/dashboard/doctor/calendar', icon: Calendar },
+     { title: 'Messages', to: '/dashboard/doctor/chat', icon: Users },
       {
         title: 'Appointments',
         to: '/dashboard/doctor/appointments',
@@ -101,7 +103,7 @@ export const navGroups = [
       {
         title: 'Billing',
         to: '/dashboard/pharmacy-dashboard/billing',
-        icon: FaMoneyBill,
+        icon: BriefcaseBusiness,
       },
       {
         title: 'Prescriptions',

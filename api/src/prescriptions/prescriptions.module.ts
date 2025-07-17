@@ -9,6 +9,7 @@ import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
 import { PrescriptionMedication } from './entities/prescription_medications.entity';
+import { MailService } from 'src/mails/mails.service';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { PrescriptionMedication } from './entities/prescription_medications.enti
     ]),
   ],
   controllers: [PrescriptionsController],
-  providers: [PrescriptionsService, UniqueNumberGenerator],
+  providers: [PrescriptionsService, UniqueNumberGenerator, MailService],
 })
 export class PrescriptionsModule {}

@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/store'
 const { user} = useAuthStore()
 const currentUserId = user.userId || 'defaultUserId' // Fallback if user is not logged in
 
-const socket = io('http://localhost:3000', {
+const socket = io('http://localhost:8000', {
   query: { userId: currentUserId }, // Pass userId to join private room
 })
 

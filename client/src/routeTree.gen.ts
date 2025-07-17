@@ -17,6 +17,7 @@ import { Route as DashboardMyPrescriptionsRouteImport } from './routes/dashboard
 import { Route as DashboardMyCalendarRouteImport } from './routes/dashboard/my-calendar'
 import { Route as DashboardHomeRouteImport } from './routes/dashboard/home'
 import { Route as DashboardDoctorsRouteImport } from './routes/dashboard/doctors'
+import { Route as DashboardChatRouteImport } from './routes/dashboard/chat'
 import { Route as DashboardBillingRouteImport } from './routes/dashboard/billing'
 import { Route as DashboardAppointmentsRouteImport } from './routes/dashboard/appointments'
 import { Route as authAuthSignupRouteImport } from './routes/(auth)/auth-signup'
@@ -33,6 +34,7 @@ import { Route as DashboardDoctorProfileRouteImport } from './routes/dashboard/d
 import { Route as DashboardDoctorPrescriptionsRouteImport } from './routes/dashboard/doctor/prescriptions'
 import { Route as DashboardDoctorPharmacyRouteImport } from './routes/dashboard/doctor/pharmacy'
 import { Route as DashboardDoctorPatientsRouteImport } from './routes/dashboard/doctor/patients'
+import { Route as DashboardDoctorChatRouteImport } from './routes/dashboard/doctor/chat'
 import { Route as DashboardDoctorCalendarRouteImport } from './routes/dashboard/doctor/calendar'
 import { Route as DashboardCartNewOrderRouteImport } from './routes/dashboard/cart/new-order'
 import { Route as DashboardPharmacyDashboardOrdersIndexRouteImport } from './routes/dashboard/pharmacy-dashboard/orders/index'
@@ -81,6 +83,11 @@ const DashboardHomeRoute = DashboardHomeRouteImport.update({
 const DashboardDoctorsRoute = DashboardDoctorsRouteImport.update({
   id: '/doctors',
   path: '/doctors',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardChatRoute = DashboardChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardBillingRoute = DashboardBillingRouteImport.update({
@@ -168,6 +175,11 @@ const DashboardDoctorPatientsRoute = DashboardDoctorPatientsRouteImport.update({
   path: '/doctor/patients',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardDoctorChatRoute = DashboardDoctorChatRouteImport.update({
+  id: '/doctor/chat',
+  path: '/doctor/chat',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardDoctorCalendarRoute = DashboardDoctorCalendarRouteImport.update({
   id: '/doctor/calendar',
   path: '/doctor/calendar',
@@ -222,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/auth-signup': typeof authAuthSignupRoute
   '/dashboard/appointments': typeof DashboardAppointmentsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
+  '/dashboard/chat': typeof DashboardChatRoute
   '/dashboard/doctors': typeof DashboardDoctorsRoute
   '/dashboard/home': typeof DashboardHomeRoute
   '/dashboard/my-calendar': typeof DashboardMyCalendarRoute
@@ -230,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/cart/new-order': typeof DashboardCartNewOrderRoute
   '/dashboard/doctor/calendar': typeof DashboardDoctorCalendarRoute
+  '/dashboard/doctor/chat': typeof DashboardDoctorChatRoute
   '/dashboard/doctor/patients': typeof DashboardDoctorPatientsRoute
   '/dashboard/doctor/pharmacy': typeof DashboardDoctorPharmacyRoute
   '/dashboard/doctor/prescriptions': typeof DashboardDoctorPrescriptionsRoute
@@ -256,6 +270,7 @@ export interface FileRoutesByTo {
   '/auth-signup': typeof authAuthSignupRoute
   '/dashboard/appointments': typeof DashboardAppointmentsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
+  '/dashboard/chat': typeof DashboardChatRoute
   '/dashboard/doctors': typeof DashboardDoctorsRoute
   '/dashboard/home': typeof DashboardHomeRoute
   '/dashboard/my-calendar': typeof DashboardMyCalendarRoute
@@ -264,6 +279,7 @@ export interface FileRoutesByTo {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/cart/new-order': typeof DashboardCartNewOrderRoute
   '/dashboard/doctor/calendar': typeof DashboardDoctorCalendarRoute
+  '/dashboard/doctor/chat': typeof DashboardDoctorChatRoute
   '/dashboard/doctor/patients': typeof DashboardDoctorPatientsRoute
   '/dashboard/doctor/pharmacy': typeof DashboardDoctorPharmacyRoute
   '/dashboard/doctor/prescriptions': typeof DashboardDoctorPrescriptionsRoute
@@ -291,6 +307,7 @@ export interface FileRoutesById {
   '/(auth)/auth-signup': typeof authAuthSignupRoute
   '/dashboard/appointments': typeof DashboardAppointmentsRoute
   '/dashboard/billing': typeof DashboardBillingRoute
+  '/dashboard/chat': typeof DashboardChatRoute
   '/dashboard/doctors': typeof DashboardDoctorsRoute
   '/dashboard/home': typeof DashboardHomeRoute
   '/dashboard/my-calendar': typeof DashboardMyCalendarRoute
@@ -299,6 +316,7 @@ export interface FileRoutesById {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/cart/new-order': typeof DashboardCartNewOrderRoute
   '/dashboard/doctor/calendar': typeof DashboardDoctorCalendarRoute
+  '/dashboard/doctor/chat': typeof DashboardDoctorChatRoute
   '/dashboard/doctor/patients': typeof DashboardDoctorPatientsRoute
   '/dashboard/doctor/pharmacy': typeof DashboardDoctorPharmacyRoute
   '/dashboard/doctor/prescriptions': typeof DashboardDoctorPrescriptionsRoute
@@ -327,6 +345,7 @@ export interface FileRouteTypes {
     | '/auth-signup'
     | '/dashboard/appointments'
     | '/dashboard/billing'
+    | '/dashboard/chat'
     | '/dashboard/doctors'
     | '/dashboard/home'
     | '/dashboard/my-calendar'
@@ -335,6 +354,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/cart/new-order'
     | '/dashboard/doctor/calendar'
+    | '/dashboard/doctor/chat'
     | '/dashboard/doctor/patients'
     | '/dashboard/doctor/pharmacy'
     | '/dashboard/doctor/prescriptions'
@@ -361,6 +381,7 @@ export interface FileRouteTypes {
     | '/auth-signup'
     | '/dashboard/appointments'
     | '/dashboard/billing'
+    | '/dashboard/chat'
     | '/dashboard/doctors'
     | '/dashboard/home'
     | '/dashboard/my-calendar'
@@ -369,6 +390,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/cart/new-order'
     | '/dashboard/doctor/calendar'
+    | '/dashboard/doctor/chat'
     | '/dashboard/doctor/patients'
     | '/dashboard/doctor/pharmacy'
     | '/dashboard/doctor/prescriptions'
@@ -395,6 +417,7 @@ export interface FileRouteTypes {
     | '/(auth)/auth-signup'
     | '/dashboard/appointments'
     | '/dashboard/billing'
+    | '/dashboard/chat'
     | '/dashboard/doctors'
     | '/dashboard/home'
     | '/dashboard/my-calendar'
@@ -403,6 +426,7 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/cart/new-order'
     | '/dashboard/doctor/calendar'
+    | '/dashboard/doctor/chat'
     | '/dashboard/doctor/patients'
     | '/dashboard/doctor/pharmacy'
     | '/dashboard/doctor/prescriptions'
@@ -486,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '/doctors'
       fullPath: '/dashboard/doctors'
       preLoaderRoute: typeof DashboardDoctorsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/chat': {
+      id: '/dashboard/chat'
+      path: '/chat'
+      fullPath: '/dashboard/chat'
+      preLoaderRoute: typeof DashboardChatRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/billing': {
@@ -600,6 +631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDoctorPatientsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/doctor/chat': {
+      id: '/dashboard/doctor/chat'
+      path: '/doctor/chat'
+      fullPath: '/dashboard/doctor/chat'
+      preLoaderRoute: typeof DashboardDoctorChatRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/doctor/calendar': {
       id: '/dashboard/doctor/calendar'
       path: '/doctor/calendar'
@@ -662,6 +700,7 @@ declare module '@tanstack/react-router' {
 interface DashboardRouteChildren {
   DashboardAppointmentsRoute: typeof DashboardAppointmentsRoute
   DashboardBillingRoute: typeof DashboardBillingRoute
+  DashboardChatRoute: typeof DashboardChatRoute
   DashboardDoctorsRoute: typeof DashboardDoctorsRoute
   DashboardHomeRoute: typeof DashboardHomeRoute
   DashboardMyCalendarRoute: typeof DashboardMyCalendarRoute
@@ -670,6 +709,7 @@ interface DashboardRouteChildren {
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardCartNewOrderRoute: typeof DashboardCartNewOrderRoute
   DashboardDoctorCalendarRoute: typeof DashboardDoctorCalendarRoute
+  DashboardDoctorChatRoute: typeof DashboardDoctorChatRoute
   DashboardDoctorPatientsRoute: typeof DashboardDoctorPatientsRoute
   DashboardDoctorPharmacyRoute: typeof DashboardDoctorPharmacyRoute
   DashboardDoctorPrescriptionsRoute: typeof DashboardDoctorPrescriptionsRoute
@@ -693,6 +733,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAppointmentsRoute: DashboardAppointmentsRoute,
   DashboardBillingRoute: DashboardBillingRoute,
+  DashboardChatRoute: DashboardChatRoute,
   DashboardDoctorsRoute: DashboardDoctorsRoute,
   DashboardHomeRoute: DashboardHomeRoute,
   DashboardMyCalendarRoute: DashboardMyCalendarRoute,
@@ -701,6 +742,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardCartNewOrderRoute: DashboardCartNewOrderRoute,
   DashboardDoctorCalendarRoute: DashboardDoctorCalendarRoute,
+  DashboardDoctorChatRoute: DashboardDoctorChatRoute,
   DashboardDoctorPatientsRoute: DashboardDoctorPatientsRoute,
   DashboardDoctorPharmacyRoute: DashboardDoctorPharmacyRoute,
   DashboardDoctorPrescriptionsRoute: DashboardDoctorPrescriptionsRoute,

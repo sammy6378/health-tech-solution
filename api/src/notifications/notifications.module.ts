@@ -5,10 +5,16 @@ import { DbModule } from 'src/db/db.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
 import { User } from 'src/users/entities/user.entity';
+import { SocketsService } from 'src/sockets/sockets.service';
+import { SocketGateway } from 'src/sockets/socket.gateway';
 
 @Module({
-  imports: [DbModule, TypeOrmModule.forFeature([Notification, User])],
+  imports: [
+    DbModule,
+    SocketGateway,
+    TypeOrmModule.forFeature([Notification, User]),
+  ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
+  providers: [NotificationsService, SocketsService, SocketGateway],
 })
 export class NotificationsModule {}

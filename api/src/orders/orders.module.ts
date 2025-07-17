@@ -11,6 +11,7 @@ import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { OrderMedication } from './entities/order-medications.entity';
+import { MailService } from 'src/mails/mails.service';
 
 @Module({
   imports: [
@@ -26,6 +27,6 @@ import { OrderMedication } from './entities/order-medications.entity';
     ]),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, UniqueNumberGenerator],
+  providers: [OrdersService, UniqueNumberGenerator, MailService],
 })
 export class OrdersModule {}

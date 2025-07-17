@@ -7,7 +7,7 @@ const AuthLayout = ({ children }:{children: ReactNode})  =>{
     <div className="flex h-screen dark:bg-gray-900">
       <div className="w-1/2 relative hidden md:flex flex-col justify-center items-center dark:bg-gray-900 dark:text-white p-8">
         <img
-          src="https://i.pinimg.com/736x/93/fa/dc/93fadc87f05304556a67ef672df28d18.jpg"
+          src="/auth.jpg"
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover opacity-50"
         />

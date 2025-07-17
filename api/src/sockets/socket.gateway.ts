@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
@@ -34,5 +37,29 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitToUser(userId: string, event: string, data: any) {
     this.server.to(userId).emit(event, data);
+  }
+
+  @SubscribeMessage('chat:message')
+  handleChatMessage(
+    @MessageBody()
+    data: {
+      senderId: string;
+      receiverId: string;
+      message: string;
+      timestamp?: string;
+    },
+  ) {
+    const { senderId, receiverId, message, timestamp } = data;
+
+    console.log('Received message from client:', data);
+
+    this.emitToUser(receiverId, 'chat:message', {
+      senderId,
+      receiverId,
+      message,
+      timestamp: timestamp || new Date().toISOString(),
+    });
+
+    this.server.to(receiverId).emit('chat:message', data);
   }
 }

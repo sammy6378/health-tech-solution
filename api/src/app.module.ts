@@ -24,12 +24,13 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { AtGuard } from './auth/guards/at.guard';
 import { DiagnosisModule } from './diagnosis/diagnosis.module';
 import { ChatbotService } from './chatbot/chatbot.service';
-import { ChatbotController } from './chatbot/chatbot.controller';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { ZoomService } from './zoom/zoom.service';
 import { UploadService } from './upload/upload.service';
 import { UploadModule } from './upload/upload.module';
 import { SocketsModule } from './sockets/sockets.module';
+import { SocketsService } from './sockets/sockets.service';
+import { SocketGateway } from './sockets/socket.gateway';
 
 @Module({
   imports: [
@@ -74,8 +75,9 @@ import { SocketsModule } from './sockets/sockets.module';
     ChatbotModule,
     UploadModule,
     SocketsModule,
+    SocketGateway,
   ],
-  controllers: [ChatbotController],
+  controllers: [],
   providers: [
     AppService,
     // {
@@ -93,6 +95,8 @@ import { SocketsModule } from './sockets/sockets.module';
     ChatbotService,
     ZoomService,
     UploadService,
+    SocketsService,
+    SocketGateway, // global socket gateway for real-time communication
   ],
 })
 export class AppModule {}

@@ -34,6 +34,7 @@ export interface Dashboard {
   medications?: TMedication[]
   payments?: TPayment[]
   medicalRecord?: TMedicalrecord
+  myDoctorsList?: TUser[]
   stats: DashboardStats
 }
 
@@ -65,6 +66,7 @@ export const useUserData = () => {
     diagnoses: data?.diagnoses || [],
     prescriptions,
     orders,
+    myDoctors: data?.myDoctorsList || [],
     payments: data?.payments || [],
     profile: data?.profileData || null,
     patients: data?.patients || [],

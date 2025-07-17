@@ -44,8 +44,7 @@ function Hero() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-[-1]"
         style={{
-          backgroundImage:
-            "url('https://i.pinimg.com/736x/0e/3c/05/0e3c0532640f7be06f9d2966ec0a0bc3.jpg')",
+          backgroundImage: "url('/hero.jpg')",
         }}
       ></div>
 
