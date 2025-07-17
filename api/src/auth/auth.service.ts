@@ -12,6 +12,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { currentUser } from '../types/jwtUser';
 import { createResponse } from 'src/utils/apiResponse';
+import { MailService } from 'src/mails/mails.service';
+import { Mailer } from 'src/mails/helperEmail';
 
 interface decodedToken {
   user_id: string;
@@ -24,7 +26,7 @@ export class AuthService {
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
     private readonly configService: ConfigService,
-    // private readonly mailService: MailService,
+    private readonly mailService: MailService,
   ) {}
 
   // token for reset email
@@ -299,7 +301,13 @@ export class AuthService {
       user.email,
     );
 
-    console.log(`Reset token for ${user.email}: ${resetToken}`);
+    // send email with reset link
+    const mail = Mailer(this.mailService);
+    await mail.passwordResetEmail({
+      name: user.email,
+      email: user.email,
+      resetLink: `${this.configService.getOrThrow<string>('FRONTEND_URL')}/reset-password?token=${resetToken}`,
+    });
 
     return {
       message: 'Password reset link sent to your email',
