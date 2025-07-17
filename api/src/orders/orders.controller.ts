@@ -53,16 +53,6 @@ export class OrdersController {
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
-  @Patch(':id/confirm-payment')
-  async confirmPayment(
-    @Param('id') id: string,
-    @Body('amount') amount: number,
-    @Body('transcation_id') transcationId: string,
-  ) {
-    return this.ordersService.confirmPayment(id, amount, transcationId);
-  }
-
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

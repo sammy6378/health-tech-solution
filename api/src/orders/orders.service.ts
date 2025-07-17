@@ -15,6 +15,8 @@ import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { DeliveryMethod, PaymentStatus } from './dto/create-order.dto';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { DataSource } from 'typeorm';
+import { MailService } from 'src/mails/mails.service';
+import { Mailer } from 'src/mails/helperEmail';
 
 @Injectable()
 export class OrdersService {
@@ -31,6 +33,7 @@ export class OrdersService {
     private readonly paymentRepository: Repository<Payment>,
     private readonly uniqueNumberGenerator: UniqueNumberGenerator,
     private readonly dataSource: DataSource,
+    private readonly mailService: MailService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<ApiResponse<Order>> {
@@ -40,6 +43,7 @@ export class OrdersService {
         // Get patient
         const patient = await manager.findOne(User, {
           where: { user_id: createOrderDto.patient_id },
+          relations: ['patientProfile'],
         });
 
         if (!patient) {
@@ -154,6 +158,7 @@ export class OrdersService {
           where: { order_id: savedOrder.order_id },
           relations: [
             'patient',
+            'patient.patientProfile',
             'orderMedications',
             'orderMedications.medication',
           ],
@@ -162,6 +167,24 @@ export class OrdersService {
         if (!fullOrder) {
           throw new NotFoundException('Failed to retrieve saved order');
         }
+
+        // send email
+        const mailer = Mailer(this.mailService);
+        await mailer.orderConfirmationEmail({
+          order_number: fullOrder.order_number,
+          email: fullOrder.patient.email,
+          total_amount: fullOrder.total_amount,
+          delivery_method: fullOrder.delivery_method,
+          payment_method: fullOrder.payment_method,
+          order_date: fullOrder.order_date,
+          payment_status: fullOrder.payment_status,
+          orderMedications: fullOrder.orderMedications.map((med) => ({
+            medication: med.medication.name,
+            quantity: med.quantity,
+            unit_price: med.unit_price,
+            total_amount: med.total_amount,
+          })),
+        });
 
         return createResponse(fullOrder, 'Order created successfully');
       } catch (error) {
@@ -177,143 +200,13 @@ export class OrdersService {
     });
   }
 
-  async confirmPayment(
-    orderId: string,
-    amount: number,
-    transcationId: string,
-  ): Promise<ApiResponse<Order | null>> {
-    return await this.dataSource.transaction(async (manager) => {
-      try {
-        // Lock the order row
-        const order = await manager.findOne(Order, {
-          where: { order_id: orderId },
-          lock: { mode: 'pessimistic_write' },
-          relations: [
-            'orderMedications',
-            'orderMedications.medication',
-            'patient',
-          ],
-        });
-
-        if (!order) {
-          throw new NotFoundException('Order not found');
-        }
-
-        // Check for existing payment
-        const existingPayment = await manager.findOne(Payment, {
-          where: { order_number: order.order_number },
-        });
-
-        if (existingPayment) {
-          throw new BadRequestException(
-            'Payment already confirmed for this order',
-          );
-        }
-
-        // Validate order state
-        if (order.delivery_status === DeliveryStatus.CANCELLED) {
-          throw new BadRequestException(
-            'Cannot confirm payment for cancelled order',
-          );
-        }
-
-        if (order.delivery_status === DeliveryStatus.DELIVERED) {
-          throw new BadRequestException('Order already completed');
-        }
-
-        const expectedAmount = parseFloat(order.total_amount.toString());
-        const receivedAmount = parseFloat(amount.toString());
-
-        if (Math.abs(expectedAmount - receivedAmount) > 0.01) {
-          throw new BadRequestException(
-            `Payment amount mismatch. Expected: ${expectedAmount.toFixed(
-              2,
-            )}, Received: ${receivedAmount.toFixed(2)}`,
-          );
-        }
-
-        // Check and update stock for each medication
-        for (const orderMedication of order.orderMedications) {
-          const currentStock = await manager.findOne(Stock, {
-            where: { medication_id: orderMedication.medication.medication_id },
-            lock: { mode: 'pessimistic_write' },
-          });
-
-          if (
-            !currentStock ||
-            currentStock.stock_quantity < orderMedication.quantity
-          ) {
-            throw new BadRequestException(
-              `Insufficient stock for ${orderMedication.medication.name}. Available: ${currentStock?.stock_quantity || 0}, Required: ${orderMedication.quantity}`,
-            );
-          }
-
-          // Update stock
-          await manager.update(
-            Stock,
-            orderMedication.medication.medication_id,
-            {
-              stock_quantity:
-                currentStock.stock_quantity - orderMedication.quantity,
-              updated_at: new Date(),
-            },
-          );
-        }
-
-        // Update order status
-        await manager.update(Order, order.order_id, {
-          delivery_status: DeliveryStatus.PROCESSING,
-          payment_status: PaymentStatus.PAID,
-          updated_at: new Date(),
-        });
-
-        // Create payment record
-        const payment = manager.create(Payment, {
-          order_number: order.order_number,
-          amount: order.total_amount,
-          transcation_id: transcationId,
-          payment_status: PaymentStatus.PAID,
-          payment_method: order.payment_method,
-          order_id: order.order_id,
-          patient_id: order.patient.user_id,
-          payment_date: new Date(),
-        });
-
-        await manager.save(Payment, payment);
-
-        // Return updated order
-        const updatedOrder = await manager.findOne(Order, {
-          where: { order_id: order.order_id },
-          relations: [
-            'patient',
-            'orderMedications',
-            'orderMedications.medication',
-          ],
-        });
-
-        return createResponse(
-          updatedOrder,
-          'Payment confirmed and stock updated successfully',
-        );
-      } catch (error) {
-        if (
-          error instanceof NotFoundException ||
-          error instanceof BadRequestException
-        ) {
-          throw error;
-        }
-        console.error('Error confirming payment:', error);
-        throw new BadRequestException('Failed to confirm payment');
-      }
-    });
-  }
-
   // Update other methods to remove prescription relations
   async findAll(): Promise<ApiResponse<Order[]>> {
     try {
       const orders = await this.orderRepository.find({
         relations: [
           'patient',
+          'patient.patientProfile',
           'orderMedications',
           'orderMedications.medication',
         ],
@@ -333,6 +226,7 @@ export class OrdersService {
         where: { order_id: id },
         relations: [
           'patient',
+          'patient.patientProfile',
           'orderMedications',
           'orderMedications.medication',
         ],
@@ -355,6 +249,7 @@ export class OrdersService {
         where: { patient: { user_id: patientId } },
         relations: [
           'patient',
+          'patient.patientProfile',
           'orderMedications',
           'orderMedications.medication',
         ],
@@ -374,6 +269,7 @@ export class OrdersService {
         where: { order_id: id },
         relations: [
           'patient',
+          'patient.patientProfile',
           'orderMedications',
           'orderMedications.medication',
         ],
@@ -398,6 +294,7 @@ export class OrdersService {
         where: { order_id: id },
         relations: [
           'patient',
+          'patient.patientProfile',
           'orderMedications',
           'orderMedications.medication',
         ],
