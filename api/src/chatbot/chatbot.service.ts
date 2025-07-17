@@ -1,43 +1,59 @@
-import { Injectable } from '@nestjs/common';
-import { NlpManager } from 'node-nlp';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 
 @Injectable()
 export class ChatbotService {
-  private manager: NlpManager;
+  private readonly logger = new Logger(ChatbotService.name);
+  private readonly endpoint: string;
+  private readonly deployment: string;
+  private readonly apiKey: string;
+  private readonly apiVersion = '2024-05-01';
 
-  constructor() {
-    this.manager = new NlpManager({ languages: ['en'] });
-    void this.trainModel();
+  constructor(private readonly config: ConfigService) {
+    this.endpoint = this.config.get<string>('AZURE_OPENAI_ENDPOINT')!;
+    this.deployment = this.config.get<string>('AZURE_OPENAI_DEPLOYMENT')!;
+    this.apiKey = this.config.get<string>('AZURE_OPENAI_KEY')!;
   }
 
-  private async trainModel() {
-    // Add documents and intents
-    this.manager.addDocument('en', 'hello', 'greeting');
-    this.manager.addDocument('en', 'hi there', 'greeting');
-    this.manager.addDocument('en', 'goodbye', 'farewell');
-    this.manager.addDocument('en', 'see you later', 'farewell');
-    this.manager.addDocument('en', 'help me', 'help');
-    this.manager.addDocument('en', 'what can you do', 'help');
+  async sendMessage(message: string): Promise<string> {
+    const url = `${this.endpoint}/openai/deployments/${this.deployment}/chat/completions?api-version=${this.apiVersion}`;
 
-    // Add answers
-    this.manager.addAnswer('en', 'greeting', 'Hello! How can I help you?');
-    this.manager.addAnswer('en', 'greeting', 'Hi there!');
-    this.manager.addAnswer('en', 'farewell', 'Goodbye!');
-    this.manager.addAnswer('en', 'farewell', 'See you soon!');
-    this.manager.addAnswer('en', 'help', 'I can answer basic questions');
-    this.manager.addAnswer(
-      'en',
-      'help',
-      'I provide information about our services',
-    );
+    const payload = {
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful medical assistant for patients and doctors.',
+        },
+        {
+          role: 'user',
+          content: message,
+        },
+      ],
+    };
 
-    // Train and save the model
-    await this.manager.train();
-    this.manager.save();
-  }
+    const headers = {
+      'Content-Type': 'application/json',
+      'api-key': this.apiKey,
+    };
 
-  async getResponse(message: string): Promise<string> {
-    const response = await this.manager.process('en', message);
-    return response.answer || "I'm not sure how to respond to that.";
+    interface OpenAIChatResponse {
+      choices: {
+        message: {
+          content: string;
+        };
+      }[];
+    }
+
+    try {
+      const response = await axios.post<OpenAIChatResponse>(url, payload, {
+        headers,
+      });
+      return response.data.choices[0].message.content;
+    } catch (error: any) {
+      this.logger.error('Error sending message to Azure OpenAI:', error);
+      return "I'm currently unavailable. Please try again later.";
+    }
   }
 }

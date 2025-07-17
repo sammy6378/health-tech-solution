@@ -1,13 +1,13 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
 
-@Controller('chatbot')
+@Controller('chat')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
-  @Post('message')
-  handleMessage(@Body() body: { message: string }) {
-    const response = this.chatbotService.getResponse(body.message);
+  @Post()
+  async handleChat(@Body() body: { message: string }) {
+    const response = await this.chatbotService.sendMessage(body.message);
     return { response };
   }
 }
