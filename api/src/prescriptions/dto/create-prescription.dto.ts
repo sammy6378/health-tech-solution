@@ -1,13 +1,13 @@
+import { Type } from 'class-transformer';
 import {
-  IsArray,
   IsDateString,
+  IsDecimal,
   IsEnum,
-  IsNumber,
-  IsOptional,
   IsString,
   IsUUID,
-  Min,
+  ValidateNested,
 } from 'class-validator';
+import { MedicationItemDto } from './MedicationItem.dto';
 
 export enum PrescriptionStatus {
   ACTIVE = 'active',
@@ -18,9 +18,9 @@ export enum PrescriptionStatus {
 }
 
 export class CreatePrescriptionDto {
-  @IsArray()
-  @IsUUID(4, { each: true })
-  medication_ids: string[];
+  @ValidateNested({ each: true })
+  @Type(() => MedicationItemDto)
+  items: MedicationItemDto[];
 
   @IsUUID()
   diagnosis_id: string;
@@ -28,31 +28,12 @@ export class CreatePrescriptionDto {
   @IsDateString()
   prescription_date: string;
 
+  @IsDecimal({ decimal_digits: '2' })
+  total_price?: number;
+
   @IsString()
   prescription_number: string;
 
-  @IsNumber()
-  @Min(1)
-  quantity_prescribed: number;
-
-  @IsArray()
-  @IsString({ each: true })
-  dosage_instructions: string[];
-
   @IsEnum(PrescriptionStatus)
   status: PrescriptionStatus = PrescriptionStatus.PENDING;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  duration_days?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  frequency_per_day?: number;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
 }

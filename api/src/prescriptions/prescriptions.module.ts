@@ -8,11 +8,18 @@ import { User } from 'src/users/entities/user.entity';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
+import { PrescriptionMedication } from './entities/prescription_medications.entity';
 
 @Module({
   imports: [
     DbModule,
-    TypeOrmModule.forFeature([Prescription, User, Stock, Diagnosis]),
+    TypeOrmModule.forFeature([
+      Prescription,
+      User,
+      Stock,
+      Diagnosis,
+      PrescriptionMedication,
+    ]),
   ],
   controllers: [PrescriptionsController],
   providers: [PrescriptionsService, UniqueNumberGenerator],

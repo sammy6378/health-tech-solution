@@ -11,122 +11,146 @@ import { createResponse, ApiResponse } from 'src/utils/apiResponse';
 import { UniqueNumberGenerator } from 'src/utils/uniqueIds';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
 import { Diagnosis } from 'src/diagnosis/entities/diagnosis.entity';
+import { PrescriptionMedication } from './entities/prescription_medications.entity';
+import { MailService } from 'src/mails/mails.service';
+import { Mailer } from 'src/mails/helperEmail';
 
 @Injectable()
 export class PrescriptionsService {
   constructor(
     @InjectRepository(Prescription)
     private readonly prescriptionRepository: Repository<Prescription>,
+    @InjectRepository(PrescriptionMedication)
+    private readonly prescriptionMedicationRepository: Repository<PrescriptionMedication>,
     @InjectRepository(Stock)
     private readonly pharmacyStockRepository: Repository<Stock>,
     @InjectRepository(Diagnosis)
     private readonly diagnosisRepository: Repository<Diagnosis>,
     private readonly uniqueNumberGenerator: UniqueNumberGenerator,
+    private readonly mailService: MailService,
   ) {}
 
-  async create(
-    createPrescriptionDto: CreatePrescriptionDto,
-  ): Promise<ApiResponse<Prescription>> {
+  async create(dto: CreatePrescriptionDto): Promise<ApiResponse<Prescription>> {
     try {
-      // Validate if diagnosis exists (contains patient and doctor info)
+      const { diagnosis_id, items } = dto;
+
+      // Validate diagnosis
       const diagnosis = await this.diagnosisRepository.findOne({
-        where: { diagnosis_id: createPrescriptionDto.diagnosis_id },
-        relations: ['patient', 'doctor'], // Load patient and doctor for validation
+        where: { diagnosis_id },
+        relations: ['patient', 'doctor'],
       });
 
       if (!diagnosis) {
         throw new NotFoundException('Diagnosis not found');
       }
 
-      // Validate all medications exist and have sufficient stock
+      const medicationIds = items.map((item) => item.medication_id);
+
+      // Fetch all medications
       const medications = await this.pharmacyStockRepository.find({
-        where: { medication_id: In(createPrescriptionDto.medication_ids) },
+        where: { medication_id: In(medicationIds) },
       });
 
-      if (medications.length !== createPrescriptionDto.medication_ids.length) {
+      if (medications.length !== medicationIds.length) {
         throw new NotFoundException('One or more medications not found');
       }
 
-      // Check stock availability for each medication
-      const insufficientStock = medications.filter(
-        (medication) =>
-          medication.stock_quantity < createPrescriptionDto.quantity_prescribed,
-      );
+      // Validate stock for each item
+      for (const item of items) {
+        const med = medications.find(
+          (m) => m.medication_id === item.medication_id,
+        );
+        if (!med) continue;
 
-      if (insufficientStock.length > 0) {
-        const stockMessages = insufficientStock.map(
-          (med) =>
-            `${med.name}: Available ${med.stock_quantity}, Requested ${createPrescriptionDto.quantity_prescribed}`,
-        );
-        throw new BadRequestException(
-          `Insufficient stock for: ${stockMessages.join(', ')}`,
-        );
+        if (med.stock_quantity < item.quantity_prescribed) {
+          throw new BadRequestException(
+            `Insufficient stock for ${med.name}: Available ${med.stock_quantity}, Requested ${item.quantity_prescribed}`,
+          );
+        }
       }
 
-      // Calculate total pricing (sum of all medications)
-      const totalPrice = medications.reduce(
-        (sum, medication) =>
-          sum +
-          medication.unit_price * createPrescriptionDto.quantity_prescribed,
-        0,
-      );
+      // Calculate total price
+      const totalPrice = items.reduce((sum, item) => {
+        const med = medications.find(
+          (m) => m.medication_id === item.medication_id,
+        );
+        return sum + (med?.unit_price ?? 0) * item.quantity_prescribed;
+      }, 0);
 
-      // Generate unique prescription number
-      const prescriptionNumber =
-        this.uniqueNumberGenerator.generatePrescriptionNumber();
-
-      // Create prescription with only diagnosis_id
+      // Generate prescription
       const prescription = this.prescriptionRepository.create({
-        diagnosis_id: createPrescriptionDto.diagnosis_id,
-        prescription_number: prescriptionNumber,
+        diagnosis_id,
+        prescription_number:
+          this.uniqueNumberGenerator.generatePrescriptionNumber(),
         prescription_date: new Date(),
-        duration_days: createPrescriptionDto.duration_days,
-        frequency_per_day: createPrescriptionDto.frequency_per_day,
-        quantity_prescribed: createPrescriptionDto.quantity_prescribed,
-        dosage_instructions: createPrescriptionDto.dosage_instructions,
-        notes: createPrescriptionDto.notes,
-        status: createPrescriptionDto.status,
-        unit_price: totalPrice / createPrescriptionDto.quantity_prescribed,
         total_price: totalPrice,
-        quantity_dispensed: 0,
+        status: dto.status,
       });
 
-      // Save prescription first
       const savedPrescription =
         await this.prescriptionRepository.save(prescription);
 
-      // Add medications to the prescription using the relationship
-      savedPrescription.medications = medications;
-      await this.prescriptionRepository.save(savedPrescription);
+      // Create prescription-medication entries
+      const prescriptionMedications = items.map((item) => {
+        const med = medications.find(
+          (m) => m.medication_id === item.medication_id,
+        );
+        return this.prescriptionMedicationRepository.create({
+          prescription: savedPrescription,
+          medication: med,
+          medication_name: med?.name,
+          quantity_prescribed: item.quantity_prescribed,
+          duration_days: item.duration_days,
+          frequency_per_day: item.frequency_per_day,
+          dosage_instructions: item.dosage_instructions || [],
+        });
+      });
 
-      // Load the complete prescription with all relations
+      await this.prescriptionMedicationRepository.save(prescriptionMedications);
+
       const prescriptionWithRelations =
         await this.prescriptionRepository.findOne({
           where: { prescription_id: savedPrescription.prescription_id },
-          relations: [
-            'diagnosis',
-            'diagnosis.patient',
-            'diagnosis.doctor',
-            'medications',
-          ],
+          relations: ['diagnosis', 'diagnosis.patient', 'diagnosis.doctor'],
         });
 
       if (!prescriptionWithRelations) {
         throw new NotFoundException('Prescription not found after creation');
       }
 
+      // send email notification
+      const emailData = {
+        patientName:
+          prescriptionWithRelations.diagnosis.patient.first_name +
+          ' ' +
+          prescriptionWithRelations.diagnosis.patient.last_name,
+        email: prescriptionWithRelations.diagnosis.patient.email,
+        prescriptionDetails:
+          prescriptionWithRelations.prescriptionMedications.map((med) => ({
+            medication: med.medication.name,
+            dosage: med.dosage_instructions.join(', '),
+            frequency: med.frequency_per_day,
+            quantity: med.quantity_prescribed,
+            duration_days: med.duration_days,
+            dosage_instructions: med.dosage_instructions,
+          })),
+      };
+
+      const mail = Mailer(this.mailService);
+      await mail.prescriptionEmail(emailData);
+
       return createResponse(
         prescriptionWithRelations,
         'Prescription created successfully',
       );
     } catch (error) {
+      console.error('Error creating prescription:', error);
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException
       ) {
         throw error;
       }
-      console.error('Error creating prescription:', error);
       throw new BadRequestException('Failed to create prescription');
     }
   }
