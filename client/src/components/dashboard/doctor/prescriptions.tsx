@@ -42,7 +42,7 @@ export default function PatientPrescriptionsPage() {
         : true
 
       const searchMatch = searchTerm
-        ? prescription.prescription_number
+        ? prescription.prescription_number!
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           `${prescription.doctor?.first_name || ''} ${prescription.patient?.last_name || ''}`
@@ -128,9 +128,6 @@ export default function PatientPrescriptionsPage() {
                   <TableHead className="hidden sm:table-cell">
                     Patient
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Medications
-                  </TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -148,20 +145,8 @@ export default function PatientPrescriptionsPage() {
                       )}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {prescription.diagnosis?.patient?.first_name}{' '}
-                      {prescription.diagnosis?.patient?.last_name}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {prescription.medications
-                        ?.map((med) => med.name)
-                        .join(', ') || (
-                        <Button
-                          variant="outline"
-                          className="w-full text-blue-500"
-                        >
-                          Add Medications
-                        </Button>
-                      )}
+                      {prescription?.diagnosis?.patient?.first_name}{' '}
+                      {prescription?.diagnosis?.patient?.last_name}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
@@ -215,46 +200,32 @@ export default function PatientPrescriptionsPage() {
                                   Patient
                                 </p>
                                 <p>
-                                  {
-                                    selectedPrescription.diagnosis?.patient
-                                      ?.first_name
-                                  }{' '}
-                                  {
-                                    selectedPrescription.diagnosis?.patient
-                                      ?.last_name
-                                  }
+                                  {prescription?.diagnosis?.patient?.first_name}{' '}
+                                  {prescription?.diagnosis?.patient?.last_name}
                                 </p>
                               </div>
                               <div className="flex justify-between">
                                 <p className="text-gray-500 dark:text-gray-400">
                                   Diagnosis
                                 </p>
-                                <p>
-                                  {
-                                    selectedPrescription.diagnosis
-                                      ?.diagnosis_name
-                                  }
-                                </p>
+                                <p>{prescription.diagnosis?.diagnosis_name}</p>
                               </div>
                               <div>
                                 <p className="text-gray-500 dark:text-gray-400 mb-2">
                                   Medications
                                 </p>
                                 <div className="space-y-2">
-                                  {selectedPrescription?.medications &&
-                                  selectedPrescription.medications.length >
-                                    0 ? (
-                                    selectedPrescription.medications.map(
+                                  {selectedPrescription?.prescriptionMedications &&
+                                  selectedPrescription.prescriptionMedications
+                                    .length > 0 ? (
+                                    selectedPrescription.prescriptionMedications.map(
                                       (med) => (
                                         <div
-                                          key={med.medication_id}
+                                          key={med.id}
                                           className="p-2 bg-gray-50 dark:bg-gray-800 rounded"
                                         >
                                           <p className="font-medium">
-                                            {med.name}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            {med.medication_type} •{' '}
+                                            {med.medication_name ?? 'N/A'}
                                           </p>
                                         </div>
                                       ),
@@ -267,48 +238,41 @@ export default function PatientPrescriptionsPage() {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-gray-500 dark:text-gray-400 mb-2">
-                                  Dosage Instructions
-                                </p>
-                                <ul className="list-disc pl-5 space-y-1">
-                                  {selectedPrescription.dosage_instructions?.map(
-                                    (dosage, i) => (
-                                      <li key={i}>{dosage}</li>
-                                    ),
-                                  )}
-                                </ul>
+                                {selectedPrescription?.prescriptionMedications?.map(
+                                  (med) => (
+                                    <>
+                                      <div>
+                                        {' '}
+                                        <p className="text-gray-500 dark:text-gray-400 mb-2">
+                                          Dosage Instructions
+                                        </p>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                          <li>{med.dosage_instructions}</li>
+                                        </ul>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                          Quantity
+                                        </p>
+                                        <p>{med.quantity_prescribed}</p>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                          Duration
+                                        </p>
+                                        <p>{med.duration_days} days</p>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                          Frequency
+                                        </p>
+                                        <p>{med.frequency_per_day}x per day</p>
+                                      </div>
+                                    </>
+                                  ),
+                                )}
                               </div>
-                              <div className="flex justify-between">
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  Quantity
-                                </p>
-                                <p>
-                                  {selectedPrescription.quantity_prescribed}
-                                </p>
-                              </div>
-                              <div className="flex justify-between">
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  Duration
-                                </p>
-                                <p>{selectedPrescription.duration_days} days</p>
-                              </div>
-                              <div className="flex justify-between">
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  Frequency
-                                </p>
-                                <p>
-                                  {selectedPrescription.frequency_per_day}x per
-                                  day
-                                </p>
-                              </div>
-                              {selectedPrescription.notes && (
-                                <div>
-                                  <p className="text-gray-500 dark:text-gray-400 mb-1">
-                                    Notes
-                                  </p>
-                                  <p>{selectedPrescription.notes}</p>
-                                </div>
-                              )}
+
                               <div className="flex justify-between">
                                 <p className="text-gray-500 dark:text-gray-400">
                                   Status

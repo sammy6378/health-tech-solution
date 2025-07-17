@@ -69,13 +69,13 @@ function Footer() {
     {
       icon: Mail,
       label: 'Email',
-      value: 'info@healthtech.com',
-      href: 'mailto:info@healthtech.com',
+      value: 'info@MediConnect.com',
+      href: 'mailto:info@MediConnect.com',
     },
     {
       icon: MapPin,
       label: 'Address',
-      value: '123 Healthcare St, Medical City, MC 12345',
+      value: '123 MediConnect St, Medical City, MC 12345',
       href: '#',
     },
   ]
@@ -112,7 +112,7 @@ function Footer() {
                 <div className="flex items-center justify-center w-12 h-12 bg-[#1A94E5] rounded-lg">
                   <Activity className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-2xl font-bold">HealthTech</span>
+                <span className="text-2xl font-bold">MediConnect</span>
               </div>
 
               <p className="text-gray-400 mb-6 leading-relaxed">
@@ -236,7 +236,7 @@ function Footer() {
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               {/* Copyright */}
               <div className="flex items-center space-x-2 text-gray-400 text-sm">
-                <span>© 2024 HealthTech. Made with</span>
+                <span>© 2024 MediConnect. Made with</span>
                 <Heart className="w-4 h-4 text-red-500" />
                 <span>for better healthcare.</span>
               </div>

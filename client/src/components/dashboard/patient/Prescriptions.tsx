@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Pill,
@@ -8,46 +7,29 @@ import {
   ClipboardList,
   User,
   FileText,
-  Info,
   Search,
+  ShoppingCart,
 } from 'lucide-react'
-import {
-  formatDate,
-  PrescriptionStatus,
-} from '@/types/api-types'
+import { formatDate } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { useGetMedications } from '@/hooks/useMedication'
 import { useCartStore } from '@/store/cart/add'
-import { toast } from 'sonner'
 
 export default function PrescriptionsPage() {
   const { prescriptions } = useUserData()
-  console.log('Prescriptions:', prescriptions) 
   const { data: pharmacyData } = useGetMedications()
   const pharmacyMeds = pharmacyData?.data ?? []
   const { addToCart } = useCartStore()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filteredPrescriptions = prescriptions.filter((p) =>
-    p.diagnosis?.diagnosis_name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
-  )
+  console.log('prescriptions', prescriptions)
 
-  const getStatusColor = (status: PrescriptionStatus) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-    }
-  }
+const filteredPrescriptions = prescriptions.filter((p) => {
+  const name = p?.diagnosis?.diagnosis_name;
+  return name?.toLowerCase().includes(searchTerm.toLowerCase());
+});
+
+console.log('filteredPrescriptions', filteredPrescriptions)
 
   return (
     <div className="container py-10 px-4">
@@ -68,16 +50,20 @@ export default function PrescriptionsPage() {
       </div>
 
       {prescriptions.length === 0 ? (
-        <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
-          No prescriptions found.
+        <div className="text-center text-gray-500 dark:text-gray-400 py-20">
+          <ShoppingCart className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-4" />
+          <p className="text-lg font-medium">No Prescriptions found</p>
+          <p className="text-sm">Try adjusting your search or filters.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredPrescriptions.map((prescription) => {
-            const matchedMeds = prescription.medications?.filter((med) =>
-              pharmacyMeds.some(
-                (pm) => pm.name.toLowerCase() === med.name.toLowerCase(),
-              ),
+            const matchedMeds = prescription.prescriptionMedications?.filter(
+              (med) =>
+                pharmacyMeds.some(
+                  (pm) =>
+                    pm.name?.toLowerCase() === med.medication.name.toLowerCase(),
+                ),
             )
 
             return (
@@ -90,16 +76,10 @@ export default function PrescriptionsPage() {
                     <div className="flex items-center gap-3">
                       <Pill className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       <CardTitle className="text-lg text-gray-900 dark:text-white">
-                        {prescription.diagnosis?.diagnosis_name}
+                        {prescription.diagnosis?.diagnosis_name ||
+                          'Untitled Diagnosis'}
                       </CardTitle>
                     </div>
-                    <Badge
-                      className={`${getStatusColor(
-                        prescription.status,
-                      )} text-xs px-2 py-1`}
-                    >
-                      {prescription.status}
-                    </Badge>
                   </div>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <User className="w-4 h-4" />
@@ -114,7 +94,7 @@ export default function PrescriptionsPage() {
                     <span className="font-medium">
                       Prescription Order:
                     </span>{' '}
-                    {prescription.prescription_number}
+                    {prescription.prescription_number || 'N/A'}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -127,43 +107,39 @@ export default function PrescriptionsPage() {
                   <div>
                     <span className="font-medium">Medications:</span>
                     <ul className="list-disc list-inside mt-1">
-                      {prescription.medications?.map((med) => (
-                        <li key={med.name}>{med.name}</li>
+                      {prescription.prescriptionMedications?.map((med) => (
+                        <li key={`${med.medication_name}-${med.id}`}>
+                          {med.medication.name}
+                          <div className="ml-4 text-sm text-gray-600 dark:text-gray-400">
+                            <div>
+                              Dosage:
+                              <ul className="list-[circle] list-inside">
+                                {med.dosage_instructions?.map((inst, idx) => (
+                                  <li key={idx}>{inst}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              Quantity: {med.quantity_prescribed} tablets
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {med.frequency_per_day}x per day for{' '}
+                              {med.duration_days} days
+                            </p>
+                          </div>
+                        </li>
                       ))}
                     </ul>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="font-medium">Dosage</p>
-                      <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400">
-                        {prescription.dosage_instructions.map((inst, idx) => (
-                          <li key={idx}>{inst}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="font-medium">Quantity</p>
-                      <p>{prescription.quantity_prescribed} tablets</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {prescription.frequency_per_day}x per day for{' '}
-                        {prescription.duration_days} days
-                      </p>
-                    </div>
-                  </div>
-
-                  {prescription.notes && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm flex items-start gap-2">
-                      <Info className="w-4 h-4 text-blue-500 mt-1" />
-                      <span>{prescription.notes}</span>
-                    </div>
-                  )}
 
                   <div className="flex justify-between text-sm pt-3 border-t dark:border-gray-700">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span>
-                        Prescribed: {formatDate(prescription.prescription_date)}
+                        Prescribed:{' '}
+                        {prescription.prescription_date
+                          ? formatDate(prescription.prescription_date)
+                          : 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -177,7 +153,9 @@ export default function PrescriptionsPage() {
                       </p>
                       <ul className="list-disc list-inside text-sm text-blue-800 dark:text-blue-200 mb-3">
                         {matchedMeds.map((med) => (
-                          <li key={med.name}>{med.name}</li>
+                          <li key={med.medication.name}>
+                            {med.medication.name}
+                          </li>
                         ))}
                       </ul>
                       <button
@@ -186,15 +164,14 @@ export default function PrescriptionsPage() {
                             const found = pharmacyMeds.find(
                               (pm) =>
                                 pm.name.toLowerCase() ===
-                                med.name.toLowerCase(),
+                                med.medication.name.toLowerCase(),
                             )
                             if (found) {
-                              addToCart(found)
+                              addToCart(found, med.quantity_prescribed)
                             }
                           })
-                          toast.success('Prescription meds added to cart!')
                         }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 cursor-pointer text-white px-4 py-2 rounded-md text-sm"
                       >
                         Create Order Now
                       </button>

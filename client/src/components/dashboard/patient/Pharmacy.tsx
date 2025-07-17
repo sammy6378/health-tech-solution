@@ -22,16 +22,25 @@ import {
   Droplet,
   TestTube2,
   type LucideIcon,
+  Pen,
+  Trash,
 } from 'lucide-react'
-import { useGetMedications } from '@/hooks/useMedication'
+import { useGetMedications, useUpdateMedication } from '@/hooks/useMedication'
 import {
   StockCategory,
   StockType,
+  type TMedication,
 } from '@/types/api-types'
 import { useCartStore } from '@/store/cart/add'
+import { useAuthStore } from '@/store/store'
+import { EditMedicationDialog } from '@/components/modals/EditMedications'
+import { toast } from 'sonner'
+import { CreateMedDialog } from '@/components/modals/CreateMedication'
 
 const Pharmacy = () => {
   const { data, isLoading } = useGetMedications()
+  const {mutateAsync: updateMed} = useUpdateMedication()
+  const {user} = useAuthStore()
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedCategory, setSelectedCategory] = React.useState<
     StockCategory | 'all'
@@ -39,7 +48,43 @@ const Pharmacy = () => {
   const [selectedType, setSelectedType] = React.useState<StockType | 'all'>(
     'all',
   )
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+   const [selectedMed, setSelectedMed] = React.useState<TMedication | null>(null)
+ 
+   const handleEdit = (med: TMedication) => {
+     setSelectedMed(med)
+     setIsDialogOpen(true)
+   }
+
+   const handleCreate = () => {
+     setSelectedMed(null)
+      setIsDialogOpen(true)
+   }
+ 
+   const handleSave = (updatedMed: TMedication, id: string) => {
+     try {
+       updateMed({id,data: updatedMed})
+       .then(() => {
+               toast.success('Medication updated successfully')
+             })
+             .catch((error) => {
+               console.error('Error updating medication:', error)
+               toast.error('Failed to update medication')
+             })
+      //  setIsDialogOpen(false)
+      //  setSelectedMed(null)
+      //  toast.success('Medication updated successfully')
+     } catch (error) {
+      toast.error('Failed to update medication')
+     }finally{
+        setIsDialogOpen(false)
+        setSelectedMed(null)
+     }
+   }
+
+
   const medications = data?.data || []
+  const role = user.role;
   const { addToCart } = useCartStore()
 
   const filteredMeds = medications.filter((med) => {
@@ -158,6 +203,35 @@ const Pharmacy = () => {
                 ))}
               </SelectContent>
             </Select>
+            {role && role === 'pharmacy' && (
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer dark:bg-blue-500 dark:text-white font-medium shadow hover:bg-primary/90 transition-colors"
+              >
+                <span className="inline-flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Create Medication
+                </span>
+              </button>
+            )}
+
+            <CreateMedDialog
+              isOpen={isDialogOpen}
+              onClose={() => setIsDialogOpen(false)}
+            />
           </div>
 
           {isLoading ? (
@@ -206,19 +280,47 @@ const Pharmacy = () => {
                         <span className="font-medium">Dosage:</span>{' '}
                         {med.dosage}
                       </p>
-        
+
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-green-600 font-bold dark:text-green-400">
                           KES {med.unit_price}
                         </p>
-                        <button
-                          onClick={() => addToCart(med)}
-                          className="px-3 py-1 text-sm border dark:border-gray-700 cursor-pointer text-white rounded-lg"
-                        >
-                          Add to Cart
-                        </button>
+                        <div>
+                          {role && role === 'pharmacy' ? (
+                            <div className="flex gap-2">
+                              <button
+                                className="p-2 cursor-pointer rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                title="Edit"
+                                onClick={() => handleEdit(med)}
+                              >
+                                <Pen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              </button>
+
+                              <button
+                                className="p-2 cursor-pointer rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                title="Delete"
+                              >
+                                <Trash className="h-4 w-4 text-red-600 dark:text-red-400" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => addToCart(med)}
+                              disabled={!!role && role !== 'patient'}
+                              className="px-3 py-1 text-sm border dark:border-gray-700 cursor-pointer dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Add to Cart
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
+                    <EditMedicationDialog
+                      med={selectedMed}
+                      isOpen={isDialogOpen}
+                      onClose={() => setIsDialogOpen(false)}
+                      onSave={handleSave}
+                    />
                   </Card>
                 )
               })}

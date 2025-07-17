@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { FileText, Search } from 'lucide-react'
 import type { TDiagnosis } from '@/types/api-types'
 import { Link } from '@tanstack/react-router'
+import PrescriptionFormSheet from '@/components/modals/PrescriptionModal'
 
 const DiagnosesTable = () => {
   const { diagnoses, error } = useDoctorData()
@@ -153,12 +154,13 @@ const DiagnosesTable = () => {
                         : 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {diagnosis.prescriptions && diagnosis.prescriptions.length > 0 ? (
+                      {diagnosis.prescriptions &&
+                      diagnosis.prescriptions.length > 0 ? (
                         <div className="flex flex-col space-y-1">
                           {diagnosis.prescriptions.map((prescription, idx) => (
                             <Link
                               key={idx}
-                              to='/dashboard/doctor/prescriptions'
+                              to="/dashboard/doctor/prescriptions"
                               className="text-sm text-gray-700 dark:text-gray-300"
                             >
                               {prescription.prescription_number}
@@ -166,13 +168,33 @@ const DiagnosesTable = () => {
                           ))}
                         </div>
                       ) : (
-                        <Link
-                          to='/dashboard/doctor/diagnoses/$dgs/new-prescription'
-                          params={{ dgs: diagnosis.diagnosis_id ?? '' }}
-                          className="w-full text-blue-500"
-                        >Add Prescription</Link>
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button
+                              variant="link"
+                              className="text-blue-500 p-0 h-auto cursor-pointer"
+                              onClick={() => setSelectedDiagnosis(diagnosis)}
+                            >
+                              Add Prescription
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent className="w-full sm:w-[500px] bg-white dark:bg-gray-900 p-6 overflow-y-auto">
+                            <SheetHeader>
+                              <SheetTitle className="text-lg cursor-pointer font-semibold text-gray-800 dark:text-white mb-4">
+                                Add Prescription
+                              </SheetTitle>
+                            </SheetHeader>
+                            {selectedDiagnosis && (
+                              <PrescriptionFormSheet
+                                diagnosisId={selectedDiagnosis.diagnosis_id}
+                                onSuccess={() => setSelectedDiagnosis(null)}
+                              />
+                            )}
+                          </SheetContent>
+                        </Sheet>
                       )}
                     </TableCell>
+
                     <TableCell className="text-right">
                       <Sheet>
                         <SheetTrigger asChild>

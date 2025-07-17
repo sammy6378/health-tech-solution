@@ -1,6 +1,6 @@
 
 import type { TUser } from '@/types/Tuser'
-import {  type TAppointment, type TDiagnosis, type TMedication, type TOrder, type TPayment, type TPrescription } from "@/types/api-types";
+import {  type TAppointment, type TDiagnosis, type TMedicalrecord, type TMedication, type TOrder, type TPayment, type TPrescription } from "@/types/api-types";
 import { useDashboardData } from "./useUserHook";
 
 interface DashboardStats {
@@ -17,6 +17,10 @@ interface DashboardStats {
   totalPayments?: number
   totalRevenue?: number
   lowStockItems?: number
+  prescriptionsChangePercent?: number
+  paymentsChangePercent?: number
+  ordersChangePercent?: number
+  inventoryPercentage?: number
 }
 
 export interface Dashboard {
@@ -29,6 +33,7 @@ export interface Dashboard {
   patients?: TUser[]
   medications?: TMedication[]
   payments?: TPayment[]
+  medicalRecord?: TMedicalrecord
   stats: DashboardStats
 }
 
@@ -63,6 +68,7 @@ export const useUserData = () => {
     payments: data?.payments || [],
     profile: data?.profileData || null,
     patients: data?.patients || [],
+    Records: data?.medicalRecord ? [data.medicalRecord] : [],
     stats,
 
     doctors: user?.role === 'doctor' ? [user] : [],
@@ -91,7 +97,7 @@ export const useUserData = () => {
     doctorPrescriptions: user?.role === 'doctor' ? prescriptions : [],
     doctorMedications:
       user?.role === 'doctor'
-        ? prescriptions.flatMap((p) => p.medications || [])
+        ? prescriptions.flatMap((p) => p.prescriptionMedications || [])
         : [],
     myPatients: data?.patients || [],
 
@@ -104,7 +110,7 @@ export const useUserData = () => {
     recentOrders: orders.slice(0, 5),
 
     // Medical records
-    medicalRecords: data?.user?.medicalRecord ? [data.user.medicalRecord] : [],
+    medicalRecords: data?.medicalRecord ? [data.medicalRecord] : [],
     totalMedicalRecords: data?.user?.medicalRecord ? 1 : 0,
     bmiRecord: data?.user?.medicalRecord?.bmi ? data.user.medicalRecord : null,
 
@@ -144,7 +150,7 @@ export const useDoctorData = () => {
     myPrescriptions: user?.role === 'doctor' ? data?.prescriptions || [] : [],
     myMedications:
       user?.role === 'doctor'
-        ? data?.prescriptions?.flatMap((p) => p.medications || []) || []
+        ? data?.prescriptions?.flatMap((p) => p.prescriptionMedications || []) || []
         : [],
     isLoading,
     error,
@@ -164,7 +170,7 @@ export const usePharmacyData = () => {
     diagnoses: data?.diagnoses || [],
     patients: data?.patients || [],
     payments: data?.payments || [],
-    stats: data?.stats || {},
+    stats: data?.stats || [],
     isLoading,
     error,
   }

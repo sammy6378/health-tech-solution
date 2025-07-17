@@ -1,21 +1,19 @@
 import { useState } from 'react'
 import {
   Package,
-  Plus,
   Search,
-  MapPin,
   CreditCard,
   Clock,
   CheckCircle,
   XCircle,
   Truck,
-  TrendingUp,
   ShoppingCart,
   Eye,
 } from 'lucide-react'
 import { DeliveryStatus, formatCurrency, formatDate } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
+import { useAuthStore } from '@/store/store'
 
 const statusColors = {
   pending:
@@ -28,14 +26,6 @@ const statusColors = {
   cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 }
 
-const paymentStatusColors = {
-  pending:
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  paid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  failed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-}
-
 const statusIcons = {
   pending: Clock,
   processing: Package,
@@ -46,12 +36,13 @@ const statusIcons = {
 
 function Orders() {
   const { orders } = useUserData()
+  const {user} = useAuthStore()
+  const role = user.role;
 
   console.log('orders',orders)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [showNewOrderModal, setShowNewOrderModal] = useState(false)
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -81,16 +72,20 @@ function Orders() {
   const completedOrders = orders.filter(
     (order) => order.delivery_status === DeliveryStatus.DELIVERED,
   ).length
-  const totalSpent = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0)
-  console.log('totalSpent', totalSpent)
+  
+ const totalSpent = orders.reduce((sum, order) => {
+  const amount = Number(order.total_amount) || 0
+  return sum + amount
+}, 0)
+
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            My Orders
+            {role && role === 'patient' ? 'My Orders' : 'All Orders'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Track your medicine orders and delivery status
@@ -124,12 +119,7 @@ function Orders() {
           />
 
           {/* Total Spent */}
-          <MetricCard
-            label="Total Spent"
-            value={formatCurrency(totalSpent)}
-            icon={<TrendingUp />}
-            color="purple"
-          />
+          <MetricCard label="Total Spent" value={formatCurrency(totalSpent)} />
         </div>
 
         {/* Search and Filter */}
@@ -161,14 +151,6 @@ function Orders() {
                   </option>
                 ))}
               </select>
-
-              <button
-                onClick={() => setShowNewOrderModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Order
-              </button>
             </div>
           </div>
         </div>
@@ -192,15 +174,27 @@ function Orders() {
                           )}
                         </div>
                         <div>
-                          <Link
-                            to="/dashboard/orders/$order"
-                            params={{
-                              order: String(order.order_number ?? 'N/A'),
-                            }}
-                            className="text-blue-600 hover:underline dark:text-blue-400"
-                          >
-                            Order #{order.order_number || 'N/A'}
-                          </Link>
+                          {role && role === 'patient' ? (
+                            <Link
+                              to="/dashboard/orders/$order"
+                              params={{
+                                order: String(order.order_number ?? 'N/A'),
+                              }}
+                              className="text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                              Order #{order.order_number || 'N/A'}
+                            </Link>
+                          ) : (
+                            <Link
+                              to="/dashboard/pharmacy-dashboard/orders/$order"
+                              params={{
+                                order: String(order.order_number ?? 'N/A'),
+                              }}
+                              className="text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                              Order #{order.order_number || 'N/A'}
+                            </Link>
+                          )}
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             Placed on{' '}
                             {order.order_date
@@ -221,10 +215,7 @@ function Orders() {
 
                     {/* Info Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-700 dark:text-gray-300 mb-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        <span>{order.delivery_address}</span>
-                      </div>
+                    
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-green-500" />
                         <span>{order.payment_method}</span>
@@ -279,8 +270,8 @@ function MetricCard({
 }: {
   label: string
   value: string | number
-  icon: React.ReactNode
-  color: string
+  icon?: React.ReactNode
+  color?: string
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

@@ -5,7 +5,7 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
-} from './ui/select'
+} from '../ui/select'
 import { Button } from '../ui/button'
 
 interface PaginationProps {
@@ -30,20 +30,35 @@ export const Pagination = ({
   const startItem = (currentPage - 1) * rowsPerPage + 1
   const endItem = Math.min(currentPage * rowsPerPage, totalCount)
 
+  // Filter out invalid values more thoroughly
+  const validRowsPerPageOptions = rowsPerPageOptions
+    .filter((option) => option && option > 0 && Number.isInteger(option))
+    .sort((a, b) => a - b)
+
+  // Ensure we have at least one valid option
+  const safeRowsPerPageOptions =
+    validRowsPerPageOptions.length > 0
+      ? validRowsPerPageOptions
+      : [5, 10, 25, 50]
+
   return (
     <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground">
       <div className="flex items-center gap-2">
         <span>Rows per page:</span>
         <Select
-          value={String(rowsPerPage)}
+          value={String(rowsPerPage || safeRowsPerPageOptions[0])}
           onValueChange={(val) => onRowsPerPageChange(Number(val))}
         >
-          <SelectTrigger className="w-[80px]">
+          <SelectTrigger className="w-[80px] bg-white dark:bg-gray-800">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            {rowsPerPageOptions.map((option) => (
-              <SelectItem key={option} value={String(option)}>
+          <SelectContent className="bg-white dark:bg-gray-800">
+            {safeRowsPerPageOptions.map((option) => (
+              <SelectItem
+                key={option}
+                value={String(option)}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
                 {option}
               </SelectItem>
             ))}

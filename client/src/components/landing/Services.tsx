@@ -119,7 +119,7 @@ function Services() {
         <motion.div
           variants={containerVariants}
           initial="hidden"
-          animate="visible" 
+          animate="visible"
           viewport={{ once: true, amount: 0.3 }}
         >
           {/* Section Header */}
@@ -248,7 +248,7 @@ function Services() {
                 How It Works
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Getting started with HealthTech is simple. Follow these three
+                Getting started with MediConnect is simple. Follow these three
                 easy steps to access quality healthcare.
               </p>
             </div>

@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/components/utils/handleError"
 import { authLogin, authSignup, type TLoginResponse } from "@/services/auth"
 import { authSlice, type TLoginRequest } from "@/store/store"
 import type { TRegister, TRegisterResponse } from "@/types/Tuser"
@@ -36,8 +37,9 @@ export const useLogin = () => {
       navigate({ to: getRedirectPath(role) })
     },
     onError: (error) => {
-      console.error('Login failed:', error)
-      toast.error(`Login failed: ${error.message}`)
+      const errormessage = getErrorMessage(error)
+      console.error(`Login failed: ${errormessage}`)
+      toast.error(`Login failed: ${errormessage}`)
     },
   })
 }

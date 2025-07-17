@@ -10,7 +10,13 @@ import {
   FiCalendar,
   FiPlus,
   FiCheckCircle,
+  FiX,
 } from 'react-icons/fi'
+import { uploadFile } from '@/hooks/useUpload'
+import { getErrorMessage } from '../utils/handleError'
+import { toast } from 'sonner'
+import { useAuthStore } from '@/store/store'
+import { useGetAppointment } from '@/hooks/useAppointments'
 
 const validationSchema = Yup.object({
   diagnosis_name: Yup.string().required('Required'),
@@ -20,50 +26,93 @@ const validationSchema = Yup.object({
 
 export default function DiagnosesPage() {
   const { mutate, isSuccess, isPending } = useCreateDiagnosis()
-  const { dgs: appointmentId } = useParams({ strict: false })
+  const { appointment } = useParams({ strict: false })
+  // if (!appointment) {
+  //   toast.error(
+  //     'Missing appointment ID. Please access this form through a valid appointment.',
+  //   )
+  //   return null
+  // }
+  const { data: appointmnet } = useGetAppointment(appointment!)
+  const {user} = useAuthStore()
+  const doctorId = user.userId;
+  const patientId = appointmnet?.data.patient?.user_id;
 
-  // console.log('dgs', appointmentId)
+  console.log('appointment', appointmnet)
 
   const formik = useFormik({
     initialValues: {
       diagnosis_name: '',
       treatment_plan: '',
       diagnosis_date: '',
-      appointment_id: appointmentId,
+      appointment_id: appointment,
       notes: '',
-      docs: [] as string[],
-      tests: [] as string[],
+      docs: [] as File[], // ✅ Store actual File objects
+      tests: [] as File[], // ✅ Store actual File objects
       allergies: '',
       symptoms: '',
     },
     validationSchema,
-    onSubmit: (values) => {
-      const payload: TDiagnosis = {
-        ...values,
-        diagnosis_date: new Date(values.diagnosis_date),
-        appointment_id: appointmentId,
-        notes: values.notes ? values.notes.split(',').map((s) => s.trim()) : [],
-        docs: values.docs,
-        tests: values.tests,
-        allergies: values.allergies
-          ? values.allergies.split(',').map((s) => s.trim())
-          : [],
-        symptoms: values.symptoms
-          ? values.symptoms.split(',').map((s) => s.trim())
-          : [],
+    onSubmit: async (values) => {
+      if (!appointment) {
+        toast.error(
+          'Missing appointment ID. Please access this form through a valid appointment.',
+        )
+        return
       }
-      
-      mutate(payload)
+
+      if (isPending) return // prevent double-submission
+
+      try {
+        const uploadedDocs =
+          values.docs.length > 0
+            ? await Promise.all(values.docs.map((file) => uploadFile(file)))
+            : []
+
+        const uploadedTests =
+          values.tests.length > 0
+            ? await Promise.all(values.tests.map((file) => uploadFile(file)))
+            : []
+
+        const payload: TDiagnosis = {
+          ...values,
+          diagnosis_date: new Date(values.diagnosis_date),
+          appointment_id: appointment,
+          patient_id: patientId,
+          doctor_id: doctorId,
+          notes: values.notes
+            ? values.notes.split(',').map((s) => s.trim())
+            : [],
+          docs: uploadedDocs,
+          tests: uploadedTests,
+          allergies: values.allergies
+            ? values.allergies.split(',').map((s) => s.trim())
+            : [],
+          symptoms: values.symptoms
+            ? values.symptoms.split(',').map((s) => s.trim())
+            : [],
+        }
+
+        console.log('payload', payload)
+        mutate(payload)
+      } catch (error) {
+        console.error('Upload failed:', error)
+        getErrorMessage(error)
+      }
     },
-    
-    // reset after submission
     enableReinitialize: true,
     validateOnMount: true,
   })
 
+  // ✅ Fixed: Store actual File objects
   const handleDrop = (acceptedFiles: File[], field: 'docs' | 'tests') => {
-    const fileNames = acceptedFiles.map((f) => f.name)
-    formik.setFieldValue(field, [...formik.values[field], ...fileNames])
+    formik.setFieldValue(field, [...formik.values[field], ...acceptedFiles])
+  }
+
+  // ✅ Fixed: Remove file function
+  const removeFile = (index: number, field: 'docs' | 'tests') => {
+    const newFiles = formik.values[field].filter((_, i) => i !== index)
+    formik.setFieldValue(field, newFiles)
   }
 
   const DropzoneInput = ({
@@ -126,10 +175,22 @@ export default function DiagnosesPage() {
               {formik.values[field].map((file, i) => (
                 <li
                   key={i}
-                  className="flex items-center text-sm text-gray-700 dark:text-gray-300"
+                  className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded"
                 >
-                  <FiFileText className="mr-2 flex-shrink-0" />
-                  <span className="truncate">{file}</span>
+                  <div className="flex items-center">
+                    <FiFileText className="mr-2 flex-shrink-0" />
+                    <span className="truncate">{file.name}</span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(i, field)}
+                    className="text-red-500 hover:text-red-700 ml-2"
+                  >
+                    <FiX className="h-4 w-4" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -147,10 +208,17 @@ export default function DiagnosesPage() {
             <FiPlus className="mr-2 text-blue-600" />
             New Diagnosis Record
           </h2>
+          {!appointment && (
+            <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-l-4 border-yellow-400 text-sm rounded">
+              Warning: No appointment ID provided. Please return to the
+              appointment page and try again.
+            </div>
+          )}
+
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             For Appointment ID:{' '}
             <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-              {appointmentId}
+              {appointment || 'N/A'}
             </span>
           </p>
         </div>

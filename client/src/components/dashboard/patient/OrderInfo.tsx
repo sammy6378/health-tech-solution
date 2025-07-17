@@ -1,10 +1,30 @@
 import { useParams } from '@tanstack/react-router'
 import { useUserData } from '@/hooks/useDashboard'
-import { DeliveryMethod, formatCurrency, formatDate } from '@/types/api-types'
-import { Truck, CheckCircle, Clock, Package, XCircle, MapPin, CreditCard, Info } from 'lucide-react'
+import { DeliveryMethod, formatCurrency, formatDate, PaymentStatus } from '@/types/api-types'
+import {
+  Truck,
+  CheckCircle,
+  Clock,
+  Package,
+  XCircle,
+  MapPin,
+  CreditCard,
+} from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import React from 'react'
+import React, { useEffect } from 'react'
 import DownloadInvoice from '@/components/modals/Download'
+import { useCreatePayment, useVerifyPayment } from '@/hooks/usePayments'
+import { useGetPatientProfileByUserId } from '@/hooks/usePatientProfile'
+import { useAuthStore } from '@/store/store'
+import { toast } from 'sonner'
+import { getErrorMessage } from '@/components/utils/handleError'
+
+// Extend the Window interface to include PaystackPop
+declare global {
+  interface Window {
+    PaystackPop?: any
+  }
+}
 
 const statusIcons = {
   pending: Clock,
@@ -23,24 +43,62 @@ const statusSteps = [
 
 const getStatusPercentage = (status: string) => {
   switch (status) {
-    case 'pending': return 25
-    case 'processing': return 50
-    case 'shipped': return 75
-    case 'delivered': return 100
-    default: return 0
+    case 'pending':
+      return 25
+    case 'processing':
+      return 50
+    case 'shipped':
+      return 75
+    case 'delivered':
+      return 100
+    default:
+      return 0
   }
 }
 
 export default function OrderInfo() {
   const { order } = useParams({ strict: false })
+  const { mutateAsync: addPayment } = useCreatePayment()
+  const { user } = useAuthStore()
+  const userId = user.userId
+  const { data: profile } = useGetPatientProfileByUserId(userId)
   const { orders } = useUserData()
+  const { mutateAsync: verifyPayment, isPending: verifying } =
+    useVerifyPayment()
 
   const orderFound = orders.find((o) => o.order_number === order)
   console.log('Order Found:', orderFound)
+  
+    useEffect(() => {
+      if (!document.getElementById('paystack-script')) {
+        const script = document.createElement('script')
+        script.src = 'https://js.paystack.co/v1/inline.js'
+        script.async = true
+        script.id = 'paystack-script'
+        document.body.appendChild(script)
+      }
+    }, [])
 
-  if (!orderFound) {
-    return null // or handle loading state
-  }
+
+    if (!orderFound) {
+      return (
+        <div className="min-h-screen py-8 px-4 sm:px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 p-6">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Order Not Found
+                </h1>
+                <p className="text-gray-500 dark:text-gray-400">
+                  The order you're looking for doesn't exist or has been
+                  removed.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
   const invoiceData = {
     invoiceNumber: orderFound.order_number,
@@ -56,27 +114,66 @@ export default function OrderInfo() {
     estimatedDelivery: formatDate(orderFound.estimated_delivery ?? ''),
     notes: 'Thank you for choosing our telemedicine services.',
   }
-  
 
-  if (!orderFound) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="max-w-md p-8 bg-white dark:bg-gray-800 rounded-xl shadow-md">
-          <Info className="w-10 h-10 mx-auto text-yellow-500 mb-4" />
-          <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
-            Order Not Found
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            We couldn't find order <span className="font-mono font-bold">{order}</span>.
-            Please check the order number and try again.
-          </p>
-        </div>
-      </div>
-    )
+  // handle payment
+
+  const initiatePayment = async () => {
+    if (!orderFound) return
+
+    const name =
+      `${orderFound?.patient?.first_name} ${orderFound?.patient?.last_name}` ||
+      'Patient'
+
+    try {
+      const response = await addPayment({
+        amount: orderFound.total_amount,
+        full_name: name,
+        email: orderFound.patient?.email ?? 'user@example.com',
+        phone_number: profile?.data.phone_number ?? '0000000000',
+        order_number: orderFound.order_number,
+        payment_method: orderFound.payment_method,
+        user: orderFound.patient,
+      })
+
+      if (response.message === 'Payment already initiated') {
+        toast.info('Payment already initialized, redirecting…')
+      }
+
+
+      const data = response.data
+
+      if (window.PaystackPop && data?.paystack_reference) {
+        const handler = window.PaystackPop.setup({
+          key: 'pk_test_9c7cb667be19893bb131624008c263884493bda2',
+          email: data.email,
+          amount: data.amount * 100,
+          currency: 'KES',
+          ref: data.paystack_reference,
+          callback: function (response: any) {
+            // Automatically verify after successful payment
+            verifyPayment({ reference: response.reference })
+          },
+          onClose: function () {
+            toast.info('Payment window closed.')
+          },
+        })
+        handler.openIframe()
+      }
+    } catch (error) {
+      console.error('Failed to initiate payment:', error)
+      const message = getErrorMessage(error)
+      toast.error(message)
+    }
   }
 
-  const Icon = orderFound.delivery_status ? statusIcons[orderFound.delivery_status as keyof typeof statusIcons] : undefined
-  const statusPercentage = getStatusPercentage(orderFound.delivery_status || 'pending')
+
+
+  const Icon = orderFound.delivery_status
+    ? statusIcons[orderFound.delivery_status as keyof typeof statusIcons]
+    : undefined
+  const statusPercentage = getStatusPercentage(
+    orderFound.delivery_status || 'pending',
+  )
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6">
@@ -94,6 +191,18 @@ export default function OrderInfo() {
                   ? formatDate(orderFound.order_date)
                   : 'N/A'}
               </p>
+            </div>
+            <div>
+                {orderFound.payment_status !== PaymentStatus.PAID && (
+                <button
+                  className="inline-flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+                  type="button"
+                  onClick={initiatePayment}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {verifying ? 'Processing...' : 'Checkout'}
+                </button>
+                )}
             </div>
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               {Icon && <Icon className="w-5 h-5 mr-2" />}
@@ -169,7 +278,7 @@ export default function OrderInfo() {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Address</p>
                 <p className="font-medium text-gray-800 dark:text-gray-200">
-                  {orderFound.delivery_address || 'N/A'}
+                  {profile?.data.address || 'N/A'}
                 </p>
               </div>
               <div>
@@ -271,6 +380,7 @@ export default function OrderInfo() {
                 {formatCurrency(orderFound.total_amount || 0)}
               </p>
             </div>
+
             {orderFound.payment_status === 'paid' && (
               <div className="mt-6 text-center">
                 <DownloadInvoice invoiceData={invoiceData} />

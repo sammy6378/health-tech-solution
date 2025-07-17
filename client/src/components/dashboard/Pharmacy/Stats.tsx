@@ -1,4 +1,4 @@
-import { usePharmacyData, useUserData } from '@/hooks/useUserHook'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -21,22 +21,55 @@ import {
 import {
   formatDate,
   type TMedication,
+  type TOrder,
   type TPrescription,
 } from '@/types/api-types'
 import dayjs from 'dayjs'
+import { usePharmacyData, useUserData } from '@/hooks/useDashboard'
 
 export function PharmacyDashboard() {
-  const { medications, stats, isLoading } = usePharmacyData()
-  const { prescriptions } = useUserData()
+  const { medications, isLoading } = usePharmacyData()
+  const { prescriptions,orders,stats } = useUserData()
 
-  const chartData = Array.from({ length: 12 }, (_, i) => {
-    const month = dayjs().month(i).format('MMM')
-    return {
-      name: month,
-      prescriptions: stats?.monthlyPrescriptions?.[i] ?? 0,
-      orders: stats?.monthlyOrders?.[i] ?? 0,
-    }
-  })
+ const getMonthlyCounts = (data: TPrescription[]) => {
+   const counts = Array(12).fill(0)
+
+   data.forEach((prescription) => {
+     const date = dayjs(prescription.prescription_date)
+     if (date.isValid()) {
+       const monthIndex = date.month() // 0-11
+       counts[monthIndex] += 1
+     }
+   })
+
+   return counts
+ }
+
+ const getOrderMonthlyCounts = (data: TOrder[]) => {
+   const counts = Array(12).fill(0)
+
+   data.forEach((order) => {
+     const date = dayjs(order.order_date)
+     if (date.isValid()) {
+       const monthIndex = date.month() // 0-11
+       counts[monthIndex] += 1
+     }
+   })
+
+   return counts
+ }
+
+ const prescriptionCounts = getMonthlyCounts(prescriptions)
+
+ // Optionally: same for orders if you have `orders` array
+ const orderCounts = getOrderMonthlyCounts(orders)
+
+ const chartData = Array.from({ length: 12 }, (_, i) => ({
+   name: dayjs().month(i).format('MMM'),
+   prescriptions: prescriptionCounts[i] || 0,
+   orders: orderCounts[i] || 0,
+ }))
+
 
   console.log("chart data", chartData)
 
@@ -220,14 +253,24 @@ export function PharmacyDashboard() {
                         {prescription.diagnosis?.patient?.first_name}{' '}
                         {prescription.diagnosis?.patient?.last_name}
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {prescription.medications
-                          ?.map(
-                            (med) =>
-                              `${med.name} (Qty: ${med.dosage}) (Batch: ${med.medication_code})`,
-                          )
-                          .join(', ')}
-                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {prescription.prescriptionMedications?.map((med) => (
+                          <li
+                            key={med.medication.medication_id}
+                            className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2"
+                          >
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {med.medication.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              Qty: <span className="font-semibold">{med.medication.dosage}</span>
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              Batch: <span className="font-semibold">{med.medication.medication_code}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
               </div>
@@ -257,7 +300,8 @@ export function PharmacyDashboard() {
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : medications.filter((m:TMedication) => m.expiration_date).length > 0 ? (
+            ) : medications.filter((m: TMedication) => m.expiration_date)
+                .length > 0 ? (
               medications
                 .filter((m: TMedication) => m.expiration_date)
                 .slice(0, 3)
@@ -301,7 +345,7 @@ export function PharmacyDashboard() {
                 ))}
               </div>
             ) : medications.filter(
-                (m:TMedication) => m.stock_quantity && m.stock_quantity < 20,
+                (m: TMedication) => m.stock_quantity && m.stock_quantity < 20,
               ).length > 0 ? (
               medications
                 .filter(

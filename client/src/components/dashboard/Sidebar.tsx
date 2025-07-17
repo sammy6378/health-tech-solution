@@ -37,11 +37,11 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
 
   return (
     <Sidebar
-      className="bg-gray-50  dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+      className="bg-white border border-r-gray-200 dark:border-r-0 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
       collapsible="offcanvas"
       {...props}
     >
-      <SidebarHeader className="bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+      <SidebarHeader className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -50,14 +50,14 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
             >
               <Link to={'/dashboard'}>
                 <LayoutDashboard className="!size-5" />
-                <span className="text-base font-semibold">HealthTech</span>
+                <span className="text-base font-semibold">MediConnect</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden hover:overflow-y-auto sidebar-scroll bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 ">
+      <SidebarContent className="overflow-hidden hover:overflow-y-auto sidebar-scroll bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ">
         {filteredNavGroups.map((group, idx) => (
           <SidebarMenu key={idx} className="mb-4">
             <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">
@@ -82,7 +82,7 @@ export function AppSidebar({ userRole, ...props }: AppSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+      <SidebarFooter className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
         <Link
           to="/auth-signin"
           onClick={() => authSlice.logout()}

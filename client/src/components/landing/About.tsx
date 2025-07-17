@@ -94,7 +94,7 @@ function About() {
               <span className="block text-[#1A94E5]">Through Innovation</span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              HealthTech is dedicated to bridging the gap between patients and
+              MediConnect is dedicated to bridging the gap between patients and
               healthcare providers through cutting-edge technology, ensuring
               everyone has access to quality medical care when they need it
               most.
@@ -137,7 +137,7 @@ function About() {
           <motion.div variants={itemVariants} className="mb-20">
             <div className="text-center mb-12">
               <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Why Choose HealthTech?
+                Why Choose MediConnect?
               </h3>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                 We combine advanced technology with human care to deliver

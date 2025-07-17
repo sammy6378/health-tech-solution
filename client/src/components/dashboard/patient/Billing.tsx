@@ -37,8 +37,8 @@ export default function BillingPage() {
     const matchesSearch =
       searchQuery === '' ||
       payment.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (payment.transaction_id &&
-        payment.transaction_id
+      (payment.paystack_reference &&
+        payment.paystack_reference
           .toLowerCase()
           .includes(searchQuery.toLowerCase()))
 
@@ -105,7 +105,7 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                KES {Number(totalPaid).toLocaleString()}
+                KES {Number(totalPaid)}
               </div>
             </CardContent>
           </Card>
@@ -242,7 +242,7 @@ export default function BillingPage() {
                     <TableCell>
                       {getStatusBadge(payment.payment_status)}
                     </TableCell>
-                    <TableCell>{payment.transaction_id || '-'}</TableCell>
+                    <TableCell>{payment.paystack_reference || '-'}</TableCell>
                   </TableRow>
                 ))
               ) : (

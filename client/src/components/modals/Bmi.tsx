@@ -33,6 +33,7 @@ export default function BmiModal({
 }: BmiModalProps) {
   const { data: existingRecord, refetch } =
     useFetchMedicalRecordByUser(patient_id)
+    console.log("medical_records", existingRecord)
   const { mutateAsync: createRecord } = useCreateMedicalRecord()
   const { mutateAsync: updateRecord } = useUpdateMedicalRecord()
 

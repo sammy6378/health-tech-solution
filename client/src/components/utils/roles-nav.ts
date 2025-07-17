@@ -66,8 +66,16 @@ export const navGroups = [
         icon: ClipboardList,
       },
       { title: 'Diagnoses', to: '/dashboard/doctor/diagnoses', icon: Pill },
-      { title: 'Patients', to: '/dashboard/doctor/patients', icon: BriefcaseMedical },
-      { title: 'Prescriptions', to: '/dashboard/doctor/prescriptions', icon: FilePlus },
+      {
+        title: 'Patients',
+        to: '/dashboard/doctor/patients',
+        icon: BriefcaseMedical,
+      },
+      {
+        title: 'Prescriptions',
+        to: '/dashboard/doctor/prescriptions',
+        icon: FilePlus,
+      },
       { title: 'Pharmacy', to: '/dashboard/doctor/pharmacy', icon: Warehouse },
       { title: 'My Profile', to: '/dashboard/doctor/profile', icon: User2 },
     ],
@@ -75,14 +83,29 @@ export const navGroups = [
   {
     label: 'Pharmacy',
     links: [
-      { title: 'Dashboard', to: '/dashboard/pharmacy-dashboard', icon: LayoutDashboard },
-      { title: 'Inventory', to: '/pharmacy/inventory', icon: Warehouse },
-      { title: 'Orders', to: '/pharmacy/orders', icon: ClipboardList },
-      { title: 'Medicines', to: '/pharmacy/medicines', icon: Pill },
-      { title: 'Calendar', to: '/pharmacy/calendar', icon: Calendar },
+      {
+        title: 'Dashboard',
+        to: '/dashboard/pharmacy-dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        title: 'Inventory',
+        to: '/dashboard/pharmacy-dashboard/inventory',
+        icon: Warehouse,
+      },
+      {
+        title: 'Orders',
+        to: '/dashboard/pharmacy-dashboard/orders',
+        icon: ClipboardList,
+      },
+      {
+        title: 'Billing',
+        to: '/dashboard/pharmacy-dashboard/billing',
+        icon: FaMoneyBill,
+      },
       {
         title: 'Prescriptions',
-        to: '/pharmacy/prescriptions',
+        to: '/dashboard/pharmacy-dashboard/patient-prescriptions',
         icon: FilePlus,
       },
     ],

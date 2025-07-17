@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { TAppointment } from '@/types/api-types'
+import type { AppointmentStatus, TAppointment } from '@/types/api-types'
 import {
   fetchList,
   fetchOne,
@@ -57,6 +57,21 @@ export const useCreateAppointment = () => {
     onSuccess: (_, __, context) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false }) // All dashboards
+    },
+  })
+}
+
+// update status
+export const useUpdateAppointmentStatus = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: AppointmentStatus }) =>
+      updateItem<TAppointment>(`${base}/${id}/status`, { status }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointment', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })
 }

@@ -23,6 +23,12 @@ const orderStatusColors = {
 
 const upcomingAppointments = () => {
   const { appointments } = useUserData()
+  // fileter past appointments
+  const filteredAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.appointment_date)
+    const today = new Date()
+    return appointmentDate >= today && appointment.status === 'scheduled'
+  })
   return (
     <div className="rounded-lg shadow bg-white dark:bg-gray-800 p-4">
       <div className="flex justify-between items-center mb-4">
@@ -35,12 +41,12 @@ const upcomingAppointments = () => {
         </button>
       </div>
       <div className="space-y-4">
-        {appointments.length === 0 ? (
+        {filteredAppointments.length === 0 ? (
           <div className="text-center text-gray-400 dark:text-gray-500 py-8">
             No upcoming appointments.
           </div>
         ) : (
-          appointments.map((appointment) => (
+          filteredAppointments.map((appointment) => (
             <div
               key={appointment.appointment_id}
               className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
@@ -48,10 +54,11 @@ const upcomingAppointments = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium">
-                    {appointment.doctor?.first_name}
+                    Dr. {appointment.doctor?.first_name}{' '}
+                    {appointment.doctor?.last_name}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {appointment.consultation_type}
+                    {appointment.consultation_type} meeting.
                   </p>
                 </div>
                 <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -64,7 +71,8 @@ const upcomingAppointments = () => {
                   className="mr-1 text-gray-500 dark:text-gray-400"
                 />
                 <span className="text-gray-500 dark:text-gray-400 mr-3">
-                  {appointment.appointment_date} {formatTime(appointment.start_time ?? '')}
+                  {appointment.appointment_date}{' '}
+                  {formatTime(appointment.start_time ?? '')}
                 </span>
                 <Clock
                   size={14}
@@ -153,23 +161,30 @@ export const ActivePrescriptions = () => {
               key={prescription.prescription_id}
               className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">
-                    {prescription.diagnosis?.diagnosis_name}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {prescription.dosage_instructions.join(', ')}
-                  </p>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                  <MoreHorizontal size={16} />
-                </button>
-              </div>
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                <p>{prescription.frequency_per_day}</p>
-                {/* <p>Remaining: {prescription.remaining}</p> */}
-              </div>
+              {prescription.prescriptionMedications?.map((med) => (
+                <>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">
+                        {prescription.diagnosis?.diagnosis_name}
+                      </p>
+
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {med.dosage_instructions.join(
+                          ', ',
+                        )}
+                      </p>
+                    </div>
+                    <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <p>{med.frequency_per_day}</p>
+                    {/* <p>Remaining: {prescription.remaining}</p> */}
+                  </div>
+                </>
+              ))}
             </div>
           ))
         )}
@@ -226,6 +241,8 @@ function getBmiCategory(bmi: number | null) {
   onAddClick: () => void
 }) {
   const {bmiRecord} = useUserData()
+
+  console.log("bmi", bmiRecord)
   const bmi = bmiRecord?.bmi ?? null
 
   const category = bmi !== null ? getBmiCategory(bmi) : null

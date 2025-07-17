@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type SetStateAction } from 'react'
 import '../../styles.css';
+import { getAuthHeaders } from '@/services/api-call';
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -32,16 +33,24 @@ const Chatbot = () => {
 
   try {
     // Call your NestJS API
-    const response = await fetch('http://localhost:8000/chatbot/message', {
+    const response = await fetch('http://localhost:8000/api/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ message: inputValue }),
     });
        const data = await response.json();
-    const newBotMessage = { text: data.response, sender: 'bot' };
-    setMessages(prev => [...prev, newBotMessage]);
+       console.log('API response:', data)
+
+    let botReply = 'Sorry, I could not process your request.'
+
+    if (typeof data.response === 'string') {
+      botReply = data.response
+    } else if (data.response?.message) {
+      botReply = data.response.message
+    }
+
+    const newBotMessage = { text: botReply, sender: 'bot' }
+    setMessages((prev) => [...prev, newBotMessage])
   } catch (error) {
     const newBotMessage = { text: "Sorry, I'm having trouble connecting.", sender: 'bot' };
     setMessages(prev => [...prev, newBotMessage]);

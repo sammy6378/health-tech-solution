@@ -1,12 +1,12 @@
-import DiagnosesPage from '@/components/modals/Diagnoses'
+import OrderInfo from '@/components/dashboard/patient/OrderInfo'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute(
-  '/dashboard/doctor/diagnoses/$dgs/new-prescription',
+  '/dashboard/pharmacy-dashboard/orders/$order',
 )({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <DiagnosesPage />
+  return <OrderInfo />
 }

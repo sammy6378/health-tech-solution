@@ -16,6 +16,8 @@ import {
 } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
+import { useUpdateAppointmentStatus } from '@/hooks/useAppointments'
+import { toast } from 'sonner'
 
 const AppointmentPage = () => {
   const [activeTab, setActiveTab] = useState<AppointmentStatus>(
@@ -29,6 +31,7 @@ const AppointmentPage = () => {
 
 
   const { appointments,user } = useUserData();
+  const {mutateAsync: updateStatus} = useUpdateAppointmentStatus()
 
   if (!appointments || !user) {
     return (
@@ -36,6 +39,16 @@ const AppointmentPage = () => {
         <p className="text-gray-500 dark:text-gray-400">Loading appointments...</p>
       </div>
     )
+  }
+
+  const handleMarkComplete = async (appointmentId: string) => {
+    try {
+      await updateStatus({ id: appointmentId, status: AppointmentStatus.COMPLETED })
+      toast.success('Appointment marked as complete')
+    } catch (error) {
+      console.error('Failed to mark appointment as complete:', error)
+      toast.error('Failed to mark appointment as complete')
+    }
   }
 
 
@@ -272,6 +285,14 @@ const AppointmentPage = () => {
                       Actions
                     </th>
                   )}
+                  {user.role === 'doctor' && (
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
+                      Mark Complete
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -294,7 +315,8 @@ const AppointmentPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm">
-                          {appointment.appointment_date} : {formatTime(appointment.start_time ?? '')}
+                          {appointment.appointment_date} :{' '}
+                          {formatTime(appointment.start_time ?? '')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -320,9 +342,13 @@ const AppointmentPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {appointment.meeting_link ? (
+                          {appointment.meeting_link && appointment.start_url ? (
                             <a
-                              href={appointment.meeting_link}
+                              href={
+                                user.role === 'doctor'
+                                  ? appointment.start_url
+                                  : appointment.meeting_link
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -335,16 +361,38 @@ const AppointmentPage = () => {
                         </div>
                       </td>
                       {user.role === 'doctor' && (
-                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                         <Link
-                         to='/dashboard/doctor/appointments/$appointment/add-diagnosis'
-                          params={{ appointment: appointment.appointment_id ?? '' }}  
-                         className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
-                           Add Diagnosis
-                         </Link>
-                       </td>
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <Link
+                              to="/dashboard/doctor/appointments/$appointment/add-diagnosis"
+                              params={{
+                                appointment: appointment.appointment_id ?? '',
+                              }}
+                              className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
+                            >
+                              Add Diagnosis
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <button
+                              className="inline-flex cursor-pointer items-center px-3 py-1 rounded-md bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() =>
+                                handleMarkComplete(
+                                  appointment.appointment_id ?? '',
+                                )
+                              }
+                              disabled={
+                                appointment.status ===
+                                AppointmentStatus.COMPLETED
+                              }
+                              title="Mark as Complete"
+                            >
+                              <CheckCircle2 size={16} className="mr-1" />
+                              Mark Complete
+                            </button>
+                          </td>
+                        </>
                       )}
-                     
                     </tr>
                   ))
                 ) : (

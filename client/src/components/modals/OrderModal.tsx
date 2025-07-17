@@ -21,7 +21,6 @@ import { toast } from 'sonner'
 import { DeliveryMethod, PaymentMethod } from '@/types/api-types'
 import { useCartStore } from '@/store/cart/add'
 import type { TPatient } from '@/types/Tuser'
-import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
 
 // 🧭 Step Indicator Component
@@ -162,8 +161,8 @@ const PersonalInfoStep = ({
 }) => {
   const { user } = useAuthStore()
   const patientId = user?.userId || ''
-  const { profileData } = useUserData()
-  const profile = profileData?.patientProfile || null
+   const { data } = useGetPatientProfileByUserId(patientId)
+   const profile = data?.data || null
 
   const createProfile = useCreatePatientProfile()
   const updateProfile = useUpdatePatientProfile()
@@ -212,10 +211,10 @@ const PersonalInfoStep = ({
       return
     }
 
-    const payload = { ...formData, patient_id: patientId }
+    const payload = { ...formData, user_id: patientId }
 
     try {
-      if (profileData) {
+      if (profile && profile.profile_id) {
         await updateProfile.mutateAsync({ id: patientId, data: payload })
       } else {
         await createProfile.mutateAsync(payload)
@@ -358,10 +357,12 @@ const OrderDetailsStep = ({
   onSubmit: (data: any) => void
   onBack: () => void
 }) => {
-  const { profileData } = useUserData()
-  const profile = profileData?.patientProfile || null
+  const {user} = useAuthStore()
+  const userId = user?.userId || ''
+  const {data} = useGetPatientProfileByUserId(userId)
+  const profile = data?.data || null
 
-  console.log('cart medications', medications)
+  console.log('profile', profile)
   
   const [formData, setFormData] = useState({
     delivery_address: profile?.address || '',

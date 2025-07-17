@@ -9,7 +9,7 @@ export interface ApiResponse<T> {
 }
 
 /** Get authorization headers */
-const getAuthHeaders = (): HeadersInit => {
+export const getAuthHeaders = (): HeadersInit => {
   const token = authStore.state.tokens?.access_token
   return {
     'Content-Type': 'application/json',

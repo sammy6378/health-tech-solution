@@ -97,7 +97,7 @@ export interface TPharmacy {
 
 export interface TPatient {
   profile_id?: string
-  patient_id?: string
+  user_id?: string
   phone_number: string
   address: string
   sex?: Gender
@@ -109,5 +109,5 @@ export interface TPatient {
   postal_code?: string
   avatar?: string
   created_at?: Date
-  user?: TUser
+  patient?: TUser
 }

@@ -7,6 +7,8 @@ import {
   updateItem,
   deleteItem,
 } from '@/services/api-call'
+import { toast } from 'sonner'
+import { getErrorMessage } from '@/components/utils/handleError'
 
 const base = 'payments'
 
@@ -42,8 +44,35 @@ export const useCreatePayment = () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
+    onError: (error: any) => {
+      const msg = getErrorMessage(error)
+      toast.error(msg || 'Failed to initiate payment')
+    }
   })
 }
+
+// verify payment
+export const useVerifyPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ reference }: { reference: string }) =>
+      fetchOne<TPayment>(`${base}/verify/${reference}`),
+    onSuccess: (_, { reference }) => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+      queryClient.invalidateQueries({ queryKey: ['payment', reference] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+      toast.success('Payment verified successfully')
+    },
+    onError: (error: any) => {
+      console.error('Payment verification error:', error)
+      const msg = getErrorMessage(error)
+      toast.error(
+        msg || 'Failed to verify payment',
+      )
+    }
+  })
+}
+
 
 // ✅ Update a payment
 export const useUpdatePayment = () => {

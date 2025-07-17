@@ -37,6 +37,8 @@ export const formatTime = (time: string) => {
 // diagnosis
 export interface TDiagnosis {
   diagnosis_id?: string
+  patient_id?: string
+  doctor_id?: string
   diagnosis_name: string
   treatment_plan: string
   diagnosis_date: Date
@@ -65,17 +67,10 @@ export enum PrescriptionStatus {
 }
 
 export interface TPrescription {
-  prescription_id: string
-  prescription_number: string
-  prescription_date: Date
-  duration_days?: number
-  frequency_per_day?: number
-  quantity_prescribed: number
-  quantity_dispensed?: number
-  unit_price?: number
+  prescription_id?: string
+  prescription_number?: string
+  prescription_date?: Date
   total_price?: number
-  dosage_instructions: string[]
-  notes?: string
   status: PrescriptionStatus
   created_at?: string
   diagnosis?: TDiagnosis
@@ -84,7 +79,17 @@ export interface TPrescription {
   diagnosis_id?: string
   patient_id?: string
   doctor_id?: string
-  medications?: TMedication[]
+  prescriptionMedications?: TPrescriptionMedication[]
+}
+
+export interface TPrescriptionMedication {
+  id?: string
+  medication_name: string
+  duration_days?: number
+  frequency_per_day?: number
+  quantity_prescribed: number
+  dosage_instructions: string[]
+  medication: TMedication
 }
 
 // appointments
@@ -260,13 +265,19 @@ export interface TMedicalrecord {
 
 export interface TPayment {
   payment_id?: string
-  order_id?: string
+  full_name?: string
+  email?: string
+  phone_number?: string
+  user_id?: string
+  user?: TUser
+  paystack_reference?: string
+  paystack_checkout_url: string
+  paystack_access_code: string
   order_number: string
   amount: number
   payment_date: Date
   payment_method: PaymentMethod
   payment_status: PaymentStatus
-  transaction_id?: string
   created_at?: Date
   updated_at?: Date
 }

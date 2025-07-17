@@ -128,12 +128,12 @@ import { formatTime } from '@/types/api-types'
                       Meeting Link:
                     </span>{' '}
                     <a
-                      href={appointment.meeting_link}
+                      href={appointment.start_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
-                      {appointment.meeting_link}
+                      {appointment.start_url}
                     </a>
                   </p>
                 )}

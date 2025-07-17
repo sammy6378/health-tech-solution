@@ -8,20 +8,20 @@ import type { Role } from '@/types/Tuser'
 import Chatbot from '@/components/modals/chatbot'
 
 export const Route = createFileRoute('/dashboard')({
-    beforeLoad: ({location}) =>{
-      // Check both store state and localStorage
-      const isAuthenticated = authStore.state.isAuthenticated
-      const storedData = localStorage.getItem('auth')
-      if (!isAuthenticated && !storedData) {
-        throw redirect({
-          to: '/auth-signin',
-          search: {
-            redirect: location.href,
-          },
-        })
-      }
+  beforeLoad: ({ location }) => {
+    // Check both store state and localStorage
+    const isAuthenticated = authStore.state.isAuthenticated
+    const storedData = localStorage.getItem('auth')
+    if (!isAuthenticated && !storedData) {
+      throw redirect({
+        to: '/auth-signin',
+        search: {
+          redirect: location.href,
+        },
+      })
+    }
 
-      // If store says not authenticated but localStorage has data, reinitialize
+    // If store says not authenticated but localStorage has data, reinitialize
     if (!isAuthenticated && storedData) {
       try {
         const userData = JSON.parse(storedData)
@@ -34,20 +34,21 @@ export const Route = createFileRoute('/dashboard')({
           throw redirect({
             to: '/auth-signin',
             search: {
-              redirect: location.href
-            }
+              redirect: location.href,
+            },
           })
         }
-      }catch (error) {
+      } catch (error) {
         localStorage.removeItem('auth')
         throw redirect({
           to: '/auth-signin',
           search: {
-            redirect: location.href
-          }
+            redirect: location.href,
+          },
         })
-      }}
-    },
+      }
+    }
+  },
   component: RouteComponent,
 })
 
@@ -56,7 +57,7 @@ function RouteComponent() {
   const role = authState.user?.role as Role
   return (
     <SidebarProvider
-      className="bg-gray-50 dark:bg-gray-900"
+      className="bg-white dark:bg-gray-900"
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -67,7 +68,7 @@ function RouteComponent() {
       <AppSidebar variant="inset" userRole={role} />
       <SidebarInset>
         <Tobbar />
-        <div className="flex flex-1 flex-col bg-gray-50 dark:bg-gray-900">
+        <div className="flex flex-1 flex-col bg-white dark:bg-gray-900">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <Outlet />
