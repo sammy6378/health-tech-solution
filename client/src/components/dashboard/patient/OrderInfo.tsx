@@ -14,10 +14,10 @@ import { Progress } from '@/components/ui/progress'
 import React, { useEffect } from 'react'
 import DownloadInvoice from '@/components/modals/Download'
 import { useCreatePayment, useVerifyPayment } from '@/hooks/usePayments'
-import { useGetPatientProfileByUserId } from '@/hooks/usePatientProfile'
-import { useAuthStore } from '@/store/store'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/components/utils/handleError'
+import { useGetOrder } from '@/hooks/useOrders'
+import { useAuthStore } from '@/store/store'
 
 // Extend the Window interface to include PaystackPop
 declare global {
@@ -59,16 +59,17 @@ const getStatusPercentage = (status: string) => {
 export default function OrderInfo() {
   const { order } = useParams({ strict: false })
   const { mutateAsync: addPayment } = useCreatePayment()
-  const { user } = useAuthStore()
-  const userId = user.userId
-  const { data: profile } = useGetPatientProfileByUserId(userId)
   const { orders } = useUserData()
   const { mutateAsync: verifyPayment, isPending: verifying } =
-    useVerifyPayment()
-
+  useVerifyPayment()
+  const {user} = useAuthStore()
+  const role = user?.role || 'guest';
   const orderFound = orders.find((o) => o.order_number === order)
+  const { data: profile } = useGetOrder(orderFound?.order_id!)
+  const patient = profile?.data.patient;
   console.log('Order Found:', orderFound)
-  
+  console.log('Patient Found:', patient)
+
     useEffect(() => {
       if (!document.getElementById('paystack-script')) {
         const script = document.createElement('script')
@@ -129,7 +130,7 @@ export default function OrderInfo() {
         amount: orderFound.total_amount,
         full_name: name,
         email: orderFound.patient?.email ?? 'user@example.com',
-        phone_number: profile?.data.phone_number ?? '0000000000',
+        phone_number: patient?.patientProfile?.phone_number ?? '0000000000',
         order_number: orderFound.order_number,
         payment_method: orderFound.payment_method,
         user: orderFound.patient,
@@ -193,7 +194,7 @@ export default function OrderInfo() {
               </p>
             </div>
             <div>
-                {orderFound.payment_status !== PaymentStatus.PAID && (
+                {orderFound.payment_status !== PaymentStatus.PAID &&  role === 'patient' && (
                 <button
                   className="inline-flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
                   type="button"
@@ -278,7 +279,7 @@ export default function OrderInfo() {
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Address</p>
                 <p className="font-medium text-gray-800 dark:text-gray-200">
-                  {profile?.data.address || 'N/A'}
+                  {patient?.patientProfile?.address || 'N/A'}
                 </p>
               </div>
               <div>
