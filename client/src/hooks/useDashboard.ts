@@ -31,6 +31,7 @@ export interface Dashboard {
   prescriptions: TPrescription[]
   orders: TOrder[]
   patients?: TUser[]
+  doctors?: TUser[]
   medications?: TMedication[]
   payments?: TPayment[]
   medicalRecord?: TMedicalrecord
@@ -178,3 +179,19 @@ export const usePharmacyData = () => {
   }
 }
 
+// admin
+export const useAdminData = () => {
+  const { data, isLoading, error } = useDashboardData()
+
+  return {
+    doctors: data?.doctors || [],
+    patients: data?.patients || [],
+    appointments: data?.appointments || [],
+    diagnoses: data?.diagnoses || [],
+    prescriptions: data?.prescriptions || [],
+    orders: data?.orders || [],
+    stats: data?.stats || {},
+    isLoading,
+    error,
+  }
+}
