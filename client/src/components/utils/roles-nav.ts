@@ -24,8 +24,6 @@ export const checkRole = (role: Role) => {
       return navGroups.filter((group) => ['Doctor'].includes(group.label))
     case Role.PATIENT:
       return navGroups.filter((group) => ['Patient'].includes(group.label))
-    case Role.PHARMACY:
-      return navGroups.filter((group) => ['Pharmacy'].includes(group.label))
     default:
       return []
   }
@@ -61,7 +59,7 @@ export const navGroups = [
     links: [
       { title: 'Dashboard', to: '/dashboard/doctor', icon: LayoutDashboard },
       { title: 'Calendar', to: '/dashboard/doctor/calendar', icon: Calendar },
-     { title: 'Messages', to: '/dashboard/doctor/chat', icon: Users },
+      { title: 'Messages', to: '/dashboard/doctor/chat', icon: Users },
       {
         title: 'Appointments',
         to: '/dashboard/doctor/appointments',
@@ -82,46 +80,60 @@ export const navGroups = [
       { title: 'My Profile', to: '/dashboard/doctor/profile', icon: User2 },
     ],
   },
-  {
-    label: 'Pharmacy',
-    links: [
-      {
-        title: 'Dashboard',
-        to: '/dashboard/pharmacy-dashboard',
-        icon: LayoutDashboard,
-      },
-      {
-        title: 'Inventory',
-        to: '/dashboard/pharmacy-dashboard/inventory',
-        icon: Warehouse,
-      },
-      {
-        title: 'Orders',
-        to: '/dashboard/pharmacy-dashboard/orders',
-        icon: ClipboardList,
-      },
-      {
-        title: 'Billing',
-        to: '/dashboard/pharmacy-dashboard/billing',
-        icon: BriefcaseBusiness,
-      },
-      {
-        title: 'Prescriptions',
-        to: '/dashboard/pharmacy-dashboard/patient-prescriptions',
-        icon: FilePlus,
-      },
-    ],
-  },
+  // {
+  //   label: 'Pharmacy',
+  //   links: [
+  //     {
+  //       title: 'Dashboard',
+  //       to: '/dashboard/pharmacy-dashboard',
+  //       icon: LayoutDashboard,
+  //     },
+  //     {
+  //       title: 'Inventory',
+  //       to: '/dashboard/pharmacy-dashboard/inventory',
+  //       icon: Warehouse,
+  //     },
+  //     {
+  //       title: 'Orders',
+  //       to: '/dashboard/pharmacy-dashboard/orders',
+  //       icon: ClipboardList,
+  //     },
+  //     {
+  //       title: 'Billing',
+  //       to: '/dashboard/pharmacy-dashboard/billing',
+  //       icon: BriefcaseBusiness,
+  //     },
+  //     {
+  //       title: 'Prescriptions',
+  //       to: '/dashboard/pharmacy-dashboard/patient-prescriptions',
+  //       icon: FilePlus,
+  //     },
+  //   ],
+  // },
   {
     label: 'Admin',
     links: [
-      { title: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
-      { title: 'Manage Users', to: '/admin/users', icon: Users },
-      { title: 'Settings', to: '/admin/settings', icon: Settings },
-      { title: 'Calendar', to: '/admin/calendar', icon: Calendar },
-      { title: 'Prescriptions', to: '/admin/prescriptions', icon: FilePlus },
-      { title: 'Pharmacy', to: '/admin/pharmacy', icon: Warehouse },
-      { title: 'Orders', to: '/admin/orders', icon: ClipboardList },
+      { title: 'Dashboard', to: '/dashboard/admin', icon: LayoutDashboard },
+      { title: 'Manage Users', to: '/dashboard/admin/patients', icon: Users },
+      { title: 'Manage Doctors', to: '/dashboard/admin/doctor', icon: Users },
+      { title: 'Pharmacy', to: '/dashboard/admin/pharmacy', icon: Warehouse },
+      {
+        title: 'Inventory',
+        to: '/dashboard/admin/inventory',
+        icon: Warehouse,
+      },
+      {
+        title: 'Prescriptions',
+        to: '/dashboard/admin/prescriptions',
+        icon: FilePlus,
+      },
+      { title: 'Orders', to: '/dashboard/admin/orders', icon: ClipboardList },
+      {
+        title: 'Billing',
+        to: '/dashboard/admin/billing',
+        icon: BriefcaseBusiness,
+      },
+      { title: 'Settings', to: '/dashboard/admin/settings', icon: Settings },
     ],
   },
   {
