@@ -20,13 +20,11 @@ export const useLogin = () => {
       const getRedirectPath = (role: string) => {
         switch (role) {
           case 'admin':
-            return '/dashboard'
+            return '/dashboard/admin'
           case 'doctor':
             return '/dashboard/doctor'
           case 'patient':
             return '/dashboard/home'
-          case 'pharmacy':
-            return '/dashboard/pharmacy-dashboard'
           default:
             return '/dashboard/home'
         }
