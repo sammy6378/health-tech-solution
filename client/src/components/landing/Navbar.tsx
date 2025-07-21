@@ -3,7 +3,6 @@ import { ModeToggle } from '../themes/mode-toggle'
 import {
   Home,
   HeartHandshake,
-  Users,
   Phone,
   LogIn,
   UserPlus,
@@ -36,27 +35,20 @@ function Navbar() {
 
           {/* Desktop Navigation Links - Center */}
           <div className="hidden md:flex items-center space-x-8">
-            <a
-              href="#home"
+            <Link
+              to="/"
               className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
             >
               <Home className="w-4 h-4" />
               <span>Home</span>
-            </a>
-            <a
-              href="#services"
+            </Link>
+            <Link
+              to="/our-doctors"
               className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
             >
               <HeartHandshake className="w-4 h-4" />
-              <span>Services</span>
-            </a>
-            <a
-              href="#about"
-              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
-            >
-              <Users className="w-4 h-4" />
-              <span>About Us</span>
-            </a>
+              <span>Our Doctors</span>
+            </Link>
             <a
               href="#contact"
               className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
@@ -106,30 +98,14 @@ function Navbar() {
           <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* Mobile Navigation Links */}
-              <a
-                href="#home"
+              <Link
+                to="/"
                 className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Home className="w-5 h-5" />
                 <span>Home</span>
-              </a>
-              <a
-                href="#services"
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <HeartHandshake className="w-5 h-5" />
-                <span>Services</span>
-              </a>
-              <a
-                href="#about"
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Users className="w-5 h-5" />
-                <span>About Us</span>
-              </a>
+              </Link>
               <a
                 href="#contact"
                 className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
