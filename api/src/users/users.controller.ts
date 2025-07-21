@@ -34,7 +34,7 @@ export class UsersController {
     return this.usersService.findAll(id);
   }
 
-  @Roles(Role.ADMIN, Role.PATIENT)
+  @Public()
   @Get('doctors')
   findAllDoctors() {
     return this.usersService.findAllDoctors();

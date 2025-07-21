@@ -18,6 +18,8 @@ import { MailService } from 'src/mails/mails.service';
 import { Mailer } from 'src/mails/helperEmail';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import * as dayjs from 'dayjs';
+// import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
+// import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
 
 // ✅ NEW: Role-based data retrieval
 interface DashboardStats {
@@ -47,6 +49,7 @@ export interface DashboardData {
   prescriptions: Prescription[];
   orders: Order[];
   patients?: User[];
+  doctors?: User[];
   medications?: Stock[];
   payments?: Payment[];
   medicalRecord?: MedicalRecord;
@@ -72,6 +75,10 @@ export class UsersService {
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
     @InjectRepository(MedicalRecord)
+    // @InjectRepository(DoctorProfile)
+    // private readonly DoctorProfileRepository: Repository<DoctorProfile>,
+    // @InjectRepository(PatientProfile)
+    // private readonly patientProfileRepository: Repository<PatientProfile>,
     private readonly medicalRecordRepository: Repository<MedicalRecord>,
     private readonly mailService: MailService,
   ) {}
@@ -79,6 +86,19 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<ApiResponse<User>> {
     const user = this.userRepository.create(createUserDto);
     const savedUser = await this.userRepository.save(user);
+
+    // create profile with user id if role is doctor or patient
+    // if (savedUser.role === Role.DOCTOR) {
+    //   const doctorProfile = this.DoctorProfileRepository.create({
+    //     user: { user_id: savedUser.user_id },
+    //   });
+    //   await this.DoctorProfileRepository.save(doctorProfile);
+    // } else if (savedUser.role === Role.PATIENT) {
+    //   const patientProfile = this.patientProfileRepository.create({
+    //     patient: { user_id: savedUser.user_id },
+    //   });
+    //   await this.patientProfileRepository.save(patientProfile);
+    // }
 
     // send welcome email
     const mailer = Mailer(this.mailService);
@@ -167,8 +187,8 @@ export class UsersService {
           dashboardData,
         );
         break;
-      case Role.PHARMACY:
-        dashboardData = await this.getPharmacyDashboardData(dashboardData);
+      case Role.ADMIN:
+        dashboardData = await this.getAdminDashboardData(dashboardData);
         break;
       default:
         dashboardData = this.getBasicDashboardData(userId, dashboardData);
@@ -389,7 +409,7 @@ export class UsersService {
     };
   }
 
-  private async getPharmacyDashboardData(
+  private async getAdminDashboardData(
     baseData: DashboardData,
   ): Promise<DashboardData> {
     // 1. Get all orders with full relations
@@ -412,6 +432,13 @@ export class UsersService {
     const patients = await this.userRepository.find({
       where: { role: Role.PATIENT },
       relations: ['patientProfile'],
+      order: { created_at: 'DESC' },
+    });
+
+    // all doctors for recommendations
+    const doctors = await this.userRepository.find({
+      where: { role: Role.DOCTOR },
+      relations: ['doctorProfile'],
       order: { created_at: 'DESC' },
     });
 
@@ -510,6 +537,7 @@ export class UsersService {
       orders,
       medications,
       patients,
+      doctors,
       diagnoses,
       prescriptions,
       payments,
@@ -544,7 +572,6 @@ export class UsersService {
     userId: string,
     baseData: DashboardData,
   ): DashboardData {
-    // For admin/pharmacy users, return basic data
     return {
       ...baseData,
       appointments: [],
