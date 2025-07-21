@@ -203,7 +203,7 @@ const Pharmacy = () => {
                 ))}
               </SelectContent>
             </Select>
-            {role && role === 'pharmacy' && (
+            {role && role === 'admin' && (
               <button
                 onClick={handleCreate}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer dark:bg-blue-500 dark:text-white font-medium shadow hover:bg-primary/90 transition-colors"
@@ -286,7 +286,7 @@ const Pharmacy = () => {
                           KES {med.unit_price}
                         </p>
                         <div>
-                          {role && role === 'pharmacy' ? (
+                          {role && role === 'admin' ? (
                             <div className="flex gap-2">
                               <button
                                 className="p-2 cursor-pointer rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
