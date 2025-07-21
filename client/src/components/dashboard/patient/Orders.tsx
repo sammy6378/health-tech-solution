@@ -186,7 +186,7 @@ function Orders() {
                             </Link>
                           ) : (
                             <Link
-                              to="/dashboard/pharmacy-dashboard/orders/$order"
+                              to="/dashboard/admin/orders/$order"
                               params={{
                                 order: String(order.order_number ?? 'N/A'),
                               }}
