@@ -36,10 +36,10 @@ export default function DoctorPatientsPage() {
 
   const filteredPatients = patients.filter((patient) => {
     const matchName =
-      patient.first_name.toLowerCase().includes(search.toLowerCase()) ||
-      patient.last_name.toLowerCase().includes(search.toLowerCase())
+      patient?.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+      patient?.last_name?.toLowerCase().includes(search.toLowerCase())
     const matchGender = genderFilter
-      ? patient.patientProfile?.sex === genderFilter
+      ? patient?.patientProfile?.sex === genderFilter
       : true
 
     return matchName && matchGender 

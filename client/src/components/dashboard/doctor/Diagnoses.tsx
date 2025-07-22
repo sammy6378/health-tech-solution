@@ -41,7 +41,7 @@ const DiagnosesTable = () => {
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           (diagnosis.patient?.first_name &&
-            diagnosis.patient.last_name
+            diagnosis.patient?.last_name!
               .toLowerCase()
               .includes(searchTerm.toLowerCase()))
         : true

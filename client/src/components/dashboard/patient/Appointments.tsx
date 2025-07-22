@@ -57,7 +57,7 @@ const AppointmentPage = () => {
     .filter((appt) => appt.status === activeTab)
     .filter(
       (appt) =>
-        appt.doctor?.first_name
+        appt.doctor?.first_name!
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         appt.consultation_type
