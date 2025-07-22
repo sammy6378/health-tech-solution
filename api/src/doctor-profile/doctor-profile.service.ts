@@ -27,22 +27,24 @@ export class DoctorProfileService {
   ): Promise<ApiResponse<DoctorProfile>> {
     const user = await this.userRepository.findOneBy({
       user_id: createDoctorProfileDto.user_id,
-      role: Role.DOCTOR, // Ensure the user has the doctor role
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (user.role !== Role.DOCTOR) {
+    if (user.role !== Role.DOCTOR && user.role !== Role.ADMIN) {
       throw new BadRequestException(
-        'User must have doctor role to create a doctor profile',
+        'User must have doctor or admin role to create a doctor profile',
       );
     }
 
-    const existingProfile = await this.doctorProfileRepository.findOneBy({
-      user: { user_id: createDoctorProfileDto.user_id },
+    const existingProfile = await this.doctorProfileRepository.findOne({
+      where: { user: { user_id: createDoctorProfileDto.user_id } },
+      relations: ['user'],
     });
+
+    console.log('existingprofile', existingProfile);
 
     if (existingProfile) {
       throw new BadRequestException(

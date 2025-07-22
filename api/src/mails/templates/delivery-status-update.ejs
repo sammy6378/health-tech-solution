@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Status Update - MediConnect</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: #1a73e8;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 10px 0 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .status-processing {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        .status-shipped {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+        }
+        .status-out {
+            background-color: #fef7e0;
+            color: #f9ab00;
+        }
+        .status-delivered {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        .order-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #fff;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .info-label {
+            font-size: 14px;
+            color: #5f6368;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .timeline {
+            position: relative;
+            margin: 30px 0;
+            padding-left: 20px;
+            border-left: 2px solid #1a73e8;
+        }
+        .timeline-step {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 30px;
+        }
+        .timeline-step:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-step::before {
+            content: "";
+            position: absolute;
+            left: -11px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #1a73e8;
+        }
+        .timeline-step.active::before {
+            background: #1a73e8;
+        }
+        .timeline-step.active .step-title {
+            color: #1a73e8;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .step-date {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1a73e8;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .footer {
+            background: #f1f3f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #70757a;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .tracking-info {
+            background: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .contact-box {
+            background: #fef7e0;
+            border-left: 4px solid #f9ab00;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>MediConnect Pharmacy</h1>
+            <p style="color: white; margin: 5px 0 0;">Your Delivery Status Update</p>
+        </div>
+        
+        <div class="content">
+            <h2>Your Order Status Has Changed</h2>
+            
+            <p>Dear Valued Customer,</p>
+            
+            <p>We're writing to inform you about an update to your MediConnect Pharmacy order. The status of your order has been updated to:</p>
+            
+           <div class="status-badge 
+  <%= 
+    delivery_status.toLowerCase().includes('processing') ? 'status-processing' :
+    delivery_status.toLowerCase().includes('shipped') ? 'status-shipped' :
+    delivery_status.toLowerCase().includes('delivered') ? 'status-delivered' :
+    delivery_status.toLowerCase().includes('cancelled') ? 'status-cancelled' :
+    'status-processing'
+  %>">
+
+            
+            <div class="order-card">
+                <h3 style="margin-top: 0;">Order #<%= order_number %></h3>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Delivery Method</div>
+                        <div class="info-value"><%= delivery_method %></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Current Status</div>
+                        <div class="info-value"><%= delivery_status %></div>
+                    </div>
+                </div>
+                
+                <% if (delivery_status.toLowerCase().includes('shipped')) { %>
+                    <div class="tracking-info">
+                        <h4 style="margin-top: 0;">Tracking Information</h4>
+                        <p>Your order has been shipped and is on its way. You can track your delivery in real-time:</p>
+                        <a href="http://localhost:3000/dashboard/admin/orders/<%= order_number %>" class="button">Track Your Order</a>
+                        <p style="margin-top: 10px; font-size: 14px;">Tracking ID: MC-<%= order_number %>-<%= new Date().getFullYear() %></p>
+                    </div>
+                <% } %>
+                
+                <h3>Delivery Timeline</h3>
+                <div class="timeline">
+                    <div class="timeline-step <%= delivery_status === 'processing' ? 'active' : '' %>">
+                        <div class="step-title">Order Received</div>
+                        <div class="step-date"><%= new Date().toLocaleDateString() %>, 9:30 AM</div>
+                    </div>
+                    
+                    <div class="timeline-step <%= delivery_status === 'processing' ? 'active' : '' %>">
+                        <div class="step-title">Processing</div>
+                        <div class="step-date"><%= delivery_status === 'processing' ? 'Currently in progress' : 'Completed' %></div>
+                    </div>
+                    
+                    <div class="timeline-step <%= delivery_status === 'shipped' ? 'active' : '' %>">
+                        <div class="step-title">Shipped</div>
+                        <% if (delivery_status === 'shipped') { %>
+                            <div class="step-date">Today, <%= new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></div>
+                        <% } else if (delivery_status === 'delivered') { %>
+                            <div class="step-date"><%= new Date(new Date().setDate(new Date().getDate()-1)).toLocaleDateString() %></div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="timeline-step <%= delivery_status === 'delivered' ? 'active' : '' %>">
+                        <div class="step-title">Delivered</div>
+                        <% if (delivery_status === 'delivered') { %>
+                            <div class="step-date">Today, <%= new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            
+            <% if (delivery_status === 'delivered') { %>
+                <div class="contact-box">
+                    <h3 style="margin-top: 0;">How Are Your Medications?</h3>
+                    <p>We hope you received everything in good condition. If you have any questions about your medications:</p>
+                    <ul>
+                        <li>Contact our pharmacy team at (800) 123-4567</li>
+                        <li>Email pharmacy@mediconnect.example.com</li>
+                        <li>Use our online chat support</li>
+                    </ul>
+                </div>
+            <% } else { %>
+                <div class="contact-box">
+                    <h3 style="margin-top: 0;">Need to Make Changes?</h3>
+                    <p>If you need to change your delivery address or schedule, please contact us immediately:</p>
+                    <p>
+                        <strong>Phone:</strong> (800) 123-4567<br>
+                        <strong>Email:</strong> pharmacy@mediconnect.example.com<br>
+                        <strong>Hours:</strong> 8am-8pm EST, 7 days a week
+                    </p>
+                </div>
+            <% } %>
+            
+            <p>Thank you for choosing MediConnect Pharmacy for your healthcare needs.</p>
+            
+            <p>Sincerely,<br>
+            <strong>The MediConnect Pharmacy Team</strong></p>
+            
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="https://mediconnect.example.com/orders" class="button">View Your Order History</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> MediConnect Hospital Management System. All rights reserved.</p>
+            <p>
+                <a href="https://mediconnect.example.com/contact">Contact Us</a> | 
+                <a href="https://mediconnect.example.com/privacy">Privacy Policy</a> | 
+                <a href="https://mediconnect.example.com/terms">Terms of Service</a>
+            </p>
+            <p>This email contains confidential health information. If received in error, please delete it.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -8,9 +8,12 @@ import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useUserData } from '@/hooks/useDashboard'
 import { useUpdatePatientProfile } from '@/hooks/usePatientProfile'
+import { uploadFile } from '@/hooks/useUpload'
+import { toast } from 'sonner'
 
 export default function ProfilePage() {
   const {profileData: profile} =useUserData()
+  console.log("profile", profile)
   const {mutateAsync: updateProfile} = useUpdatePatientProfile()
 
   const [profileData, setProfileData] = useState({
@@ -40,28 +43,37 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setProfileData({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
-        email: profile.email || '',
-        profilePicture: profile.patientProfile?.avatar || '',
+        firstName: profile?.patient?.first_name || '',
+        lastName: profile?.patient?.last_name || '',
+        email: profile?.patient?.email || '',
+        profilePicture: profile.avatar || '',
       })
     }
   }, [profile])
+
+ const handleImageUpload = async (file: File) => {
+   try {
+     const imageUrl = await uploadFile(file)
+     setProfileData((prev) => ({ ...prev, profilePicture: imageUrl }))
+   } catch (error) {
+     console.error('Image upload failed:', error)
+   }
+ }
 
   const handleProfileUpdate = async () => {
 
     setIsUpdating(true)
     try {
       await updateProfile({
-        id: profile?.patientProfile?.profile_id ?? '',
+        id: profile?.profile_id ?? '',
         data: {
           avatar: profileData.profilePicture,
         },
       })
       setIsUpdating(false)
-    
+    toast.success('Profile updated successfully!')
     } catch (error) {
-
+      toast.error('Failed to update profile')
     } finally {
       setIsUpdating(false)
     }
@@ -171,14 +183,29 @@ export default function ProfilePage() {
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
-            <Button
-              variant="outline"
-              size="sm"
-              className="dark:border-gray-600 dark:text-white"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Change Photo
-            </Button>
+            <label>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleImageUpload(e.target.files[0]);
+                  }
+                }}
+              />
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="dark:border-gray-600 dark:text-white cursor-pointer"
+              >
+                <span>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Change Photo
+                </span>
+              </Button>
+            </label>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,6 +216,7 @@ export default function ProfilePage() {
                 id="firstName"
                 value={profileData.firstName}
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                disabled
                 onChange={(e) =>
                   setProfileData({ ...profileData, firstName: e.target.value })
                 }
@@ -202,6 +230,7 @@ export default function ProfilePage() {
                 id="lastName"
                 value={profileData.lastName}
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                disabled
                 onChange={(e) =>
                   setProfileData({ ...profileData, lastName: e.target.value })
                 }
@@ -216,6 +245,7 @@ export default function ProfilePage() {
                 type="email"
                 value={profileData.email}
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                disabled
                 onChange={(e) =>
                   setProfileData({ ...profileData, email: e.target.value })
                 }

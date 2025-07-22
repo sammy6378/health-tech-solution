@@ -151,19 +151,19 @@ const getPatientRegistrationData = () => {
                 <CartesianGrid strokeDasharray="5 5" stroke="#374151" />
                 <Line
                   type="monotone"
-                  dataKey="prescriptions"
+                  dataKey="patients"
                   stroke="#4f46e5"
                   strokeWidth={3}
                   dot={{ fill: '#4f46e5', r: 5 }}
-                  name="Prescriptions"
+                  name="Patients"
                 />
                 <Line
                   type="monotone"
-                  dataKey="orders"
+                  dataKey="doctors"
                   stroke="#10b981"
                   strokeWidth={3}
                   dot={{ fill: '#10b981', r: 5 }}
-                  name="Orders"
+                  name="doctors"
                 />
               </LineChart>
             </ResponsiveContainer>

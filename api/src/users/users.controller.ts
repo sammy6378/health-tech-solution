@@ -47,7 +47,7 @@ export class UsersController {
     return this.usersService.getUserDashboardData(id);
   }
 
-  @Roles(Role.ADMIN, Role.PATIENT)
+  @Roles(Role.ADMIN, Role.PATIENT, Role.DOCTOR)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);

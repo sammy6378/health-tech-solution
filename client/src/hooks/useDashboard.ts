@@ -1,5 +1,5 @@
 
-import type { TUser } from '@/types/Tuser'
+import type { TPatient, TUser } from '@/types/Tuser'
 import {  type TAppointment, type TDiagnosis, type TMedicalrecord, type TMedication, type TOrder, type TPayment, type TPrescription } from "@/types/api-types";
 import { useDashboardData } from "./useUserHook";
 
@@ -25,7 +25,7 @@ interface DashboardStats {
 
 export interface Dashboard {
   user: TUser
-  profileData: TUser
+  profileData: TPatient
   appointments: TAppointment[]
   diagnoses: TDiagnosis[]
   prescriptions: TPrescription[]

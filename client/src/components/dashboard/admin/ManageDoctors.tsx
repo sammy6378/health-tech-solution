@@ -23,6 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import CreateUser from '@/components/modals/CreateUser'
 
 const PER_PAGE = 6
 
@@ -33,11 +34,24 @@ export const Ourdoctors = () => {
   const [sortBy, setSortBy] = useState('name')
   const [selectedDoctor, setSelectedDoctor] = useState<TDoctor | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [openModal,setModalOpen] = useState(false)
+
+
+  const handleOpenModal = () => {
+    setModalOpen(true)
+  }
+
+  
+  const handleCloseModal = () => {
+    setModalOpen(false)
+  }
 
  
 
   const { data: allDoctors } = useGetDoctors()
+  
   const doctors = allDoctors?.data || []
+  console.log("doctors", doctors)
   const profile = doctors.map((doc) => ({
     ...doc,
     ...(doc.doctorProfile || {}),
@@ -122,10 +136,10 @@ export const Ourdoctors = () => {
     return filtered
   }, [doctors, searchTerm, selectedDepartment, selectedAvailability, sortBy])
 
-  const calculateAverageRating = (ratings: number[]) => {
-    if (!ratings || ratings.length === 0) return 0
-    return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-  }
+  // const calculateAverageRating = (ratings: number[]) => {
+  //   if (!ratings || ratings.length === 0) return 0
+  //   return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+  // }
 
    const totalPages = Math.ceil(filteredAndSortedDoctors.length / PER_PAGE)
    const paginatedDoctors = useMemo(() => {
@@ -226,13 +240,16 @@ export const Ourdoctors = () => {
             Meet our team of experienced and dedicated healthcare professionals.
           </p>
         </div>
-        <Link
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition-colors self-start md:self-auto"
-          to="/dashboard/admin/doctor/new"
+        <button
+          className="inline-block cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition-colors self-start md:self-auto"
+          onClick={handleOpenModal}
         >
-          Add Doctor
-        </Link>
+          Register Doctor
+        </button>
       </div>
+    {openModal && (
+      <CreateUser handleCloseModal={handleCloseModal} />
+    )}
 
       {/* Search and Filter Bar */}
       <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -322,16 +339,16 @@ export const Ourdoctors = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-gray-700 dark:text-gray-300">
-                  {doctor.department}
+                  {doctor.department || 'N/A'}
                 </TableCell>
                 <TableCell className="text-gray-700 dark:text-gray-300">
-                  {doctor.specialization}
+                  {doctor.specialization || 'N/A'}
                 </TableCell>
                 <TableCell className="text-gray-700 dark:text-gray-300">
                   {doctor.years_of_experience} yrs
                 </TableCell>
                 <TableCell className="text-gray-700 dark:text-gray-300">
-                  ${doctor.consultation_fee}
+                  ${doctor.consultation_fee || 'N/A'}
                 </TableCell>
                 <TableCell>
                   <span
@@ -352,6 +369,13 @@ export const Ourdoctors = () => {
                   >
                     View
                   </Button>
+                  <Link
+                    to='/dashboard/admin/doctor/$doctorId/new'
+                    params={{ doctorId: doctor.user_id ?? '' }}
+                    className="ml-2 inline-block text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Add Profile
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}

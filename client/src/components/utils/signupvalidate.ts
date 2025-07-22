@@ -1,4 +1,5 @@
 
+import { Role } from '@/types/Tuser';
 import { z } from 'zod';
 
 export const validateSignup = z.object({
@@ -12,6 +13,8 @@ export const validateSignup = z.object({
 
     email: z.string()
     .email('Invalid email address'),
+
+    role: z.enum(Object.values(Role) as [string, ...string[]]),
 
     password: z.string()
     .min(8, 'Password must be at least 8 characters long')

@@ -55,6 +55,7 @@ export interface TRegisterResponse {
 
 export interface TDoctor {
   profile_id?: string
+  user_id?: string
   license_number: string
   phone_number?: string
   specialization?: string

@@ -15,6 +15,7 @@ import { RtGuard } from './guards/rt.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JWTPayload } from './strategies/at.strategy';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 export interface RequestWithUser extends Request {
   user: {
@@ -28,6 +29,13 @@ export interface RequestWithUser extends Request {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  // auth/signup
+  @Public()
+  @Post('signup')
+  async SignUp(@Body() CreateUserDto: CreateUserDto) {
+    return await this.authService.signUp(CreateUserDto);
+  }
 
   // auth/signin
   @Public()

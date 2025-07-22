@@ -43,18 +43,36 @@ export const useLogin = () => {
 }
 
 
-export const useauthRegister = () => {
+export const useAuthRegister = () => {
   const navigate = useNavigate()
-    return useMutation<TRegisterResponse, Error, TRegister>({
+    return useMutation<TLoginResponse, Error, TRegister>({
       mutationKey: ['register'],
       mutationFn: authSignup,
       onSuccess: (data) => {
-        console.log('Registration successful:', data)
+        const user = data.data.user;
+        const role = user?.role ?? '';
+
+        const getRedirectPath = (role: string) => {
+          switch (role) {
+            case 'admin':
+              return '/dashboard/admin'
+            case 'doctor':
+              return '/dashboard/doctor'
+            case 'patient':
+              return '/dashboard/home'
+            default:
+              return '/dashboard/home'
+          }
+        }
         toast.success(data.message || 'Registration successful!')
-        navigate({to: '/auth-signin'})
+        if (data.success) {
+          authSlice.login(data.data)
+          navigate({ to: getRedirectPath(role) })
+        }
       },
       onError: (error) => {
         console.error(`Registration failed: ${error.message}`)
-      }
-    }
-    )}
+        const errormessage = getErrorMessage(error)
+        toast.error(`Registration failed: ${errormessage}`)
+      },
+    })}

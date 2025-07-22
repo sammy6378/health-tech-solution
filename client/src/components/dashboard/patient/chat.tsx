@@ -15,8 +15,10 @@ import {
   Mic,
   Smile,
 } from 'lucide-react'
+import { useUser } from '@/hooks/useUserHook'
 
 type Message = {
+  id: string
   senderId: string
   senderName?: string
   receiverId: string
@@ -26,8 +28,11 @@ type Message = {
 
 const Chat = () => {
   const { user } = useAuthStore()
+  const {user:currentuser} = useUser(user.userId);
   const { myPatients, myDoctors } = useUserData()
   const currentUserId = user.userId || 'defaultUserId'
+  const userName = currentuser?.first_name + ' ' + currentuser?.last_name;
+  console.log("name", userName)
 
   const contacts = (user.role === 'doctor' ? myPatients : myDoctors) || []
 
@@ -40,7 +45,13 @@ const Chat = () => {
    socketRef.current = socket
 
    socket.on('chat:message', (data) => {
-     setMessages((prev) => [...prev, data])
+     setMessages((prev) => {
+       // Check if we already have this message (optimistic update)
+       if (!prev.some((msg) => msg.id === data.id)) {
+         return [...prev, data]
+       }
+       return prev
+     })
    })
 
    socket.on('notification:new', (notification) => {
@@ -87,18 +98,23 @@ const Chat = () => {
  const sendMessage = (e: { preventDefault: () => void }) => {
    e.preventDefault()
    if (!selectedContact || newMessage.trim() === '') return
-
+   const messageId = Date.now().toString() // Unique ID
    const messageData = {
+     id: messageId,
      senderId: currentUserId,
-     senderName: selectedContact.name,
+     senderName: userName,
      receiverId: selectedContact.id,
      message: newMessage,
      timestamp: new Date().toISOString(),
    }
 
-   socketRef.current?.emit('chat:message', messageData)
+   console.log("messagedata", messageData)
+
+   // Optimistic update
    setMessages((prev) => [...prev, messageData])
    setNewMessage('')
+
+   socketRef.current?.emit('chat:message', messageData)
  }
 
 
@@ -251,7 +267,7 @@ const Chat = () => {
                         <p className="font-medium mb-1">
                           {msg.senderId === currentUserId
                             ? 'You'
-                            : msg.senderName || selectedContact.name}
+                            : msg.senderName}
                         </p>
                         <p className="whitespace-pre-wrap">{msg.message}</p>
                       </div>

@@ -4,12 +4,12 @@ import { type ReactNode } from 'react';
 const AuthLayout = ({ children }:{children: ReactNode})  =>{
   return (
     // right side of the form
-    <div className="flex h-screen dark:bg-gray-900">
-      <div className="w-1/2 relative hidden md:flex flex-col justify-center items-center dark:bg-gray-900 dark:text-white p-8">
+    <div className="flex h-screen">
+      <div className="w-1/2 relative hidden md:flex flex-col justify-center items-center p-8">
         <img
           src="/auth.jpg"
           alt="Background"
-          className="absolute inset-0 w-full h-full object-cover opacity-50"
+          className="absolute inset-0 w-full h-full object-cover opacity-70"
         />
         <div className="relative z-10 text-center">
           <h2 className="text-4xl font-bold mb-4">MediConnect</h2>

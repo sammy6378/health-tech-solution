@@ -17,6 +17,7 @@ import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { MailService } from 'src/mails/mails.service';
 import { PrescriptionMedication } from 'src/prescriptions/entities/prescription_medications.entity';
+import { AuthService } from 'src/auth/auth.service';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PrescriptionMedication } from 'src/prescriptions/entities/prescription_
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService, MailService],
+  providers: [UsersService, MailService, AuthService],
+  exports: [UsersService],
 })
 export class UsersModule {}

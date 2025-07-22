@@ -118,12 +118,34 @@ export const Mailer = (mailService: MailService) => {
     await mailService.sendEmail(payload);
   };
 
+  // delivery status update
+  const updateStatus = async (data: {
+    order_number: string;
+    email: string;
+    delivery_method: string;
+    delivery_status: string;
+  }) => {
+    const payload: sendEmailDto = {
+      recipients: data.email,
+      subject: 'Delivery Status Update',
+      template: 'delivery-status-update.ejs',
+      context: {
+        order_number: data.order_number,
+        delivery_method: data.delivery_method,
+        delivery_status: data.delivery_status,
+      },
+    };
+
+    await mailService.sendEmail(payload);
+  };
+
   return {
     welcomeEmail,
     passwordResetEmail,
     meetingLinkEmail,
     orderConfirmationEmail,
     prescriptionEmail,
+    updateStatus,
     // Add more functions as needed
   };
 };

@@ -3,12 +3,12 @@ import { validateSignup } from '../utils/signupvalidate'
 import { useForm } from '@tanstack/react-form'
 import { AlertCircle } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { useauthRegister } from '@/hooks/useAuthHook'
+import { useAuthRegister } from '@/hooks/useAuthHook'
 import AuthLayout from './authLayout'
 
 function Signup() {
   type FormData = z.infer<typeof validateSignup>
-  const authRegister = useauthRegister()
+  const authRegister = useAuthRegister()
 
   const validateField = <T,>(value: T, schema: z.ZodType<T>) => {
     const res = schema.safeParse(value)

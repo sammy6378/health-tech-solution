@@ -1,6 +1,6 @@
 import { useParams } from '@tanstack/react-router'
 import { useUserData } from '@/hooks/useDashboard'
-import { DeliveryMethod, formatCurrency, formatDate, PaymentStatus } from '@/types/api-types'
+import { DeliveryMethod, DeliveryStatus, formatCurrency, formatDate, PaymentStatus, type TOrderMedication } from '@/types/api-types'
 import {
   Truck,
   CheckCircle,
@@ -16,8 +16,9 @@ import DownloadInvoice from '@/components/modals/Download'
 import { useCreatePayment, useVerifyPayment } from '@/hooks/usePayments'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/components/utils/handleError'
-import { useGetOrder } from '@/hooks/useOrders'
+import { useGetOrder, useUpdateOrderStatus } from '@/hooks/useOrders'
 import { useAuthStore } from '@/store/store'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // Extend the Window interface to include PaystackPop
 declare global {
@@ -36,13 +37,22 @@ const statusIcons = {
 
 const statusSteps = [
   { id: 'pending', name: 'Order Placed' },
+  { id: 'cancelled', name: 'Cancelled' },
   { id: 'processing', name: 'Processing' },
   { id: 'shipped', name: 'Shipped' },
   { id: 'delivered', name: 'Delivered' },
 ]
 
+const statusOptions = [
+  { value: 'shipped', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
+
 const getStatusPercentage = (status: string) => {
   switch (status) {
+     case 'cancelled':
+      return 0
     case 'pending':
       return 25
     case 'processing':
@@ -62,6 +72,7 @@ export default function OrderInfo() {
   const { orders } = useUserData()
   const { mutateAsync: verifyPayment, isPending: verifying } =
   useVerifyPayment()
+  const { mutateAsync: updateOrderStatus } = useUpdateOrderStatus()
   const {user} = useAuthStore()
   const role = user?.role || 'guest';
   const orderFound = orders.find((o) => o.order_number === order)
@@ -176,9 +187,60 @@ export default function OrderInfo() {
     orderFound.delivery_status || 'pending',
   )
 
+
+  const updateOrderByStatus = async (status: DeliveryStatus) => {
+    if (!orderFound) return
+
+    try {
+      await updateOrderStatus({
+        id: orderFound.order_id!,
+        status: status as DeliveryStatus,
+      })
+
+      toast.success(`Order status updated to ${status}`)
+    } catch (error) {
+      console.error('Failed to update order status:', error)
+      const message = getErrorMessage(error)
+      toast.error(message)
+    }
+
+  }
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
+        {/* update order status */}
+        {(role === 'admin' || role === 'pharmacy') && (
+          <div className="mb-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-blue-200 dark:border-blue-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Update Order Status
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Change the delivery status of this order.
+                </p>
+              </div>
+              <Select
+                value={orderFound.delivery_status}
+                onValueChange={(value) =>
+                  updateOrderByStatus(value as DeliveryStatus)
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className='cursor-pointer'>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
         {/* Order Header */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300 p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -194,15 +256,16 @@ export default function OrderInfo() {
               </p>
             </div>
             <div>
-                {orderFound.payment_status !== PaymentStatus.PAID &&  role === 'patient' && (
-                <button
-                  className="inline-flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
-                  type="button"
-                  onClick={initiatePayment}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {verifying ? 'Processing...' : 'Checkout'}
-                </button>
+              {orderFound.payment_status !== PaymentStatus.PAID &&
+                role === 'patient' && (
+                  <button
+                    className="inline-flex items-center px-4 py-2 cursor-pointer bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+                    type="button"
+                    onClick={initiatePayment}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {verifying ? 'Processing...' : 'Checkout'}
+                  </button>
                 )}
             </div>
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
@@ -223,33 +286,46 @@ export default function OrderInfo() {
           <div className="relative mb-6">
             <Progress value={statusPercentage} className="h-2" />
             <div className="flex justify-between mt-4">
-              {statusSteps.map((step) => (
-                <div key={step.id} className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center 
-                    ${
-                      orderFound.delivery_status === step.id
-                        ? 'bg-blue-600 text-white'
-                        : statusSteps.findIndex(
-                              (s) => s.id === orderFound.delivery_status,
-                            ) > statusSteps.findIndex((s) => s.id === step.id)
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                    }`}
-                  >
-                    {statusIcons[step.id as keyof typeof statusIcons] &&
-                      React.createElement(
-                        statusIcons[step.id as keyof typeof statusIcons],
-                        { className: 'w-4 h-4' },
-                      )}
+              {statusSteps
+                .filter((step) => {
+                  // Omit "cancelled" if order is past "processing"
+                  if (
+                    step.id === 'cancelled' &&
+                    ['processing', 'shipped', 'delivered'].includes(
+                      orderFound.delivery_status ?? '',
+                    )
+                  ) {
+                    return false
+                  }
+                  return true
+                })
+                .map((step) => (
+                  <div key={step.id} className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center 
+                ${
+                  orderFound.delivery_status === step.id
+                    ? 'bg-blue-600 text-white'
+                    : statusSteps.findIndex(
+                          (s) => s.id === orderFound.delivery_status,
+                        ) > statusSteps.findIndex((s) => s.id === step.id)
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                }`}
+                    >
+                      {statusIcons[step.id as keyof typeof statusIcons] &&
+                        React.createElement(
+                          statusIcons[step.id as keyof typeof statusIcons],
+                          { className: 'w-4 h-4' },
+                        )}
+                    </div>
+                    <span
+                      className={`text-xs mt-2 text-center ${orderFound.delivery_status === step.id ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
+                    >
+                      {step.name}
+                    </span>
                   </div>
-                  <span
-                    className={`text-xs mt-2 text-center ${orderFound.delivery_status === step.id ? 'font-bold text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}
-                  >
-                    {step.name}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
 
@@ -323,24 +399,29 @@ export default function OrderInfo() {
         </div>
 
         {/* Order Items */}
-        {/* {orderFound.prescription?.medication.length > 0 && (
+        {orderFound.orderMedications?.length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Prescription Items
             </h2>
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {orderFound.prescription.medication.map((med: any) => (
-                <div key={med.medication_id} className="py-4 first:pt-0 last:pb-0">
+              {orderFound.orderMedications.map((med: TOrderMedication) => (
+                <div
+                  key={med.medication_id}
+                  className="py-4 first:pt-0 last:pb-0"
+                >
                   <div className="flex items-start">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 dark:text-white">{med.medication_name}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {med?.medication?.name}
+                      </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {med.dosage} • {med.frequency} • {med.duration}
+                        {med?.medication?.dosage}
                       </p>
                     </div>
                     <div className="ml-4 text-right">
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(med.price || 0)}
+                        {formatCurrency(med.total_amount || 0)}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Qty: {med.quantity || 1}
@@ -351,7 +432,7 @@ export default function OrderInfo() {
               ))}
             </div>
           </div>
-        )} */}
+        )}
 
         {/* Order Summary */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300 p-6">

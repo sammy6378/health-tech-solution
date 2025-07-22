@@ -78,6 +78,7 @@ export const useCreateUser = () => {
     mutationFn: (payload: Partial<TUser>) => createItem<TUser>(base, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })
 
@@ -93,6 +94,7 @@ export const useUpdateUser = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })
 
@@ -107,6 +109,7 @@ export const useDeleteUser = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })
 

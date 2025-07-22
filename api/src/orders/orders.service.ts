@@ -300,6 +300,19 @@ export class OrdersService {
         ],
       });
 
+      if (!updatedOrder) {
+        throw new NotFoundException('Updated order not found');
+      }
+
+      // send email
+      const mail = Mailer(this.mailService);
+      await mail.updateStatus({
+        order_number: updatedOrder.order_number,
+        email: updatedOrder.patient.email,
+        delivery_method: updatedOrder.delivery_method,
+        delivery_status: updatedOrder.delivery_status,
+      });
+
       return createResponse(updatedOrder, `Order status updated to ${status}`);
     } catch (error) {
       console.error('Error updating delivery status:', error);

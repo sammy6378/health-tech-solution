@@ -43,23 +43,25 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleChatMessage(
     @MessageBody()
     data: {
+      id: string;
       senderId: string;
       receiverId: string;
+      senderName: string;
       message: string;
       timestamp?: string;
     },
   ) {
-    const { senderId, receiverId, message, timestamp } = data;
+    const { id, senderId, receiverId, senderName, message, timestamp } = data;
 
     console.log('Received message from client:', data);
 
     this.emitToUser(receiverId, 'chat:message', {
+      id,
       senderId,
       receiverId,
+      senderName,
       message,
       timestamp: timestamp || new Date().toISOString(),
     });
-
-    this.server.to(receiverId).emit('chat:message', data);
   }
 }

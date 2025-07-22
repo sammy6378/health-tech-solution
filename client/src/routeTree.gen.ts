@@ -45,9 +45,9 @@ import { Route as DashboardDoctorAppointmentsIndexRouteImport } from './routes/d
 import { Route as DashboardAdminOrdersIndexRouteImport } from './routes/dashboard/admin/orders/index'
 import { Route as DashboardAdminDoctorIndexRouteImport } from './routes/dashboard/admin/doctor/index'
 import { Route as DashboardAdminOrdersOrderRouteImport } from './routes/dashboard/admin/orders/$order'
-import { Route as DashboardAdminDoctorNewRouteImport } from './routes/dashboard/admin/doctor/new'
 import { Route as DashboardDoctorDiagnosesNewPrescriptionDgsRouteImport } from './routes/dashboard/doctor/diagnoses/new-prescription.$dgs'
 import { Route as DashboardDoctorAppointmentsAppointmentAddDiagnosisRouteImport } from './routes/dashboard/doctor/appointments/$appointment.add-diagnosis'
+import { Route as DashboardAdminDoctorDoctorIdNewRouteImport } from './routes/dashboard/admin/doctor/$doctorId.new'
 
 const OurDoctorsRoute = OurDoctorsRouteImport.update({
   id: '/our-doctors',
@@ -237,11 +237,6 @@ const DashboardAdminOrdersOrderRoute =
     path: '/admin/orders/$order',
     getParentRoute: () => DashboardRoute,
   } as any)
-const DashboardAdminDoctorNewRoute = DashboardAdminDoctorNewRouteImport.update({
-  id: '/admin/doctor/new',
-  path: '/admin/doctor/new',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardDoctorDiagnosesNewPrescriptionDgsRoute =
   DashboardDoctorDiagnosesNewPrescriptionDgsRouteImport.update({
     id: '/doctor/diagnoses/new-prescription/$dgs',
@@ -252,6 +247,12 @@ const DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute =
   DashboardDoctorAppointmentsAppointmentAddDiagnosisRouteImport.update({
     id: '/doctor/appointments/$appointment/add-diagnosis',
     path: '/doctor/appointments/$appointment/add-diagnosis',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardAdminDoctorDoctorIdNewRoute =
+  DashboardAdminDoctorDoctorIdNewRouteImport.update({
+    id: '/admin/doctor/$doctorId/new',
+    path: '/admin/doctor/$doctorId/new',
     getParentRoute: () => DashboardRoute,
   } as any)
 
@@ -287,12 +288,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/cart': typeof DashboardCartIndexRoute
   '/dashboard/doctor': typeof DashboardDoctorIndexRoute
   '/dashboard/orders': typeof DashboardOrdersIndexRoute
-  '/dashboard/admin/doctor/new': typeof DashboardAdminDoctorNewRoute
   '/dashboard/admin/orders/$order': typeof DashboardAdminOrdersOrderRoute
   '/dashboard/admin/doctor': typeof DashboardAdminDoctorIndexRoute
   '/dashboard/admin/orders': typeof DashboardAdminOrdersIndexRoute
   '/dashboard/doctor/appointments': typeof DashboardDoctorAppointmentsIndexRoute
   '/dashboard/doctor/diagnoses': typeof DashboardDoctorDiagnosesIndexRoute
+  '/dashboard/admin/doctor/$doctorId/new': typeof DashboardAdminDoctorDoctorIdNewRoute
   '/dashboard/doctor/appointments/$appointment/add-diagnosis': typeof DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute
   '/dashboard/doctor/diagnoses/new-prescription/$dgs': typeof DashboardDoctorDiagnosesNewPrescriptionDgsRoute
 }
@@ -328,12 +329,12 @@ export interface FileRoutesByTo {
   '/dashboard/cart': typeof DashboardCartIndexRoute
   '/dashboard/doctor': typeof DashboardDoctorIndexRoute
   '/dashboard/orders': typeof DashboardOrdersIndexRoute
-  '/dashboard/admin/doctor/new': typeof DashboardAdminDoctorNewRoute
   '/dashboard/admin/orders/$order': typeof DashboardAdminOrdersOrderRoute
   '/dashboard/admin/doctor': typeof DashboardAdminDoctorIndexRoute
   '/dashboard/admin/orders': typeof DashboardAdminOrdersIndexRoute
   '/dashboard/doctor/appointments': typeof DashboardDoctorAppointmentsIndexRoute
   '/dashboard/doctor/diagnoses': typeof DashboardDoctorDiagnosesIndexRoute
+  '/dashboard/admin/doctor/$doctorId/new': typeof DashboardAdminDoctorDoctorIdNewRoute
   '/dashboard/doctor/appointments/$appointment/add-diagnosis': typeof DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute
   '/dashboard/doctor/diagnoses/new-prescription/$dgs': typeof DashboardDoctorDiagnosesNewPrescriptionDgsRoute
 }
@@ -370,12 +371,12 @@ export interface FileRoutesById {
   '/dashboard/cart/': typeof DashboardCartIndexRoute
   '/dashboard/doctor/': typeof DashboardDoctorIndexRoute
   '/dashboard/orders/': typeof DashboardOrdersIndexRoute
-  '/dashboard/admin/doctor/new': typeof DashboardAdminDoctorNewRoute
   '/dashboard/admin/orders/$order': typeof DashboardAdminOrdersOrderRoute
   '/dashboard/admin/doctor/': typeof DashboardAdminDoctorIndexRoute
   '/dashboard/admin/orders/': typeof DashboardAdminOrdersIndexRoute
   '/dashboard/doctor/appointments/': typeof DashboardDoctorAppointmentsIndexRoute
   '/dashboard/doctor/diagnoses/': typeof DashboardDoctorDiagnosesIndexRoute
+  '/dashboard/admin/doctor/$doctorId/new': typeof DashboardAdminDoctorDoctorIdNewRoute
   '/dashboard/doctor/appointments/$appointment/add-diagnosis': typeof DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute
   '/dashboard/doctor/diagnoses/new-prescription/$dgs': typeof DashboardDoctorDiagnosesNewPrescriptionDgsRoute
 }
@@ -413,12 +414,12 @@ export interface FileRouteTypes {
     | '/dashboard/cart'
     | '/dashboard/doctor'
     | '/dashboard/orders'
-    | '/dashboard/admin/doctor/new'
     | '/dashboard/admin/orders/$order'
     | '/dashboard/admin/doctor'
     | '/dashboard/admin/orders'
     | '/dashboard/doctor/appointments'
     | '/dashboard/doctor/diagnoses'
+    | '/dashboard/admin/doctor/$doctorId/new'
     | '/dashboard/doctor/appointments/$appointment/add-diagnosis'
     | '/dashboard/doctor/diagnoses/new-prescription/$dgs'
   fileRoutesByTo: FileRoutesByTo
@@ -454,12 +455,12 @@ export interface FileRouteTypes {
     | '/dashboard/cart'
     | '/dashboard/doctor'
     | '/dashboard/orders'
-    | '/dashboard/admin/doctor/new'
     | '/dashboard/admin/orders/$order'
     | '/dashboard/admin/doctor'
     | '/dashboard/admin/orders'
     | '/dashboard/doctor/appointments'
     | '/dashboard/doctor/diagnoses'
+    | '/dashboard/admin/doctor/$doctorId/new'
     | '/dashboard/doctor/appointments/$appointment/add-diagnosis'
     | '/dashboard/doctor/diagnoses/new-prescription/$dgs'
   id:
@@ -495,12 +496,12 @@ export interface FileRouteTypes {
     | '/dashboard/cart/'
     | '/dashboard/doctor/'
     | '/dashboard/orders/'
-    | '/dashboard/admin/doctor/new'
     | '/dashboard/admin/orders/$order'
     | '/dashboard/admin/doctor/'
     | '/dashboard/admin/orders/'
     | '/dashboard/doctor/appointments/'
     | '/dashboard/doctor/diagnoses/'
+    | '/dashboard/admin/doctor/$doctorId/new'
     | '/dashboard/doctor/appointments/$appointment/add-diagnosis'
     | '/dashboard/doctor/diagnoses/new-prescription/$dgs'
   fileRoutesById: FileRoutesById
@@ -767,13 +768,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAdminOrdersOrderRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/admin/doctor/new': {
-      id: '/dashboard/admin/doctor/new'
-      path: '/admin/doctor/new'
-      fullPath: '/dashboard/admin/doctor/new'
-      preLoaderRoute: typeof DashboardAdminDoctorNewRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/doctor/diagnoses/new-prescription/$dgs': {
       id: '/dashboard/doctor/diagnoses/new-prescription/$dgs'
       path: '/doctor/diagnoses/new-prescription/$dgs'
@@ -786,6 +780,13 @@ declare module '@tanstack/react-router' {
       path: '/doctor/appointments/$appointment/add-diagnosis'
       fullPath: '/dashboard/doctor/appointments/$appointment/add-diagnosis'
       preLoaderRoute: typeof DashboardDoctorAppointmentsAppointmentAddDiagnosisRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/admin/doctor/$doctorId/new': {
+      id: '/dashboard/admin/doctor/$doctorId/new'
+      path: '/admin/doctor/$doctorId/new'
+      fullPath: '/dashboard/admin/doctor/$doctorId/new'
+      preLoaderRoute: typeof DashboardAdminDoctorDoctorIdNewRouteImport
       parentRoute: typeof DashboardRoute
     }
   }
@@ -818,12 +819,12 @@ interface DashboardRouteChildren {
   DashboardCartIndexRoute: typeof DashboardCartIndexRoute
   DashboardDoctorIndexRoute: typeof DashboardDoctorIndexRoute
   DashboardOrdersIndexRoute: typeof DashboardOrdersIndexRoute
-  DashboardAdminDoctorNewRoute: typeof DashboardAdminDoctorNewRoute
   DashboardAdminOrdersOrderRoute: typeof DashboardAdminOrdersOrderRoute
   DashboardAdminDoctorIndexRoute: typeof DashboardAdminDoctorIndexRoute
   DashboardAdminOrdersIndexRoute: typeof DashboardAdminOrdersIndexRoute
   DashboardDoctorAppointmentsIndexRoute: typeof DashboardDoctorAppointmentsIndexRoute
   DashboardDoctorDiagnosesIndexRoute: typeof DashboardDoctorDiagnosesIndexRoute
+  DashboardAdminDoctorDoctorIdNewRoute: typeof DashboardAdminDoctorDoctorIdNewRoute
   DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute: typeof DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute
   DashboardDoctorDiagnosesNewPrescriptionDgsRoute: typeof DashboardDoctorDiagnosesNewPrescriptionDgsRoute
 }
@@ -855,12 +856,12 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCartIndexRoute: DashboardCartIndexRoute,
   DashboardDoctorIndexRoute: DashboardDoctorIndexRoute,
   DashboardOrdersIndexRoute: DashboardOrdersIndexRoute,
-  DashboardAdminDoctorNewRoute: DashboardAdminDoctorNewRoute,
   DashboardAdminOrdersOrderRoute: DashboardAdminOrdersOrderRoute,
   DashboardAdminDoctorIndexRoute: DashboardAdminDoctorIndexRoute,
   DashboardAdminOrdersIndexRoute: DashboardAdminOrdersIndexRoute,
   DashboardDoctorAppointmentsIndexRoute: DashboardDoctorAppointmentsIndexRoute,
   DashboardDoctorDiagnosesIndexRoute: DashboardDoctorDiagnosesIndexRoute,
+  DashboardAdminDoctorDoctorIdNewRoute: DashboardAdminDoctorDoctorIdNewRoute,
   DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute:
     DashboardDoctorAppointmentsAppointmentAddDiagnosisRoute,
   DashboardDoctorDiagnosesNewPrescriptionDgsRoute:

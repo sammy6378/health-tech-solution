@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { TOrder } from '@/types/api-types'
+import { DeliveryStatus, type TOrder } from '@/types/api-types'
 import {
   fetchList,
   fetchOne,
@@ -32,6 +32,20 @@ export const useCreateOrder = () => {
     mutationFn: (data: Partial<TOrder>) => createItem<TOrder>(base, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
+// update status
+export const useUpdateOrderStatus = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: DeliveryStatus }) =>
+      updateItem<TOrder>(`${base}/${id}/update-status`, { delivery_status: status }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      queryClient.invalidateQueries({ queryKey: ['order', id] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })

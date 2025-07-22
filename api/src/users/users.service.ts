@@ -19,7 +19,8 @@ import { Mailer } from 'src/mails/helperEmail';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import * as dayjs from 'dayjs';
 // import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
-// import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
+import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
+import { AuthService } from 'src/auth/auth.service';
 
 // ✅ NEW: Role-based data retrieval
 interface DashboardStats {
@@ -43,7 +44,7 @@ interface DashboardStats {
 
 export interface DashboardData {
   user: User;
-  profileData: User;
+  profileData?: PatientProfile;
   appointments: Appointment[];
   diagnoses: Diagnosis[];
   prescriptions: Prescription[];
@@ -74,13 +75,14 @@ export class UsersService {
     private readonly medicationRepository: Repository<Stock>,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
-    @InjectRepository(MedicalRecord)
     // @InjectRepository(DoctorProfile)
     // private readonly DoctorProfileRepository: Repository<DoctorProfile>,
-    // @InjectRepository(PatientProfile)
-    // private readonly patientProfileRepository: Repository<PatientProfile>,
+    @InjectRepository(PatientProfile)
+    private readonly patientProfileRepository: Repository<PatientProfile>,
+    @InjectRepository(MedicalRecord)
     private readonly medicalRecordRepository: Repository<MedicalRecord>,
     private readonly mailService: MailService,
+    private readonly authService: AuthService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ApiResponse<User>> {
@@ -100,11 +102,21 @@ export class UsersService {
     //   await this.patientProfileRepository.save(patientProfile);
     // }
 
+    if (!savedUser.user_id) {
+      throw new Error('Failed to create user: user_id is missing');
+    }
+
     // send welcome email
     const mailer = Mailer(this.mailService);
     await mailer.welcomeEmail({
       name: savedUser.first_name,
       email: savedUser.email,
+    });
+
+    // login user immediately
+    await this.authService.signIn({
+      email: savedUser.email,
+      password: createUserDto.password,
     });
 
     return createResponse(savedUser, 'User created successfully');
@@ -157,7 +169,7 @@ export class UsersService {
 
     let dashboardData: DashboardData | null = {
       user,
-      profileData: user,
+      profileData: user.patientProfile,
       appointments: [],
       diagnoses: [],
       prescriptions: [],
@@ -205,9 +217,9 @@ export class UsersService {
     baseData: DashboardData,
   ): Promise<DashboardData> {
     // patient profile
-    const patientProfile = await this.userRepository.findOne({
-      where: { user_id: userId },
-      relations: ['patientProfile'],
+    const patientProfile = await this.patientProfileRepository.findOne({
+      where: { patient: { user_id: userId } },
+      relations: ['patient'],
     });
     // 1. Get patient appointments
     const appointments = await this.appointmentRepository.find({
@@ -307,7 +319,7 @@ export class UsersService {
       prescriptions,
       orders,
       medicalRecord: medicalRecord ?? undefined,
-      profileData: patientProfile ?? baseData.user,
+      profileData: patientProfile ?? undefined,
       myDoctorsList,
       payments,
       stats: {

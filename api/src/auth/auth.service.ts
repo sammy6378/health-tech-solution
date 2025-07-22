@@ -14,6 +14,7 @@ import { currentUser } from '../types/jwtUser';
 import { createResponse } from 'src/utils/apiResponse';
 import { MailService } from 'src/mails/mails.service';
 import { Mailer } from 'src/mails/helperEmail';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 interface decodedToken {
   user_id: string;
@@ -116,10 +117,10 @@ export class AuthService {
   }
 
   // signup
-  async signUp(CreateAuthDto: CreateAuthDto) {
+  async signUp(CreateUserDto: CreateUserDto) {
     // check if user already exists
     const existingUser = await this.userRepository.findOne({
-      where: { email: CreateAuthDto.email },
+      where: { email: CreateUserDto.email },
     });
 
     if (existingUser) {
@@ -127,7 +128,7 @@ export class AuthService {
     }
 
     // create user
-    const newUser = this.userRepository.create(CreateAuthDto);
+    const newUser = this.userRepository.create(CreateUserDto);
 
     // save user
     const savedUser = await this.userRepository.save(newUser);

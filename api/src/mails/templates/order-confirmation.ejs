@@ -179,11 +179,12 @@
                     <h4 style="margin-top: 0;">Payment Method</h4>
                     <p><strong><%= payment_method %></strong></p>
                     <p>Payment status: <span style="color: #137333;"><%= payment_status %></span></p>
-                    <%= if (payment_status === 'Paid') { %>
-                        <p>Thank you for your payment!</p>
-                    <% } else { %>
-                        <p>Please complete your payment to avoid delays.</p>
-                    <% } %>
+                    <% if (payment_status === 'Paid') { %>
+    <p>Thank you for your payment!</p>
+<% } else { %>
+    <p>Please complete your payment to avoid delays.</p>
+<% } %>
+
 
                 </div>
             </div>
