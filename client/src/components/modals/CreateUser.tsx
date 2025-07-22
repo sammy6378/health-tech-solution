@@ -2,14 +2,14 @@ import type z from 'zod'
 import { validateSignup } from '../utils/signupvalidate'
 import { useForm } from '@tanstack/react-form'
 import { AlertCircle, X } from 'lucide-react'
-import { useauthRegister } from '@/hooks/useAuthHook'
+import { useAuthRegister } from '@/hooks/useAuthHook'
 import { Role } from '@/types/Tuser'
 import { toast } from 'sonner'
 
 function CreateUser({ handleCloseModal }: { handleCloseModal: () => void }) {
   // Define the form data
   type FormData = z.infer<typeof validateSignup>
-  const authRegister = useauthRegister()
+  const authRegister = useAuthRegister()
 
   const validateField = <T,>(value: T, schema: z.ZodType<T>) => {
     const res = schema.safeParse(value)
