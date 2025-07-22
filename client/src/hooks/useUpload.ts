@@ -1,5 +1,7 @@
+import { getErrorMessage } from '@/components/utils/handleError'
 import { baseUrl } from '@/lib/baseUrl'
 import { authStore } from '@/store/store'
+import { toast } from 'sonner'
 
 const base = `${baseUrl}/upload`
 
@@ -19,7 +21,8 @@ export const uploadFile = async (file: File): Promise<string> => {
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`File upload failed: ${errorText}`)
+    const msg = getErrorMessage(errorText)
+    toast.error(`Upload failed: ${msg}`)
   }
 
   const data = await response.json()

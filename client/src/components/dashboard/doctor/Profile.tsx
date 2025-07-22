@@ -1,4 +1,7 @@
-import { useDoctorData } from "@/hooks/useDashboard"
+
+import { useGetDoctorProfileByUserId, useUpdateDoctorProfile } from "@/hooks/useDoctorProfile"
+import { uploadFile } from "@/hooks/useUpload"
+import { useAuthStore } from "@/store/store"
 import {
   Clock,
   MapPin,
@@ -11,15 +14,33 @@ import {
   User,
   Stethoscope,
 } from 'lucide-react'
+import { toast } from "sonner"
 
 const DoctorProfile = () => {
-  const { profile } = useDoctorData()
+  const {user} = useAuthStore()
+  const userId = user?.userId || ''
 
-  const doctor = profile?.doctorProfile;
+  const { doctorProfile } = useGetDoctorProfileByUserId(userId)
+  const {mutateAsync: updateProfile} = useUpdateDoctorProfile()
+  const doctor = doctorProfile;
+
+  // update profile image
+    const handleImageUpload = async (file: File) => {
+      if (file) {
+        const imageUrl = await uploadFile(file);
+         if (doctor?.profile_id) {
+           await updateProfile({ id: doctor.profile_id, data: { avatar: imageUrl } })
+           toast.success(`Profile image updated successfully!`)
+         } else {
+          toast.error(`Profile image update failed`)
+           console.error("Doctor profile_id is undefined.")
+         }
+      }
+    }
 
   if (!doctor) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className="min-h-screen py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -105,13 +126,13 @@ const DoctorProfile = () => {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen py-8">
       <div className="max-w-6xl mx-auto px-4 space-y-6">
         {/* Header Card */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className=" px-6 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-white">Doctor Profile</h1>
+              <h1 className="text-2xl font-bold dark:text-white">Doctor Profile</h1>
               <StatusBadge available={doctor.availability} />
             </div>
           </div>
@@ -120,15 +141,29 @@ const DoctorProfile = () => {
             <div className="flex flex-col lg:flex-row gap-8">
               {/* Profile Image */}
               <div className="flex-shrink-0">
-                <div className="relative">
+                <div className="relative group">
                   <img
                     src={doctor.avatar}
                     alt="Doctor Avatar"
                     className="w-32 h-32 rounded-xl object-cover border-4 border-white dark:border-gray-700 shadow-lg"
                   />
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <label
+                    htmlFor="profile-image-upload"
+                    className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer transition-opacity opacity-80 group-hover:opacity-100"
+                    title="Change profile image"
+                  >
                     <Stethoscope className="w-4 h-4 text-white" />
-                  </div>
+                    <input
+                      id="profile-image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0]
+                        if (file) handleImageUpload(file)
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
 
@@ -174,7 +209,7 @@ const DoctorProfile = () => {
             label="Education"
             value={doctor.education}
           />
-          <InfoCard icon={User} label="Gender" value={doctor.sex} />
+          <InfoCard icon={User} label="Gender" value={doctor.sex || 'N/A'} />
           <InfoCard icon={MapPin} label="Address" value={doctor.address} />
           <InfoCard
             icon={Phone}

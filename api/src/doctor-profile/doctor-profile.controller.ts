@@ -34,6 +34,12 @@ export class DoctorProfileController {
   }
 
   @Roles(Role.DOCTOR, Role.ADMIN)
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.doctorProfileService.findByUserId(userId);
+  }
+
+  @Roles(Role.DOCTOR, Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.doctorProfileService.findOne(id);

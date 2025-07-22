@@ -6,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useUserData } from '@/hooks/useDashboard'
-import { useUpdatePatientProfile } from '@/hooks/usePatientProfile'
+import { useGetPatientProfileByUserId, useUpdatePatientProfile } from '@/hooks/usePatientProfile'
 import { uploadFile } from '@/hooks/useUpload'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/store'
 
 export default function ProfilePage() {
-  const {profileData: profile} =useUserData()
-  console.log("profile", profile)
+  const {user} = useAuthStore()
+  const userId = user?.userId || ''
   const {mutateAsync: updateProfile} = useUpdatePatientProfile()
+  const {data: patientProfile} = useGetPatientProfileByUserId(userId)
+  const profile = patientProfile?.data
 
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -46,7 +48,7 @@ export default function ProfilePage() {
         firstName: profile?.patient?.first_name || '',
         lastName: profile?.patient?.last_name || '',
         email: profile?.patient?.email || '',
-        profilePicture: profile.avatar || '',
+        profilePicture: profile?.avatar || '',
       })
     }
   }, [profile])

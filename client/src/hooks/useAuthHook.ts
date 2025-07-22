@@ -1,7 +1,7 @@
 import { getErrorMessage } from "@/components/utils/handleError"
 import { authLogin, authSignup, type TLoginResponse } from "@/services/auth"
 import { authSlice, type TLoginRequest } from "@/store/store"
-import type { TRegister, TRegisterResponse } from "@/types/Tuser"
+import type { TRegister } from "@/types/Tuser"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"

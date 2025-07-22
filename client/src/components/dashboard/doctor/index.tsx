@@ -10,6 +10,8 @@ import { MyCalendar } from '../patient/Calendar'
 import AppointmentsAnalytics from './Analytics'
 import type { JSX } from 'react'
 import { formatTime } from '@/types/api-types'
+import { useAuthStore } from '@/store/store'
+import { useGetDoctorProfileByUserId } from '@/hooks/useDoctorProfile'
   
   function DoctorDashboard() {
     const {
@@ -17,8 +19,13 @@ import { formatTime } from '@/types/api-types'
       completedAppointments,
       activePrescriptions,
       totalPrescriptions,
-      profileData,
     } = useUserData()
+    const {user} = useAuthStore()
+      const userId = user?.userId || ''
+    
+      const { doctorProfile } = useGetDoctorProfileByUserId(userId)
+    
+      const doctor = doctorProfile;
 
 
   
@@ -67,7 +74,7 @@ import { formatTime } from '@/types/api-types'
     return (
       <div className="min-h-screen p-4 md:p-6 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome, Dr. {profileData?.first_name || 'Doctor'}
+          Welcome, Dr. {doctor?.user?.first_name || 'Doctor'}
         </h1>
 
         {/* Metrics Grid */}
@@ -98,48 +105,54 @@ import { formatTime } from '@/types/api-types'
             Upcoming Appointments
           </h2>
 
-          <ul className="space-y-4">
-            {upcomingAppointments?.map((appointment) => (
-              <li
-                key={appointment.appointment_id}
-                className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {appointment.appointment_date} ·{' '}
-                    {formatTime(appointment.start_time ?? '')}
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full capitalize">
-                    {appointment.consultation_type}
-                  </span>
-                </div>
+          {upcomingAppointments && upcomingAppointments.length > 0 ? (
+            <ul className="space-y-4">
+              {upcomingAppointments.map((appointment) => (
+          <li
+            key={appointment.appointment_id}
+            className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {appointment.appointment_date} ·{' '}
+                {formatTime(appointment.start_time ?? '')}
+              </span>
+              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full capitalize">
+                {appointment.consultation_type}
+              </span>
+            </div>
 
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    Patient:
-                  </span>{' '}
-                  {appointment.patient?.first_name}{' '}
-                  {appointment.patient?.last_name}
-                </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-gray-800 dark:text-gray-200">
+                Patient:
+              </span>{' '}
+              {appointment.patient?.first_name}{' '}
+              {appointment.patient?.last_name}
+            </p>
 
-                {appointment.meeting_link && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
-                    <span className="font-medium text-gray-800 dark:text-gray-200">
-                      Meeting Link:
-                    </span>{' '}
-                    <a
-                      href={appointment.start_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {appointment.start_url}
-                    </a>
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+            {appointment.meeting_link && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 break-words">
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+            Meeting Link:
+                </span>{' '}
+                <a
+            href={appointment.start_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+            Meeting Link
+                </a>
+              </p>
+            )}
+          </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No upcoming appointments.
+            </div>
+          )}
         </Card>
 
         {/* Chart Card */}

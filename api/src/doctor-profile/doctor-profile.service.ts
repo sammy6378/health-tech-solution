@@ -86,6 +86,27 @@ export class DoctorProfileService {
       });
   }
 
+  // find by user id
+  async findByUserId(
+    userId: string,
+  ): Promise<ApiResponse<DoctorProfile | null>> {
+    return this.doctorProfileRepository
+      .findOne({
+        where: { user: { user_id: userId } },
+        relations: ['user'],
+      })
+      .then((profile) => {
+        if (!profile) {
+          return createResponse(null, 'Doctor profile not found');
+        }
+        return createResponse(profile, 'Doctor profile retrieved successfully');
+      })
+      .catch((error) => {
+        console.error('Error retrieving doctor profile:', error);
+        throw new Error('Failed to retrieve doctor profile');
+      });
+  }
+
   async findOne(id: string): Promise<ApiResponse<DoctorProfile | null>> {
     return this.doctorProfileRepository
       .findOne({

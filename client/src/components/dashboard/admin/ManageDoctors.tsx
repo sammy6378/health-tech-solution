@@ -5,7 +5,7 @@ import {
   Search,
   User,
 } from 'lucide-react'
-import type { TDoctor } from '@/types/Tuser'
+import { Gender, type TDoctor } from '@/types/Tuser'
 import { Link } from '@tanstack/react-router'
 import {
   Table,
@@ -55,13 +55,16 @@ export const Ourdoctors = () => {
   const profile = doctors.map((doc) => ({
     ...doc,
     ...(doc.doctorProfile || {}),
-    user: { first_name: doc.first_name, last_name: doc.last_name },
+    user: { first_name: doc.first_name ?? '', last_name: doc.last_name ?? '' },
     license_number: doc.doctorProfile?.license_number ?? '',
     years_of_experience: doc.doctorProfile?.years_of_experience ?? 0,
     education: doc.doctorProfile?.education ?? '',
     specialization: doc.doctorProfile?.specialization ?? '',
     department: doc.doctorProfile?.department ?? '',
     availability: doc.doctorProfile?.availability ?? false,
+    sex: doc.doctorProfile?.sex ?? Gender.MALE,
+    address: doc.doctorProfile?.address ?? '', // Ensure address is always a string
+    avatar: doc.doctorProfile?.avatar ?? '', // Ensure avatar is always a string
   }))
 
   const departments = [

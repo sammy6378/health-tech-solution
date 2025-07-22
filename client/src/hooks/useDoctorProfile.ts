@@ -27,6 +27,17 @@ export const useGetDoctorProfile = (profileId: string) => {
   return { doctorProfile: data?.data, isLoading, error }
 }
 
+// get by user id
+export const useGetDoctorProfileByUserId = (userId: string) => {
+  const { data, isLoading, error } = useQuery<ApiResponse<TDoctor>>({
+    queryKey: ['doctorProfile', 'user', userId],
+    queryFn: () => fetchOne<TDoctor>(`${base}/user/${userId}`),
+    enabled: !!userId,
+  })
+
+  return { doctorProfile: data?.data, isLoading, error }
+}
+
 
 // Create a new doctor profile
 export const useCreateDoctorProfile = () => {

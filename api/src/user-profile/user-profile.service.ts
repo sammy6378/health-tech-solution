@@ -77,6 +77,7 @@ export class UserProfileService {
     return this.userProfileRepository
       .findOne({
         where: { patient: { user_id: patientId } },
+        relations: ['patient'],
       })
       .then((profile) => {
         if (!profile) {

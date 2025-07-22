@@ -13,12 +13,12 @@ export enum Gender {
 }
 export interface TUser {
   user_id?: string
-  first_name: string
-  last_name: string
-  email: string
+  first_name?: string
+  last_name?: string
+  email?: string
   created_at?: Date
   role?: Role
-  password: string
+  password?: string
   patientProfile?: TPatient
   doctorProfile?: TDoctor
   medicalRecord?: TMedicalrecord
@@ -63,7 +63,7 @@ export interface TDoctor {
   education: string
   department: string
   availability: boolean
-  sex: Gender
+  sex?: Gender
   address: string
   consultation_fee?: number
   ratings?: number[]
@@ -71,7 +71,7 @@ export interface TDoctor {
   days?: string[]
   start_time?: string
   end_time?: string
-  avatar: string
+  avatar?: string
   bio?: string
   created_at?: Date
   user?: TUser
