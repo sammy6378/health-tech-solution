@@ -1,0 +1,21 @@
+name: Ping Render to Keep Awake
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo start time
+        run: echo "🏓 Starting Render ping at $(date -u) UTC"
+
+      - name: Ping Render /ping endpoint (with debug)
+        run: |
+          set -x  # Show commands
+          curl -v "https://you_render_service.onrender.com/ping"
+
+      - name: Done
+        run: echo "✅ Done pinging at $(date -u) UTC"
