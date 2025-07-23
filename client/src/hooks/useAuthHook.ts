@@ -1,5 +1,6 @@
 import { getErrorMessage } from "@/components/utils/handleError"
-import { authLogin, authSignup, type TLoginResponse } from "@/services/auth"
+import { baseUrl } from "@/lib/baseUrl"
+import { authLogin, authSignup, resetEmail, type TLoginResponse, type TResetEmailResponse } from "@/services/auth"
 import { authSlice, type TLoginRequest } from "@/store/store"
 import type { TRegister } from "@/types/Tuser"
 import { useMutation } from "@tanstack/react-query"
@@ -76,3 +77,52 @@ export const useAuthRegister = () => {
         toast.error(`Registration failed: ${errormessage}`)
       },
     })}
+
+
+    // reset email
+export const useResetEmail = () => {
+  return useMutation<TResetEmailResponse, Error, { email: string }>({
+    mutationKey: ['resetEmail'],
+    mutationFn: ({ email }) => resetEmail(email),
+    onSuccess: () => {
+      toast.success('Reset email sent successfully!')
+    },
+    onError: (error) => {
+      const errormessage = getErrorMessage(error)
+      console.error(`Reset email failed: ${errormessage}`)
+      toast.error(`Reset email failed: ${errormessage}`)
+    },
+  })
+}
+
+
+export const useResetPassword = () => {
+  const navigate = useNavigate()
+  return useMutation<{ message: string }, Error, { token: string; newPassword: string }>({
+    mutationKey: ['resetPassword'],
+    mutationFn: async ({ token, newPassword }) => {
+      const response = await fetch(`${baseUrl}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token, newPassword }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to reset password')
+      }
+
+      return response.json()
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || 'Password reset successful!')
+      navigate({ to: '/auth-signin' })
+    },
+    onError: (error) => {
+      const errormessage = getErrorMessage(error)
+      console.error(`Reset password failed: ${errormessage}`)
+      toast.error(`Reset password failed: ${errormessage}`)
+    },
+  })
+}

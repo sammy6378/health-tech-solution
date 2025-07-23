@@ -8,11 +8,21 @@ import {
 } from '@/store/store'
 import type { TRegister } from '@/types/Tuser'
 import { useNavigate } from '@tanstack/react-router'
+import { getErrorMessage } from '@/components/utils/handleError'
+import { toast } from 'sonner'
 
 export interface TLoginResponse {
   success: boolean
   message: string
   data: TUser
+}
+
+export interface TResetEmailResponse {
+  success: boolean
+  message: string
+  data: {
+    resetToken: string
+  }
 }
 
 // register
@@ -50,6 +60,27 @@ export const authLogin = async (data: TLoginRequest) => {
     return resp
   } catch (error: any) {
     throw error
+  }
+}
+
+// reset email
+export const resetEmail = async (email: string) => {
+  try {
+    const res = await fetch(`${baseUrl}/auth/reset-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    })
+
+    await handleApiResponse(res)
+    const resp = await res.json()
+    return resp
+  } catch (error: any) {
+  const errormessage = getErrorMessage(error)
+        console.error(`Reset email failed: ${errormessage}`)
+        toast.error(`Reset email failed: ${errormessage}`)
   }
 }
 

@@ -284,8 +284,8 @@ export class AuthService {
     return { message: 'Password changed successfuly' };
   }
 
-  // forgot password
-  async forgotPassword(email: string) {
+  // reset email
+  async resetEmail(email: string) {
     // find user by email
     const user = await this.userRepository.findOne({
       where: { email },
@@ -310,11 +310,7 @@ export class AuthService {
       resetLink: `${this.configService.getOrThrow<string>('FRONTEND_URL')}/reset-password?token=${resetToken}`,
     });
 
-    return {
-      message: 'Password reset link sent to your email',
-      userId: user.user_id,
-      email: user.email,
-    };
+    return createResponse(resetToken, 'Reset email sent successfully');
   }
 
   // reset password
@@ -331,10 +327,13 @@ export class AuthService {
     // hash the new password
     const hashedPassword = await this.hashPassword(newPassword);
 
-    // update the password in the database
-    await this.userRepository.update(user.user_id, {
-      password: hashedPassword,
-    });
+    // query builder to bypass entity hooks
+    await this.userRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({ password: hashedPassword })
+      .where('user_id = :userId', { userId: user.user_id })
+      .execute();
 
     return {
       message: `Password reset successful for ${user.email}`,
