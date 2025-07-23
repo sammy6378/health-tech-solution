@@ -37,6 +37,9 @@ export class Appointment {
   @Column()
   end_time: string;
 
+  @Column({ default: false })
+  needs_meeting_link: boolean;
+
   @Column({ nullable: true })
   meeting_link: string;
 

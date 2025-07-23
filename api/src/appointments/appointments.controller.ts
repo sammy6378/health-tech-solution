@@ -79,6 +79,16 @@ export class AppointmentsController {
     return this.appointmentsService.findByUser(userId);
   }
 
+  @Post(':id/meeting-link')
+  async createMeetingLink(@Param('id') id: string) {
+    return this.appointmentsService.createMeetingLink(id);
+  }
+
+  @Get('pending-meeting-links')
+  async getAppointmentsNeedingMeetingLinks() {
+    return this.appointmentsService.getAppointmentsNeedingMeetingLinks();
+  }
+
   // update status
   @Roles(Role.DOCTOR, Role.ADMIN)
   @Patch(':id/status')

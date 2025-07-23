@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -39,6 +40,10 @@ export class CreateAppointmentDto {
 
   @IsArray({ each: true })
   time_slots?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  needs_meeting_link?: boolean;
 
   @IsString()
   @IsOptional()

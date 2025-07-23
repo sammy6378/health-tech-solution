@@ -70,6 +70,26 @@ import { useGetDoctorProfileByUserId } from '@/hooks/useDoctorProfile'
       red: 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300',
       indigo: 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300',
     }
+
+    // Returns a string like "in 2 hrs" or "in 45 mins" until the next appointment
+    function getTimeUntilNextAppointment(appointment?: typeof upcomingAppointments[0]) {
+      if (!appointment) return 'No appointment';
+
+      const start = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
+      const now = new Date();
+      const diffMs = start.getTime() - now.getTime();
+
+      if (diffMs <= 0) return 'Starting now';
+
+      const diffMins = Math.floor(diffMs / 60000);
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+
+      if (hours > 0) {
+      return `in ${hours} hr${hours > 1 ? 's' : ''}${mins > 0 ? ` ${mins} min${mins > 1 ? 's' : ''}` : ''}`;
+      }
+      return `in ${mins} min${mins !== 1 ? 's' : ''}`;
+    }
   
     return (
       <div className="min-h-screen p-4 md:p-6 space-y-6">
@@ -115,10 +135,10 @@ import { useGetDoctorProfileByUserId } from '@/hooks/useDoctorProfile'
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 {appointment.appointment_date} ·{' '}
-                {formatTime(appointment.start_time ?? '')}
+                {formatTime(appointment.start_time ?? '')} - {formatTime(appointment.end_time ?? '')}
               </span>
               <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full capitalize">
-                {appointment.consultation_type}
+                {appointment.consultation_type} / {getTimeUntilNextAppointment(appointment)}
               </span>
             </div>
 

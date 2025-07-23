@@ -57,6 +57,7 @@ export class AppointmentsService {
 
     // ✅ Prevent past appointments
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     // Parse "YYYY-MM-DD" string safely
     const [year, month, day] = dto.appointment_date.split('-').map(Number);
     if (!year || !month || !day) {
@@ -146,24 +147,15 @@ export class AppointmentsService {
 
     // generate meeting link if type is virtual
     if (dto.consultation_type === ConsultationType.VIRTUAL) {
-      try {
-        const zoomMeeting = await this.zoomService.createMeeting(
-          `Appointment with Dr. ${doctor.first_name} ${doctor.last_name}`,
-          `${dto.appointment_date}T${dto.start_time}:00`,
-          dto.duration_minutes ?? 60,
-        );
-
-        dto.meeting_link = zoomMeeting.join_url; // For patient
-        dto.zoom_meeting_id = zoomMeeting.meeting_id;
-        dto.start_url = zoomMeeting.start_url; // For doctor
-      } catch (error: any) {
-        console.error('Zoom meeting creation failed:', error);
-        throw new BadRequestException('Failed to create Zoom meeting');
-      }
+      dto.meeting_link = '';
+      dto.zoom_meeting_id = '';
+      dto.start_url = '';
+      dto.needs_meeting_link = true;
     } else {
       dto.meeting_link = '';
       dto.zoom_meeting_id = '';
       dto.start_url = '';
+      dto.needs_meeting_link = false;
     }
 
     // ✅ Create and save appointment
@@ -215,6 +207,74 @@ export class AppointmentsService {
     }
 
     return createResponse(appointments, 'Appointments fetched successfully');
+  }
+
+  async createMeetingLink(
+    appointmentId: string,
+  ): Promise<ApiResponse<Appointment>> {
+    const appointment = await this.appointmentRepository.findOne({
+      where: { appointment_id: appointmentId },
+      relations: ['patient', 'doctor'],
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.consultation_type !== ConsultationType.VIRTUAL) {
+      throw new BadRequestException('Appointment is not virtual');
+    }
+
+    if (appointment.meeting_link) {
+      throw new BadRequestException('Meeting link already exists');
+    }
+
+    try {
+      const zoomMeeting = await this.zoomService.createMeeting(
+        `Appointment with Dr. ${appointment.doctor.first_name} ${appointment.doctor.last_name}`,
+        `${appointment.appointment_date}T${appointment.start_time}:00`,
+        appointment.duration_minutes ?? 60,
+      );
+
+      appointment.meeting_link = zoomMeeting.join_url;
+      appointment.zoom_meeting_id = zoomMeeting.meeting_id;
+      appointment.start_url = zoomMeeting.start_url;
+      appointment.needs_meeting_link = false;
+
+      const saved = await this.appointmentRepository.save(appointment);
+
+      // Send email with meeting link
+      const mailer = Mailer(this.mailService);
+      await mailer.meetingLinkEmail({
+        name: appointment.patient.first_name,
+        email: appointment.patient.email,
+        meetingLink: appointment.meeting_link,
+        meetingId: String(appointment.zoom_meeting_id),
+      });
+
+      return createResponse(saved, 'Meeting link created successfully');
+    } catch (error: any) {
+      console.error('Zoom meeting creation failed:', error);
+      throw new BadRequestException('Failed to create Zoom meeting');
+    }
+  }
+
+  async getAppointmentsNeedingMeetingLinks(): Promise<
+    ApiResponse<Appointment[]>
+  > {
+    const appointments = await this.appointmentRepository.find({
+      where: {
+        consultation_type: ConsultationType.VIRTUAL,
+        needs_meeting_link: true,
+      },
+      relations: ['patient', 'doctor'],
+      order: { appointment_date: 'ASC' },
+    });
+
+    return createResponse(
+      appointments,
+      'Appointments needing meeting links fetched',
+    );
   }
 
   async getAvailableSlots(

@@ -10,7 +10,7 @@ import { AppointmentModal } from '@/components/modals/AppointmentModal'
 export default function DoctorsPage() {
   const { data, isLoading } = useGetDoctors()
   const [search, setSearch] = useState('')
-  const [openModal, setOpenModal] = useState(false)
+   const [selectedDoctor, setSelectedDoctor] = useState<any>(null)
   const doctors = data?.data || []
 
   const filteredDoctors = doctors.filter((user) => {
@@ -159,28 +159,29 @@ export default function DoctorsPage() {
                       disabled={
                         !doctor.availability || !validateAvailability(doctor)
                       }
-                      onClick={() => setOpenModal(true)}
+                      onClick={() => setSelectedDoctor(user)}
                       className="cursor-pointer"
                     >
                       Book Appointment
                     </Button>
                   </div>
-
-                  <AppointmentModal
-                    open={openModal}
-                    onClose={() => setOpenModal(false)}
-                    doctorId={user.user_id ?? ''}
-                    name={`${user.first_name} ${user.last_name}`}
-                    timeSlots={{
-                      start: doctor.start_time || '08:00',
-                      end: doctor.end_time || '17:00',
-                    }}
-                  />
                 </CardContent>
               </Card>
             )
           })}
         </div>
+      )}
+      {selectedDoctor && (
+        <AppointmentModal
+          open={!!selectedDoctor}
+          onClose={() => setSelectedDoctor(null)}
+          doctorId={selectedDoctor.user_id ?? ''}
+          name={`${selectedDoctor.first_name} ${selectedDoctor.last_name}`}
+          timeSlots={{
+            start: selectedDoctor.doctorProfile?.start_time || '08:00',
+            end: selectedDoctor.doctorProfile?.end_time || '17:00',
+          }}
+        />
       )}
     </div>
   )

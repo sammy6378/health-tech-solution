@@ -16,7 +16,7 @@ import {
 } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
-import { useUpdateAppointmentStatus } from '@/hooks/useAppointments'
+import { useCreateMeetingLink, useUpdateAppointmentStatus } from '@/hooks/useAppointments'
 import { toast } from 'sonner'
 
 const AppointmentPage = () => {
@@ -28,6 +28,7 @@ const AppointmentPage = () => {
     key: keyof TAppointment
     direction: 'ascending' | 'descending'
   } | null>(null)
+  const {mutateAsync: createMeetingLink} = useCreateMeetingLink()
 
 
   const { appointments,user } = useUserData();
@@ -91,6 +92,16 @@ const AppointmentPage = () => {
       direction = 'descending'
     }
     setSortConfig({ key, direction })
+  }
+
+  const createLink = async (appointmentId: string) => {
+    try {
+      await createMeetingLink(appointmentId)
+      toast.success('Meeting link created successfully')
+    } catch (error) {
+      console.error('Failed to create meeting link:', error)
+      toast.error('Failed to create meeting link')
+    }
   }
 
   // Calculate metrics
@@ -353,11 +364,18 @@ const AppointmentPage = () => {
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
-                              Join Meeting
+                              Join
                             </a>
-                          ) : (
-                            'No link yet'
-                          )}
+                          ) : user.role === 'doctor' ? (
+                            <button
+                              onClick={() =>
+                                createLink(appointment.appointment_id ?? '')
+                              }
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              Create Link
+                            </button>
+                          ) : null}
                         </div>
                       </td>
                       {user.role === 'doctor' && (

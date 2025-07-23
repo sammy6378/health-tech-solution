@@ -46,6 +46,13 @@ export const useGetAppointmentsByTimeSlots = (appointmentDate: string,doctor_id:
   })
 }
 
+// get pending meeting links
+export const useGetPendingMeetingLinks = () =>
+  useQuery({
+    queryKey: ['appointments', 'pending-meeting-links'],
+    queryFn: () => fetchList<TAppointment>(`${base}/pending-meeting-links`),
+  })
+
 
 // ✅ Create an appointment
 export const useCreateAppointment = () => {
@@ -57,6 +64,21 @@ export const useCreateAppointment = () => {
     onSuccess: (_, __,) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false }) // All dashboards
+    },
+  })
+}
+
+// create meeting link
+export const useCreateMeetingLink = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      createItem<{ meeting_link: string }>(`${base}/${id}/meeting-link`, {}),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['appointment', id] })
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
     },
   })
 }
