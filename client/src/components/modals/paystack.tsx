@@ -12,7 +12,6 @@ type PaystackModalProps = {
   email: string
   amount: number
   reference: string
-  name?: string
   currency?: string
   onSuccess?: (reference: string) => void
   onClose?: () => void
@@ -23,7 +22,6 @@ export default function PaystackModal({
   email,
   amount,
   reference,
-  name = 'User',
   currency = 'KES',
   onSuccess,
   onClose,

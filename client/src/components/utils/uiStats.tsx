@@ -28,6 +28,7 @@ const upcomingAppointments = () => {
   const filteredAppointments = appointments.filter(appointment => {
     const appointmentDate = new Date(appointment.appointment_date)
     const today = new Date()
+    today.setHours(0, 0, 0, 0) // Reset time for today
     return appointmentDate >= today && appointment.status === 'scheduled'
   })
   return (

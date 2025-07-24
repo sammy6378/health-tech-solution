@@ -1,5 +1,5 @@
 import { getErrorMessage } from "@/components/utils/handleError"
-import ToastHelper from "@/components/utils/ToastHelper"
+import { useToast } from '@/hooks/use-toast'
 import { baseUrl } from "@/lib/baseUrl"
 import { authLogin, authSignup, resetEmail, type TLoginResponse, type TResetEmailResponse } from "@/services/auth"
 import { authSlice, type TLoginRequest } from "@/store/store"
@@ -10,7 +10,7 @@ import { useNavigate } from "@tanstack/react-router"
 
 export const useLogin = () => {
   const navigate = useNavigate()
-  const { toast } = ToastHelper()
+ const { toast } = useToast()
 
   return useMutation<TLoginResponse, Error, TLoginRequest>({
     mutationKey: ['login'],
@@ -55,7 +55,7 @@ export const useLogin = () => {
 
 export const useAuthRegister = () => {
   const navigate = useNavigate()
-    const { toast } = ToastHelper()
+   const { toast } = useToast()
     return useMutation<TLoginResponse, Error, TRegister>({
       mutationKey: ['register'],
       mutationFn: authSignup,
@@ -99,7 +99,7 @@ export const useAuthRegister = () => {
 
     // reset email
 export const useResetEmail = () => {
-    const { toast } = ToastHelper()
+    const { toast } = useToast()
   return useMutation<TResetEmailResponse, Error, { email: string }>({
     mutationKey: ['resetEmail'],
     mutationFn: ({ email }) => resetEmail(email),
@@ -123,7 +123,7 @@ export const useResetEmail = () => {
 
 
 export const useResetPassword = () => {
-    const { toast } = ToastHelper()
+    const { toast } = useToast()
   const navigate = useNavigate()
   return useMutation<{ message: string }, Error, { token: string; newPassword: string }>({
     mutationKey: ['resetPassword'],
