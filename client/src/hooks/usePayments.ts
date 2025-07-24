@@ -35,6 +35,14 @@ export const useGetPaymentsByUser = (userId: string) =>
     enabled: !!userId,
   })
 
+  // ✅ Get payments for a specific appointment
+export const useGetPaymentsByAppointment = (appointmentId: string) =>
+  useQuery({
+    queryKey: ['payments', 'appointment', appointmentId],
+    queryFn: () => fetchList<TPayment>(`${base}/appointment/${appointmentId}`),
+    enabled: !!appointmentId,
+  })
+
 // ✅ Create a payment
 export const useCreatePayment = () => {
   const queryClient = useQueryClient()
@@ -68,6 +76,46 @@ export const useVerifyPayment = () => {
       const msg = getErrorMessage(error)
       toast.error(
         msg || 'Failed to verify payment',
+      )
+    }
+  })
+}
+
+
+// PAYMENT for appointmnets
+export const useCreateAppointmentPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<TPayment>) =>
+      createItem<TPayment>(`${base}/appointments`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+    onError: (error: any) => {
+      const msg = getErrorMessage(error)
+      toast.error(msg || 'Failed to create appointment payment')
+    }
+  })
+}
+
+// verify appointment payment
+export const useVerifyAppointmentPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ reference }: { reference: string }) =>
+      fetchOne<TPayment>(`${base}/appointments/verify/${reference}`),
+    onSuccess: (_, { reference }) => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] })
+      queryClient.invalidateQueries({ queryKey: ['payment', reference] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+      toast.success('Appointment payment verified successfully')
+    },
+    onError: (error: any) => {
+      console.error('Appointment payment verification error:', error)
+      const msg = getErrorMessage(error)
+      toast.error(
+        msg || 'Failed to verify appointment payment',
       )
     }
   })

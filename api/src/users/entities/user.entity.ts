@@ -74,7 +74,7 @@ export class User {
   patientProfile: PatientProfile;
 
   @OneToOne(() => DoctorProfile, (doctorProfile) => doctorProfile.user, {
-    eager: true,
+    eager: false,
     cascade: true,
   })
   @JoinColumn()

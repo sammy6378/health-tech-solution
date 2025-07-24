@@ -1,15 +1,16 @@
 import { getErrorMessage } from "@/components/utils/handleError"
+import ToastHelper from "@/components/utils/ToastHelper"
 import { baseUrl } from "@/lib/baseUrl"
 import { authLogin, authSignup, resetEmail, type TLoginResponse, type TResetEmailResponse } from "@/services/auth"
 import { authSlice, type TLoginRequest } from "@/store/store"
 import type { TRegister } from "@/types/Tuser"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { toast } from "sonner"
 
 
 export const useLogin = () => {
   const navigate = useNavigate()
+  const { toast } = ToastHelper()
 
   return useMutation<TLoginResponse, Error, TLoginRequest>({
     mutationKey: ['login'],
@@ -32,13 +33,21 @@ export const useLogin = () => {
       }
 
       authSlice.login(data.data) // update store AFTER redirect path is determined
-      toast.success('Login successful!')
+      toast({
+        title: 'Login successful',
+        description: data.message || 'Welcome back!',
+        variant: 'default',
+      })
       navigate({ to: getRedirectPath(role) })
     },
     onError: (error) => {
       const errormessage = getErrorMessage(error)
       console.error(`Login failed: ${errormessage}`)
-      toast.error(`Login failed: ${errormessage}`)
+      toast({
+        title: 'Login failed',
+        description: errormessage,
+        variant: 'destructive',
+      })
     },
   })
 }
@@ -46,6 +55,7 @@ export const useLogin = () => {
 
 export const useAuthRegister = () => {
   const navigate = useNavigate()
+    const { toast } = ToastHelper()
     return useMutation<TLoginResponse, Error, TRegister>({
       mutationKey: ['register'],
       mutationFn: authSignup,
@@ -65,7 +75,11 @@ export const useAuthRegister = () => {
               return '/dashboard/home'
           }
         }
-        toast.success(data.message || 'Registration successful!')
+        toast({
+          title: 'Registration successful',
+          description: data.message || 'Welcome aboard!',
+          variant: 'default',
+        })
         if (data.success) {
           authSlice.login(data.data)
           navigate({ to: getRedirectPath(role) })
@@ -74,29 +88,42 @@ export const useAuthRegister = () => {
       onError: (error) => {
         console.error(`Registration failed: ${error.message}`)
         const errormessage = getErrorMessage(error)
-        toast.error(`Registration failed: ${errormessage}`)
+        toast({
+          title: 'Registration failed',
+          description: errormessage,
+          variant: 'destructive',
+        })
       },
     })}
 
 
     // reset email
 export const useResetEmail = () => {
+    const { toast } = ToastHelper()
   return useMutation<TResetEmailResponse, Error, { email: string }>({
     mutationKey: ['resetEmail'],
     mutationFn: ({ email }) => resetEmail(email),
     onSuccess: () => {
-      toast.success('Reset email sent successfully!')
+      toast({
+        title: 'Reset email sent successfully!',
+        variant: 'default',
+      })
     },
     onError: (error) => {
       const errormessage = getErrorMessage(error)
       console.error(`Reset email failed: ${errormessage}`)
-      toast.error(`Reset email failed: ${errormessage}`)
+      toast({
+        title: 'Reset email failed',
+        description: errormessage,
+        variant: 'destructive',
+      })
     },
   })
 }
 
 
 export const useResetPassword = () => {
+    const { toast } = ToastHelper()
   const navigate = useNavigate()
   return useMutation<{ message: string }, Error, { token: string; newPassword: string }>({
     mutationKey: ['resetPassword'],
@@ -116,13 +143,21 @@ export const useResetPassword = () => {
       return response.json()
     },
     onSuccess: (data) => {
-      toast.success(data.message || 'Password reset successful!')
+      toast({
+        title: 'Password reset successful!',
+        description: data.message || 'You can now log in with your new password.',
+        variant: 'default',
+      })
       navigate({ to: '/auth-signin' })
     },
     onError: (error) => {
       const errormessage = getErrorMessage(error)
       console.error(`Reset password failed: ${errormessage}`)
-      toast.error(`Reset password failed: ${errormessage}`)
+      toast({
+        title: 'Reset password failed',
+        description: errormessage,
+        variant: 'destructive',
+      })
     },
   })
 }

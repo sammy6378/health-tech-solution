@@ -31,16 +31,36 @@ export class PaymentsController {
     return this.paymentsService.findAll();
   }
 
-  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get('user/:userId')
   findByUser(@Param('userId') userId: string) {
     return this.paymentsService.findByUser(userId);
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
+  @Get('appointment/:appointmentId')
+  findByAppointment(@Param('appointmentId') appointmentId: string) {
+    return this.paymentsService.findByAppointment(appointmentId);
+  }
+
+  @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR, Role.PATIENT)
   @Get('verify/:reference')
   verifyPayment(@Param('reference') reference: string) {
     return this.paymentsService.verify(reference);
+  }
+
+  // appointment payments
+  @Roles(Role.PATIENT)
+  @Post('appointments')
+  createAppointmentPayment(@Body() createPaymentDto: CreatePaymentDto) {
+    return this.paymentsService.createAppointmentPayment(createPaymentDto);
+  }
+
+  // verify appointment payment
+  @Roles(Role.PATIENT)
+  @Get('appointments/verify/:reference')
+  verifyAppointmentPayment(@Param('reference') reference: string) {
+    return this.paymentsService.verifyAppointmentPayment(reference); // ✅ Now calls correct method
   }
 
   @Roles(Role.PHARMACY, Role.ADMIN, Role.DOCTOR)

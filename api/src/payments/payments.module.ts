@@ -7,9 +7,13 @@ import { Payment } from './entities/payment.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Stock } from 'src/pharmacy-stock/entities/stocks.entity';
+import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
 
 @Module({
-  imports: [DbModule, TypeOrmModule.forFeature([Payment, Order, User, Stock])],
+  imports: [
+    DbModule,
+    TypeOrmModule.forFeature([Payment, Order, User, Stock, DoctorProfile]),
+  ],
   controllers: [PaymentsController],
   providers: [PaymentsService],
 })

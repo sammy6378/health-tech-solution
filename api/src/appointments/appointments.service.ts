@@ -166,14 +166,6 @@ export class AppointmentsService {
     });
 
     const saved = await this.appointmentRepository.save(appointment);
-    // send email link
-    const mailer = Mailer(this.mailService);
-    await mailer.meetingLinkEmail({
-      name: patient.first_name,
-      email: patient.email,
-      meetingLink: dto.meeting_link,
-      meetingId: String(dto.zoom_meeting_id),
-    });
 
     return createResponse(saved, 'Appointment created successfully');
   }

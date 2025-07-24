@@ -1,0 +1,350 @@
+{
+  "settings": {
+    "languages": [
+      "en"
+    ],
+    "tag": "nlp",
+    "threshold": 0.5,
+    "autoLoad": true,
+    "autoSave": true,
+    "modelFileName": "model.nlp",
+    "executeActionsBeforeAnswers": false,
+    "calculateSentiment": true
+  },
+  "nluManager": {
+    "settings": {
+      "tag": "nlu-manager"
+    },
+    "locales": [
+      "en"
+    ],
+    "languageNames": {},
+    "domainManagers": {
+      "en": {
+        "settings": {
+          "locale": "en",
+          "trainByDomain": false,
+          "tag": "domain-manager-en",
+          "nluByDomain": {
+            "default": {
+              "className": "NeuralNlu",
+              "settings": {}
+            }
+          },
+          "useStemDict": true
+        },
+        "stemDict": {
+          "hello": {
+            "intent": "greeting",
+            "domain": "default"
+          },
+          "hi,there": {
+            "intent": "greeting",
+            "domain": "default"
+          },
+          "goodby": {
+            "intent": "farewell",
+            "domain": "default"
+          },
+          "later,see,you": {
+            "intent": "farewell",
+            "domain": "default"
+          },
+          "help,me": {
+            "intent": "help",
+            "domain": "default"
+          },
+          "can,do,what,you": {
+            "intent": "help",
+            "domain": "default"
+          }
+        },
+        "intentDict": {
+          "greeting": "default",
+          "farewell": "default",
+          "help": "default"
+        },
+        "sentences": [
+          {
+            "domain": "default",
+            "utterance": "hello",
+            "intent": "greeting"
+          },
+          {
+            "domain": "default",
+            "utterance": "hi there",
+            "intent": "greeting"
+          },
+          {
+            "domain": "default",
+            "utterance": "goodbye",
+            "intent": "farewell"
+          },
+          {
+            "domain": "default",
+            "utterance": "see you later",
+            "intent": "farewell"
+          },
+          {
+            "domain": "default",
+            "utterance": "help me",
+            "intent": "help"
+          },
+          {
+            "domain": "default",
+            "utterance": "what can you do",
+            "intent": "help"
+          }
+        ],
+        "domains": {
+          "master_domain": {
+            "settings": {
+              "locale": "en",
+              "tag": "nlu-en",
+              "keepStopwords": true,
+              "nonefeatureValue": 1,
+              "nonedeltaMultiplier": 1.2,
+              "spellCheck": false,
+              "spellCheckDistance": 1,
+              "filterZeros": true,
+              "log": true
+            },
+            "features": {
+              "hello": 1,
+              "hi": 1,
+              "there": 1,
+              "goodby": 1,
+              "see": 1,
+              "you": 1,
+              "later": 1,
+              "help": 1,
+              "me": 1,
+              "what": 1,
+              "can": 1,
+              "do": 1
+            },
+            "intents": {
+              "greeting": 1,
+              "farewell": 1,
+              "help": 1
+            },
+            "intentFeatures": {
+              "greeting": {
+                "hello": 1,
+                "hi": 1,
+                "there": 1
+              },
+              "farewell": {
+                "goodby": 1,
+                "see": 1,
+                "you": 1,
+                "later": 1
+              },
+              "help": {
+                "help": 1,
+                "me": 1,
+                "what": 1,
+                "can": 1,
+                "you": 1,
+                "do": 1
+              }
+            },
+            "featuresToIntent": {
+              "hello": [
+                "greeting"
+              ],
+              "hi": [
+                "greeting"
+              ],
+              "there": [
+                "greeting"
+              ],
+              "goodby": [
+                "farewell"
+              ],
+              "see": [
+                "farewell"
+              ],
+              "you": [
+                "farewell",
+                "help"
+              ],
+              "later": [
+                "farewell"
+              ],
+              "help": [
+                "help"
+              ],
+              "me": [
+                "help"
+              ],
+              "what": [
+                "help"
+              ],
+              "can": [
+                "help"
+              ],
+              "do": [
+                "help"
+              ]
+            },
+            "neuralNetwork": {
+              "settings": {
+                "locale": "en",
+                "tag": "nlu-en",
+                "keepStopwords": true,
+                "nonefeatureValue": 1,
+                "nonedeltaMultiplier": 1.2,
+                "spellCheck": false,
+                "spellCheckDistance": 1,
+                "filterZeros": true,
+                "log": true
+              },
+              "features": [
+                "hello",
+                "hi",
+                "there",
+                "goodby",
+                "see",
+                "you",
+                "later",
+                "help",
+                "me",
+                "what",
+                "can",
+                "do"
+              ],
+              "intents": [
+                "greeting",
+                "farewell",
+                "help"
+              ],
+              "perceptrons": [
+                [
+                  10.1740083694458,
+                  5.180772304534912,
+                  5.180772304534912,
+                  -3.7795488834381104,
+                  -1.0685653686523438,
+                  -1.7814488410949707,
+                  -1.0685653686523438,
+                  -1.9555720090866089,
+                  -1.9555720090866089,
+                  -0.7125439643859863,
+                  -0.7125439643859863,
+                  -0.7125439643859863,
+                  3.920459039251817
+                ],
+                [
+                  -3.1694834232330322,
+                  -1.653855800628662,
+                  -1.653855800628662,
+                  10.761298179626465,
+                  4.286917209625244,
+                  2.3826372623443604,
+                  4.286917209625244,
+                  -1.6616731882095337,
+                  -1.6616731882095337,
+                  -1.9040523767471313,
+                  -1.9040523767471313,
+                  -1.9040523767471313,
+                  3.330331803862946
+                ],
+                [
+                  -1.7636040449142456,
+                  -0.9568512439727783,
+                  -0.9568512439727783,
+                  -1.755040168762207,
+                  -1.8054568767547607,
+                  1.771040678024292,
+                  -1.8054568767547607,
+                  6.253650665283203,
+                  6.253650665283203,
+                  3.5806822776794434,
+                  3.5806822776794434,
+                  3.5806822776794434,
+                  1.7713597707503232
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    "intentDomains": {},
+    "extraSentences": [
+      [
+        "en",
+        "hello"
+      ],
+      [
+        "en",
+        "hi there"
+      ],
+      [
+        "en",
+        "goodbye"
+      ],
+      [
+        "en",
+        "see you later"
+      ],
+      [
+        "en",
+        "help me"
+      ],
+      [
+        "en",
+        "what can you do"
+      ]
+    ]
+  },
+  "ner": {
+    "settings": {
+      "tag": "ner",
+      "entityPreffix": "%",
+      "entitySuffix": "%"
+    },
+    "rules": {}
+  },
+  "nlgManager": {
+    "settings": {
+      "tag": "nlg-manager"
+    },
+    "responses": {
+      "en": {
+        "greeting": [
+          {
+            "answer": "Hello! How can I help you?"
+          },
+          {
+            "answer": "Hi there!"
+          }
+        ],
+        "farewell": [
+          {
+            "answer": "Goodbye!"
+          },
+          {
+            "answer": "See you soon!"
+          }
+        ],
+        "help": [
+          {
+            "answer": "I can answer basic questions"
+          },
+          {
+            "answer": "I provide information about our services"
+          }
+        ]
+      }
+    }
+  },
+  "actionManager": {
+    "settings": {
+      "tag": "action-manager"
+    },
+    "actions": {}
+  },
+  "slotManager": {}
+}

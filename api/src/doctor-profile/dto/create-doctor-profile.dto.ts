@@ -63,6 +63,10 @@ export class CreateDoctorProfileDto {
   reviews?: string[];
 
   @IsOptional()
+  @IsNumber()
+  bonus?: number;
+
+  @IsOptional()
   @IsString()
   avatar?: string;
 

@@ -61,6 +61,9 @@ export class DoctorProfile {
   @Column('text', { array: true, nullable: true })
   reviews?: string[];
 
+  @Column('decimal', { nullable: true })
+  bonus?: number;
+
   @Column({ type: 'text', nullable: true })
   avatar: string;
 

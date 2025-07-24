@@ -11,7 +11,7 @@ import {
   CreditCard,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import DownloadInvoice from '@/components/modals/Download'
 import { useCreatePayment, useVerifyPayment } from '@/hooks/usePayments'
 import { toast } from 'sonner'
@@ -19,6 +19,7 @@ import { getErrorMessage } from '@/components/utils/handleError'
 import { useGetOrder, useUpdateOrderStatus } from '@/hooks/useOrders'
 import { useAuthStore } from '@/store/store'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import PaystackModal from '@/components/modals/paystack'
 
 // Extend the Window interface to include PaystackPop
 declare global {
@@ -68,6 +69,8 @@ const getStatusPercentage = (status: string) => {
 
 export default function OrderInfo() {
   const { order } = useParams({ strict: false })
+  const [showPaystack, setShowPaystack] = useState(false)
+  const [paymentData, setPaymentData] = useState<any>(null)
   const { mutateAsync: addPayment } = useCreatePayment()
   const { orders } = useUserData()
   const { mutateAsync: verifyPayment, isPending: verifying } =
@@ -154,23 +157,12 @@ export default function OrderInfo() {
 
       const data = response.data
 
-      if (window.PaystackPop && data?.paystack_reference) {
-        const handler = window.PaystackPop.setup({
-          key: 'pk_test_9c7cb667be19893bb131624008c263884493bda2',
-          email: data.email,
-          amount: data.amount * 100,
-          currency: 'KES',
-          ref: data.paystack_reference,
-          callback: function (response: any) {
-            // Automatically verify after successful payment
-            verifyPayment({ reference: response.reference })
-          },
-          onClose: function () {
-            toast.info('Payment window closed.')
-          },
-        })
-        handler.openIframe()
-      }
+       setPaymentData({
+         email: data.email,
+         amount: data.amount,
+         reference: data.paystack_reference,
+       })
+       setShowPaystack(true)
     } catch (error) {
       console.error('Failed to initiate payment:', error)
       const message = getErrorMessage(error)
@@ -232,7 +224,11 @@ export default function OrderInfo() {
                 </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className='cursor-pointer'>
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      className="cursor-pointer"
+                    >
                       {option.label}
                     </SelectItem>
                   ))}
@@ -267,6 +263,18 @@ export default function OrderInfo() {
                     {verifying ? 'Processing...' : 'Checkout'}
                   </button>
                 )}
+              {showPaystack && paymentData && (
+                <PaystackModal
+                  email={paymentData.email}
+                  amount={paymentData.amount}
+                  reference={paymentData.reference}
+                  onSuccess={(ref) => {
+                    setShowPaystack(false)
+                    verifyPayment({ reference: ref })
+                  }}
+                  onClose={() => setShowPaystack(false)}
+                />
+              )}
             </div>
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               {Icon && <Icon className="w-5 h-5 mr-2" />}

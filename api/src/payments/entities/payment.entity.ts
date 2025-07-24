@@ -7,6 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { PaymentType } from '../dto/create-payment.dto';
 
 @Entity('payments')
 export class Payment {
@@ -22,6 +23,9 @@ export class Payment {
 
   @Column({ type: 'enum', enum: PaymentMethod })
   payment_method: PaymentMethod;
+
+  @Column({ type: 'enum', enum: PaymentType, default: PaymentType.MEDICATIONS })
+  payment_type: PaymentType;
 
   @Column()
   full_name: string;
@@ -44,10 +48,17 @@ export class Payment {
   @Column({ type: 'date' })
   payment_date: Date;
 
-  @Column()
+  @Column({ nullable: true })
   order_number: string;
+
+  @Column({ nullable: true })
+  appointment_id?: string;
 
   @ManyToOne(() => User, (user) => user.payments)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'doctor_id' })
+  doctor: User;
 }

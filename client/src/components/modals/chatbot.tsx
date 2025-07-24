@@ -1,199 +1,345 @@
-import { useState, useEffect, useRef, type SetStateAction } from 'react'
-import '../../styles.css';
-import { getAuthHeaders } from '@/services/api-call';
+import React, { useState, useRef, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { MessageCircle, Send, User, Bot, Loader2 } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 
-const Chatbot = () => {
+interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+}
+
+interface ChatSession {
+  userId?: string
+  userName?: string
+  sessionId: string
+  startTime: Date
+}
+
+const ChatInterface = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState([
-    { text: 'Hello! How can I help you today?', sender: 'bot' },
-  ])
-  const [inputValue, setInputValue] = useState('')
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [apiKey, setApiKey] = useState(
+    localStorage.getItem('openrouter_api_key') || '',
+  )
+  const [systemInstructions, setSystemInstructions] = useState(
+    localStorage.getItem('system_instructions') ||
+      'You are a helpful medical assistant for Mediconnect. Provide informative, empathetic responses while always reminding users to consult healthcare professionals for serious concerns. Never provide specific diagnoses or treatment recommendations.',
+  )
+  const [session] = useState<ChatSession>({
+    sessionId: `session_${Date.now()}`,
+    startTime: new Date(),
+    userName: 'Patient',
+  })
 
-  // Auto-scroll to bottom when messages change
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    localStorage.setItem('openrouter_api_key', apiKey)
+  }, [apiKey])
+
+  useEffect(() => {
+    localStorage.setItem('system_instructions', systemInstructions)
+  }, [systemInstructions])
+
+  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const toggleChat = () => {
-    setIsOpen(!isOpen)
-  }
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading) return
 
-  const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
-    setInputValue(e.target.value)
-  }
+    if (!apiKey) {
+      toast({
+        title: 'API Key Required',
+        description: 'Please configure your OpenRouter API key in settings.',
+        variant: 'destructive',
+      })
+      return
+    }
 
-  const handleSendMessage = async () => {
-    if (inputValue.trim() === '') return
+    const userMessage: Message = {
+      id: `msg_${Date.now()}`,
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
+    }
 
-    // Add user message
-    const newUserMessage = { text: inputValue, sender: 'user' }
-    setMessages([...messages, newUserMessage])
-    setInputValue('')
+    setMessages((prev) => [...prev, userMessage])
+    setInput('')
+    setIsLoading(true)
 
-  try {
-    // Call your NestJS API
-    const response = await fetch(
-      'https://app-mediconnect-im47ltrdzqxxq.azurewebsites.net/chat',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      const chatMessages = [
+        {
+          role: 'system',
+          content: `${systemInstructions}\n\nSession Info: Patient ${session.userName}, Session ID: ${session.sessionId}, Started: ${session.startTime.toLocaleString()}`,
         },
+        ...messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        {
+          role: 'user',
+          content: input,
+        },
+      ]
 
-        body: JSON.stringify({ message: inputValue }),
-      },
-    )
-       const data = await response.json();
-       console.log('API response:', data)
+      const response = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Mediconnect',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'deepseek/deepseek-r1-0528:free',
+            messages: chatMessages,
+            temperature: 0.4,
+            max_tokens: 700,
+          }),
+        },
+      )
 
-    let botReply = 'Sorry, I could not process your request.'
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
 
-    if (typeof data.response === 'string') {
-      botReply = data.response
-    } else if (data.response?.message) {
-      botReply = data.response.message
+      const data = await response.json()
+
+      if (data.choices && data.choices[0]?.message?.content) {
+        const assistantMessage: Message = {
+          id: `msg_${Date.now()}_assistant`,
+          role: 'assistant',
+          content: data.choices[0].message.content,
+          timestamp: new Date(),
+        }
+
+        setMessages((prev) => [...prev, assistantMessage])
+      } else {
+        throw new Error('Invalid response format')
+      }
+    } catch (error) {
+      console.error('Chat error:', error)
+      toast({
+        title: 'Error',
+        description:
+          'Failed to get response. Please check your API key and try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    const newBotMessage = { text: botReply, sender: 'bot' }
-    setMessages((prev) => [...prev, newBotMessage])
-  } catch (error) {
-    const newBotMessage = { text: "Sorry, I'm having trouble connecting.", sender: 'bot' };
-    setMessages(prev => [...prev, newBotMessage]);
   }
-};
 
-  const handleKeyPress = (e: { key: string }) => {
-    if (e.key === 'Enter') {
-      handleSendMessage()
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
     }
+  }
+
+  const clearChat = () => {
+    setMessages([])
+    toast({
+      title: 'Chat Cleared',
+      description: 'All messages have been removed.',
+    })
   }
 
   return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${isOpen ? 'w-80 md:w-96' : 'w-16'}`}
-    >
-      {isOpen ? (
-        <div
-          className={`rounded-lg shadow-xl overflow-hidden flex flex-col dark:bg-gray-800 dark:text-white bg-white text-gray-800`}
-          style={{ height: '500px' }}
-        >
-          {/* Header */}
-          <div
-            className={`flex justify-between items-center p-4 dark:bg-blue-300 bg-blue-600 text-white'}`}
-          >
-            <h3 className="font-semibold text-lg">Chat Support</h3>
-          </div>
+    <>
+      {/* Floating Chat Button */}
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="fixed cursor-pointer bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+        size="icon"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto sidebar-scroll p-4 space-y-3">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs md:max-w-md rounded-lg px-4 py-2 ${
-                    message.sender === 'user'
-                        ? 'dark:bg-blue-600 dark:text-white'
-                        : 'bg-gray-700 text-white'
-                  }`}
-                >
-                  {message.text}
+      {/* Chat Dialog */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-2xl h-[500px] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              Mediconnect Assistant
+            </DialogTitle>
+          </DialogHeader>
+
+          <Tabs defaultValue="chat" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="mx-6 mt-2 flex-shrink-0">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="chat" className="flex-1 flex flex-col min-h-0">
+              {/* Messages Area with proper scrolling */}
+              <div className="flex-1 overflow-hidden px-6">
+                <ScrollArea className="h-full">
+                  <div className="space-y-4 py-4 pr-4">
+                    {messages.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Hello! I'm your Mediconnect assistant.</p>
+                        <p className="text-sm mt-2">
+                          How can I help you today?
+                        </p>
+                      </div>
+                    )}
+
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex gap-3 ${
+                          message.role === 'user'
+                            ? 'justify-end'
+                            : 'justify-start'
+                        }`}
+                      >
+                        {message.role === 'assistant' && (
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Bot className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+
+                        <div
+                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                            message.role === 'user'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                          </p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+
+                        {message.role === 'user' && (
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                            <User className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {isLoading && (
+                      <div className="flex gap-3 justify-start">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="bg-muted rounded-lg px-4 py-2">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Thinking...
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Invisible div to scroll to */}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+              </div>
+
+              {/* Input Area */}
+              <div className="border-t p-4 flex-shrink-0">
+                <div className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type your message..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={isLoading || !input.trim()}
+                    size="icon"
+                    className="cursor-pointer"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
+            </TabsContent>
 
-          {/* Input */}
-          <div
-            className={`p-4 border-t dark:border-gray-700 dark:bg-gray-800 border-gray-200 bg-white`}
-          >
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className={`flex-1 rounded-full px-4 py-2 focus:outline-none dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 bg-gray-100 text-gray-800 placeholder-gray-500`}
-              />
-              <button
-                onClick={handleSendMessage}
-                className={`rounded-full w-10 h-10 flex items-center justify-center dark:bg-blue-600 dark:hover:bg-blue-700 bg-blue-500 hover:bg-blue-600 text-white`}
-              >
-                ➤
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={toggleChat}
-          className={`rounded-full cursor-pointer w-16 h-16 flex items-center justify-center shadow-lg dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-white hover:bg-gray-100 text-blue-600`}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </button>
-      )}
-    </div>
+            <TabsContent
+              value="settings"
+              className="flex-1 p-6 space-y-6 overflow-auto"
+            >
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="api-key">OpenRouter API Key</Label>
+                  <Input
+                    id="api-key"
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Enter your OpenRouter API key"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your API key is stored locally in your browser.
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="system-instructions">
+                    System Instructions
+                  </Label>
+                  <Textarea
+                    id="system-instructions"
+                    value={systemInstructions}
+                    onChange={(e) => setSystemInstructions(e.target.value)}
+                    placeholder="Define how the assistant should behave..."
+                    className="mt-2 min-h-[120px]"
+                  />
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={clearChat}
+                      variant="outline"
+                      className="flex-1 cursor-pointer"
+                    >
+                      Clear Chat
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
-export default Chatbot
-
-// // src/components/BotpressWidget.tsx
-// import { useEffect } from 'react'
-
-// // Extend the Window interface to include botpressWebChat
-// declare global {
-//   interface Window {
-//     botpressWebChat?: any;
-//   }
-// }
-
-// const BotpressWidget = () => {
-//   useEffect(() => {
-//     // Avoid injecting the script multiple times
-//     if (window.botpressWebChat) return;
-
-//     const script1 = document.createElement('script')
-//     script1.src = 'https://cdn.botpress.cloud/webchat/v3.2/inject.js'
-//     script1.defer = true
-//     document.body.appendChild(script1)
-
-//     const script2 = document.createElement('script')
-//     script2.src = 'https://files.bpcontent.cloud/2025/07/17/04/20250717044447-FXO4EF57.js'
-//     script2.defer = true
-//     script2.onload = () => {
-//       window.botpressWebChat.init({
-//         botId: 'your-bot-id',
-//         hostUrl: 'https://cdn.botpress.cloud/webchat/v3',
-//         messagingUrl: 'https://messaging.botpress.cloud',
-//         // Optional: Custom theme and data
-//         userAttributes: {
-//           role: 'patient',
-//         },
-//         stylesheet: 'https://yourdomain.com/custom-bot-theme.css',
-//       });
-//     }
-//     document.body.appendChild(script2)
-//   }, [])
-
-//   return null // the widget is injected globally, so no need to return JSX
-// }
-
-// export default BotpressWidget
+export default ChatInterface

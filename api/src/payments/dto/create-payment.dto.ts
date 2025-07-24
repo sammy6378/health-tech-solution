@@ -3,18 +3,27 @@ import {
   IsDecimal,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsString,
   IsUUID,
 } from 'class-validator';
 import { PaymentMethod, PaymentStatus } from 'src/orders/dto/create-order.dto';
 import { PrimaryGeneratedColumn } from 'typeorm';
 
+export enum PaymentType {
+  MEDICATIONS = 'medications',
+  APPOINTMENTS = 'appointments',
+  LAB_TESTS = 'lab_tests',
+  CONSULTATIONS = 'consultations',
+}
+
 export class CreatePaymentDto {
   @PrimaryGeneratedColumn('uuid')
   payment_id: string;
 
   @IsString()
-  order_number: string;
+  @IsOptional()
+  order_number?: string;
 
   @IsDecimal({ decimal_digits: '0,2' })
   @IsNumber()
@@ -47,6 +56,18 @@ export class CreatePaymentDto {
   @IsEnum(PaymentMethod)
   payment_method: PaymentMethod;
 
+  @IsEnum(PaymentType)
+  @IsOptional()
+  payment_type: PaymentType = PaymentType.MEDICATIONS;
+
   @IsUUID()
   user_id: string;
+
+  @IsUUID()
+  @IsOptional()
+  doctor_id?: string;
+
+  @IsUUID()
+  @IsOptional()
+  appointment_id?: string;
 }

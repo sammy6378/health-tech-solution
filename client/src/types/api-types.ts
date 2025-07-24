@@ -263,6 +263,13 @@ export interface TMedicalrecord {
 
 
 
+export enum PaymentType {
+  MEDICATIONS = 'medications',
+  APPOINTMENTS = 'appointments',
+  LAB_TESTS = 'lab_tests',
+  CONSULTATIONS = 'consultations',
+}
+
 export interface TPayment {
   payment_id?: string
   full_name?: string
@@ -270,11 +277,15 @@ export interface TPayment {
   phone_number?: string
   user_id?: string
   user?: TUser
+  doctor?: TUser
+  doctor_id?: string
+  appointment_id?: string
   paystack_reference?: string
   paystack_checkout_url: string
   paystack_access_code: string
   order_number: string
   amount: number
+  payment_type: PaymentType
   payment_date: Date
   payment_method: PaymentMethod
   payment_status: PaymentStatus

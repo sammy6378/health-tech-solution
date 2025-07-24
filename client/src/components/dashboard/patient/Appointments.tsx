@@ -11,40 +11,68 @@ import {
 import {
   AppointmentStatus,
   ConsultationType,
+  formatCurrency,
   formatTime,
+  PaymentStatus,
   type TAppointment,
 } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
 import { useCreateMeetingLink, useUpdateAppointmentStatus } from '@/hooks/useAppointments'
 import { toast } from 'sonner'
+import { useCreateAppointmentPayment, useGetPaymentsByAppointment, useVerifyAppointmentPayment } from '@/hooks/usePayments'
+import { getErrorMessage } from '@/components/utils/handleError'
+import PaystackModal from '@/components/modals/paystack'
+import { useAuthStore } from '@/store/store'
+import { useGetPatientProfileByUserId } from '@/hooks/usePatientProfile'
 
 const AppointmentPage = () => {
   const [activeTab, setActiveTab] = useState<AppointmentStatus>(
     AppointmentStatus.SCHEDULED,
   )
+  const [showPaystack, setShowPaystack] = useState(false)
+  const [paymentData, setPaymentData] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TAppointment
     direction: 'ascending' | 'descending'
   } | null>(null)
-  const {mutateAsync: createMeetingLink} = useCreateMeetingLink()
+  const { mutateAsync: createMeetingLink } = useCreateMeetingLink()
 
-
-  const { appointments,user } = useUserData();
-  const {mutateAsync: updateStatus} = useUpdateAppointmentStatus()
+  const { appointments, user } = useUserData()
+  const {user: currentUser} = useAuthStore()
+  const userId = currentUser?.userId ?? ''
+  console.log('all appointment', appointments)
+  const { mutateAsync: updateStatus } = useUpdateAppointmentStatus()
+  const { mutateAsync: createPayment } = useCreateAppointmentPayment()
+  const { mutateAsync: verifyPayment } = useVerifyAppointmentPayment()
+  const { data } = useGetPatientProfileByUserId(userId)
+  const appointmentUserId = appointments.find(
+    (appt) => appt.patient?.user_id === userId,
+  )?.appointment_id ?? ''
+  const { data: userPayment } = useGetPaymentsByAppointment(appointmentUserId)
+  const patient = data?.data
+  console.log('appointmet user id', appointmentUserId)
+  console.log("payments", userPayment)
+  const paymentStatus = userPayment?.data.map((payment) => payment.payment_status) || []
 
   if (!appointments || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Loading appointments...</p>
+        <p className="text-gray-500 dark:text-gray-400">
+          Loading appointments...
+        </p>
       </div>
     )
   }
 
+  // mark appointment as complete
   const handleMarkComplete = async (appointmentId: string) => {
     try {
-      await updateStatus({ id: appointmentId, status: AppointmentStatus.COMPLETED })
+      await updateStatus({
+        id: appointmentId,
+        status: AppointmentStatus.COMPLETED,
+      })
       toast.success('Appointment marked as complete')
     } catch (error) {
       console.error('Failed to mark appointment as complete:', error)
@@ -52,14 +80,13 @@ const AppointmentPage = () => {
     }
   }
 
-
   // Filter appointments based on active tab and search query
   const filteredAppointments = appointments
     .filter((appt) => appt.status === activeTab)
     .filter(
       (appt) =>
-        appt.doctor?.first_name!
-          .toLowerCase()
+        appt.doctor
+          ?.first_name!.toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         appt.consultation_type
           .toLowerCase()
@@ -94,6 +121,7 @@ const AppointmentPage = () => {
     setSortConfig({ key, direction })
   }
 
+  // meeting links
   const createLink = async (appointmentId: string) => {
     try {
       await createMeetingLink(appointmentId)
@@ -102,6 +130,64 @@ const AppointmentPage = () => {
       console.error('Failed to create meeting link:', error)
       toast.error('Failed to create meeting link')
     }
+  }
+
+  // initiate payment
+  const initiatePayment = async (appointment: TAppointment) => {
+    console.log('Initiating payment for appointment:', appointment)
+    const name = `${patient?.patient?.first_name} ${patient?.patient?.last_name}`
+
+    try {
+      const res = await createPayment({
+        amount: appointment.doctor?.doctorProfile?.consultation_fee,
+        full_name: name,
+        email: appointment.patient?.email ?? 'user@example.com',
+        phone_number:
+          patient?.phone_number ?? '0000000000',
+        doctor_id: appointment.doctor?.user_id,
+        user_id: patient?.user_id,
+        appointment_id: appointment.appointment_id,
+      })
+
+      if (res.message === 'Payment already initiated') {
+        toast.info('Payment already initialized, redirecting…')
+        return // Don't proceed if payment already initiated
+      }
+
+      const data = res.data
+      console.log('Payment data received:', data)
+
+      setPaymentData({
+        email: data.email,
+        amount: data.amount,
+        reference: data.paystack_reference,
+      })
+
+      // Set show paystack to true AFTER setting payment data
+      setShowPaystack(true)
+    } catch (error) {
+      console.error('Failed to initiate payment:', error)
+      const message = getErrorMessage(error)
+      toast.error(message)
+    }
+  }
+
+  // Handle payment success
+  const handlePaymentSuccess = async (reference: string) => {
+    try {
+      setShowPaystack(false)
+      await verifyPayment({ reference })
+      setPaymentData(null) // Clear payment data
+    } catch (error) {
+      console.error('Payment verification failed:', error)
+      toast.error('Payment verification failed')
+    }
+  }
+
+  // Handle payment close
+  const handlePaymentClose = () => {
+    setShowPaystack(false)
+    setPaymentData(null) // Clear payment data
   }
 
   // Calculate metrics
@@ -116,6 +202,18 @@ const AppointmentPage = () => {
       (a) => a.status === AppointmentStatus.CANCELLED,
     ).length,
     total: appointments.length,
+  }
+
+  // check if doctor has consulation fee
+  const consultationFees = (appointment: TAppointment) => {
+    const fees = appointment.doctor?.doctorProfile?.consultation_fee ?? 0
+    if (fees === undefined || fees === null) {
+      return false
+    }
+    if (fees <= 0) {
+      return false
+    }
+    return fees
   }
 
   return (
@@ -230,6 +328,16 @@ const AppointmentPage = () => {
           </div>
         </div>
 
+        {showPaystack && paymentData && (
+          <PaystackModal
+            email={paymentData.email}
+            amount={paymentData.amount}
+            reference={paymentData.reference}
+            onSuccess={handlePaymentSuccess}
+            onClose={handlePaymentClose}
+          />
+        )}
+
         {/* Appointments Table */}
         <div className="rounded-lg shadow bg-white dark:bg-gray-800 overflow-hidden">
           <div className="overflow-x-auto">
@@ -287,6 +395,12 @@ const AppointmentPage = () => {
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                   >
                     Meeting Link
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Consultation Fee
                   </th>
                   {user.role === 'doctor' && (
                     <th
@@ -371,13 +485,47 @@ const AppointmentPage = () => {
                               onClick={() =>
                                 createLink(appointment.appointment_id ?? '')
                               }
-                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                              disabled={consultationFees(appointment) === false}
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Create Link
                             </button>
                           ) : null}
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {consultationFees(appointment) ? (
+                          appointment.status === AppointmentStatus.CANCELLED ? (
+                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                              Cancelled
+                            </span>
+                          ) : appointment.status ===
+                            AppointmentStatus.COMPLETED ? (
+                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                              Completed
+                            </span>
+                          ) : paymentStatus.includes(PaymentStatus.PAID) ? (
+                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Paid
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => initiatePayment(appointment)}
+                              className="p-2 cursor-pointer rounded-md shadow-lg text-white bg-green-400 hover:bg-green-500 transition-colors duration-300"
+                            >
+                              Checkout{' '}
+                              {formatCurrency(
+                                consultationFees(appointment) as number,
+                              ).replace(/\.00$/, '')}
+                            </button>
+                          )
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Free
+                          </span>
+                        )}
+                      </td>
+
                       {user.role === 'doctor' && (
                         <>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
