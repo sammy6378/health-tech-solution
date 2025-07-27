@@ -18,7 +18,6 @@ import { MailService } from 'src/mails/mails.service';
 import { Mailer } from 'src/mails/helperEmail';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import * as dayjs from 'dayjs';
-// import { DoctorProfile } from 'src/doctor-profile/entities/doctor-profile.entity';
 import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
 import { AuthService } from 'src/auth/auth.service';
 
@@ -89,19 +88,6 @@ export class UsersService {
     const user = this.userRepository.create(createUserDto);
     const savedUser = await this.userRepository.save(user);
 
-    // create profile with user id if role is doctor or patient
-    // if (savedUser.role === Role.DOCTOR) {
-    //   const doctorProfile = this.DoctorProfileRepository.create({
-    //     user: { user_id: savedUser.user_id },
-    //   });
-    //   await this.DoctorProfileRepository.save(doctorProfile);
-    // } else if (savedUser.role === Role.PATIENT) {
-    //   const patientProfile = this.patientProfileRepository.create({
-    //     patient: { user_id: savedUser.user_id },
-    //   });
-    //   await this.patientProfileRepository.save(patientProfile);
-    // }
-
     if (!savedUser.user_id) {
       throw new Error('Failed to create user: user_id is missing');
     }
@@ -111,12 +97,6 @@ export class UsersService {
     await mailer.welcomeEmail({
       name: savedUser.first_name,
       email: savedUser.email,
-    });
-
-    // login user immediately
-    await this.authService.signIn({
-      email: savedUser.email,
-      password: createUserDto.password,
     });
 
     return createResponse(savedUser, 'User created successfully');

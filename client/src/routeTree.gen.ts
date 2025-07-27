@@ -26,6 +26,7 @@ import { Route as authAuthSignupRouteImport } from './routes/(auth)/auth-signup'
 import { Route as authAuthSigninRouteImport } from './routes/(auth)/auth-signin'
 import { Route as authAuthResetPasswordRouteImport } from './routes/(auth)/auth-reset-password'
 import { Route as authAuthResetEmailRouteImport } from './routes/(auth)/auth-reset-email'
+import { Route as authAuthActivateRouteImport } from './routes/(auth)/auth-activate'
 import { Route as DashboardOrdersIndexRouteImport } from './routes/dashboard/orders/index'
 import { Route as DashboardDoctorIndexRouteImport } from './routes/dashboard/doctor/index'
 import { Route as DashboardCartIndexRouteImport } from './routes/dashboard/cart/index'
@@ -136,6 +137,11 @@ const authAuthResetPasswordRoute = authAuthResetPasswordRouteImport.update({
 const authAuthResetEmailRoute = authAuthResetEmailRouteImport.update({
   id: '/(auth)/auth-reset-email',
   path: '/auth-reset-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authAuthActivateRoute = authAuthActivateRouteImport.update({
+  id: '/(auth)/auth-activate',
+  path: '/auth-activate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardOrdersIndexRoute = DashboardOrdersIndexRouteImport.update({
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/our-doctors': typeof OurDoctorsRoute
+  '/auth-activate': typeof authAuthActivateRoute
   '/auth-reset-email': typeof authAuthResetEmailRoute
   '/auth-reset-password': typeof authAuthResetPasswordRoute
   '/auth-signin': typeof authAuthSigninRoute
@@ -323,6 +330,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/our-doctors': typeof OurDoctorsRoute
+  '/auth-activate': typeof authAuthActivateRoute
   '/auth-reset-email': typeof authAuthResetEmailRoute
   '/auth-reset-password': typeof authAuthResetPasswordRoute
   '/auth-signin': typeof authAuthSigninRoute
@@ -368,6 +376,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/our-doctors': typeof OurDoctorsRoute
+  '/(auth)/auth-activate': typeof authAuthActivateRoute
   '/(auth)/auth-reset-email': typeof authAuthResetEmailRoute
   '/(auth)/auth-reset-password': typeof authAuthResetPasswordRoute
   '/(auth)/auth-signin': typeof authAuthSigninRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/our-doctors'
+    | '/auth-activate'
     | '/auth-reset-email'
     | '/auth-reset-password'
     | '/auth-signin'
@@ -458,6 +468,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/our-doctors'
+    | '/auth-activate'
     | '/auth-reset-email'
     | '/auth-reset-password'
     | '/auth-signin'
@@ -502,6 +513,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/dashboard'
     | '/our-doctors'
+    | '/(auth)/auth-activate'
     | '/(auth)/auth-reset-email'
     | '/(auth)/auth-reset-password'
     | '/(auth)/auth-signin'
@@ -547,6 +559,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   OurDoctorsRoute: typeof OurDoctorsRoute
+  authAuthActivateRoute: typeof authAuthActivateRoute
   authAuthResetEmailRoute: typeof authAuthResetEmailRoute
   authAuthResetPasswordRoute: typeof authAuthResetPasswordRoute
   authAuthSigninRoute: typeof authAuthSigninRoute
@@ -672,6 +685,13 @@ declare module '@tanstack/react-router' {
       path: '/auth-reset-email'
       fullPath: '/auth-reset-email'
       preLoaderRoute: typeof authAuthResetEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/auth-activate': {
+      id: '/(auth)/auth-activate'
+      path: '/auth-activate'
+      fullPath: '/auth-activate'
+      preLoaderRoute: typeof authAuthActivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/orders/': {
@@ -937,6 +957,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
   OurDoctorsRoute: OurDoctorsRoute,
+  authAuthActivateRoute: authAuthActivateRoute,
   authAuthResetEmailRoute: authAuthResetEmailRoute,
   authAuthResetPasswordRoute: authAuthResetPasswordRoute,
   authAuthSigninRoute: authAuthSigninRoute,

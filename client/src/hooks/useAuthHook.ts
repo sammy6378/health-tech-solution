@@ -1,22 +1,30 @@
-import { getErrorMessage } from "@/components/utils/handleError"
+import { useContextFunc } from '@/components/context/authContext'
+import { getErrorMessage } from '@/components/utils/handleError'
 import { useToast } from '@/hooks/use-toast'
-import { baseUrl } from "@/lib/baseUrl"
-import { authLogin, authSignup, resetEmail, type TLoginResponse, type TResetEmailResponse } from "@/services/auth"
-import { authSlice, type TLoginRequest } from "@/store/store"
-import type { TRegister } from "@/types/Tuser"
-import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-
+import { baseUrl } from '@/lib/baseUrl'
+import {
+  authActivate,
+  authLogin,
+  authSignup,
+  resetEmail,
+  type TLoginResponse,
+  type TRegister,
+  type TRegisterResponse,
+  type TResetEmailResponse,
+} from '@/services/auth'
+import { authSlice, type TLoginRequest } from '@/store/store'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 export const useLogin = () => {
   const navigate = useNavigate()
- const { toast } = useToast()
+  const { toast } = useToast()
 
   return useMutation<TLoginResponse, Error, TLoginRequest>({
     mutationKey: ['login'],
     mutationFn: authLogin,
     onSuccess: (data) => {
-      const user = data.data.user 
+      const user = data.data.user
       const role = user?.role ?? ''
 
       const getRedirectPath = (role: string) => {
@@ -52,54 +60,83 @@ export const useLogin = () => {
   })
 }
 
-
 export const useAuthRegister = () => {
   const navigate = useNavigate()
-   const { toast } = useToast()
-    return useMutation<TLoginResponse, Error, TRegister>({
-      mutationKey: ['register'],
-      mutationFn: authSignup,
-      onSuccess: (data) => {
-        const user = data.data.user;
-        const role = user?.role ?? '';
+  const { toast } = useToast()
+  const { setActivationToken } = useContextFunc()
 
-        const getRedirectPath = (role: string) => {
-          switch (role) {
-            case 'admin':
-              return '/dashboard/admin'
-            case 'doctor':
-              return '/dashboard/doctor'
-            case 'patient':
-              return '/dashboard/home'
-            default:
-              return '/dashboard/home'
-          }
-        }
-        toast({
-          title: 'Registration successful',
-          description: data.message || 'Welcome aboard!',
-          variant: 'success',
-        })
-        if (data.success) {
-          authSlice.login(data.data)
-          navigate({ to: getRedirectPath(role) })
-        }
-      },
-      onError: (error) => {
-        console.error(`Registration failed: ${error.message}`)
-        const errormessage = getErrorMessage(error)
-        toast({
-          title: 'Registration failed',
-          description: errormessage,
-          variant: 'destructive',
-        })
-      },
-    })}
+  return useMutation<TRegisterResponse, Error, TRegister>({
+    mutationKey: ['register'],
+    mutationFn: authSignup,
+    onSuccess: (data) => {
+      // Store the activation token in context
+      setActivationToken(data.data.token)
 
+      toast({
+        title: 'Registration successful',
+        description: 'Please check your email for the activation code.',
+        variant: 'success',
+      })
 
-    // reset email
+      // Navigate to activation page
+      navigate({ to: '/auth-activate' })
+    },
+    onError: (error) => {
+      console.error(`Registration failed: ${error.message}`)
+      const errormessage = getErrorMessage(error)
+      toast({
+        title: 'Registration failed',
+        description: errormessage,
+        variant: 'destructive',
+      })
+    },
+  })
+}
+
+// activate
+export const useActivateAccount = () => {
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const { activationToken, setActivationToken } = useContextFunc()
+
+  return useMutation<any, Error, { activation_code: string }>({
+    mutationKey: ['activate'],
+    mutationFn: async ({ activation_code }) => {
+      if (!activationToken) {
+        throw new Error('No activation token found. Please register again.')
+      }
+
+      return authActivate({
+        activation_code,
+        activation_token: activationToken,
+      })
+    },
+    onSuccess: () => {
+      setActivationToken(null)
+
+      toast({
+        title: 'Account activated successfully',
+        description: 'Welcome! Your account is now active.',
+        variant: 'success',
+      })
+
+      navigate({ to: '/auth-signin' })
+    },
+    onError: (error) => {
+      const errormessage = getErrorMessage(error)
+      console.error(`Activation failed: ${errormessage}`)
+      toast({
+        title: 'Activation failed',
+        description: errormessage,
+        variant: 'destructive',
+      })
+    },
+  })
+}
+
+// reset email
 export const useResetEmail = () => {
-    const { toast } = useToast()
+  const { toast } = useToast()
   return useMutation<TResetEmailResponse, Error, { email: string }>({
     mutationKey: ['resetEmail'],
     mutationFn: ({ email }) => resetEmail(email),
@@ -121,11 +158,14 @@ export const useResetEmail = () => {
   })
 }
 
-
 export const useResetPassword = () => {
-    const { toast } = useToast()
+  const { toast } = useToast()
   const navigate = useNavigate()
-  return useMutation<{ message: string }, Error, { token: string; newPassword: string }>({
+  return useMutation<
+    { message: string },
+    Error,
+    { token: string; newPassword: string }
+  >({
     mutationKey: ['resetPassword'],
     mutationFn: async ({ token, newPassword }) => {
       const response = await fetch(`${baseUrl}/auth/reset-password`, {

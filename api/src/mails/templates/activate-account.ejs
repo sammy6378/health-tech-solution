@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Your Account - MediConnect</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: #1a73e8;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 10px 0 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .activation-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+        }
+        .code-display {
+            font-size: 32px;
+            letter-spacing: 3px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1a73e8;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .security-alert {
+            background-color: #fef7e0;
+            border-left: 4px solid #f9ab00;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .steps {
+            padding-left: 20px;
+            text-align: left;
+        }
+        .steps li {
+            margin-bottom: 10px;
+        }
+        .footer {
+            background: #f1f3f4;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #70757a;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .note {
+            font-size: 14px;
+            color: #666;
+            margin-top: 25px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .timer {
+            font-size: 18px;
+            font-weight: bold;
+            color: #d93025;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>MediConnect</h1>
+            <p style="color: white; margin: 5px 0 0;">Activate Your Account</p>
+        </div>
+        
+        <div class="content">
+            <h2>Welcome <%= name %>,</h2>
+            
+            <p>We're excited to have you join our healthcare community. To complete your registration and access your account, please activate it using the code below.</p>
+            
+            <div class="activation-card">
+                <h3 style="margin-top: 0;">Your Activation Code</h3>
+                <div class="code-display"><%= activationCode %></div>
+                <div>These Code will Expire in 5mins. Be sure to use before the time runs out.</div>
+            </div>
+            
+            <div class="security-alert">
+                <strong>Security Notice:</strong> Never share this code with anyone. MediConnect will never ask you for your activation code.
+            </div>
+            
+            <h3>Why Activate Your Account?</h3>
+            <ul>
+                <li>Access your medical records securely</li>
+                <li>Schedule appointments with healthcare providers</li>
+                <li>Manage prescriptions and refills</li>
+                <li>Receive important health notifications</li>
+                <li>Connect with your care team</li>
+            </ul>
+            
+            <div class="note">
+                <p><strong>Note:</strong> If you didn't create a MediConnect account, please ignore this email or contact our support team immediately.</p>
+            </div>
+            
+            <p>Need help activating your account? Contact our support team:</p>
+            <p>
+                <strong>Email:</strong> support@mediconnect.example.com<br>
+                <strong>Phone:</strong> (800) 123-4567<br>
+                <strong>Hours:</strong> 24/7 support available
+            </p>
+            
+            <p>Welcome to better healthcare management,<br>
+            <strong>The MediConnect Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> MediConnect Hospital Management System. All rights reserved.</p>
+            <p>
+                <a href="https://mediconnect.example.com/contact">Contact Us</a> | 
+                <a href="https://mediconnect.example.com/privacy">Privacy Policy</a> | 
+                <a href="https://mediconnect.example.com/terms">Terms of Service</a>
+            </p>
+            <p>This email was sent to <%= email %> and is intended for the recipient only. If you believe you have received this email in error, please contact our support team.</p>
+        </div>
+    </div>
+</body>
+</html>

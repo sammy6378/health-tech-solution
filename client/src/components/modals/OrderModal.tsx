@@ -17,7 +17,7 @@ import {
   useUpdatePatientProfile,
 } from '@/hooks/usePatientProfile'
 import { useCreateOrder } from '@/hooks/useOrders'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { DeliveryMethod, PaymentMethod } from '@/types/api-types'
 import { useCartStore } from '@/store/cart/add'
 import type { TPatient } from '@/types/Tuser'
@@ -85,6 +85,7 @@ export default function CheckoutPage() {
   const { user } = useAuthStore()
   const patientId = user?.userId || ''
   const createOrder = useCreateOrder()
+  const {toast} = useToast()
 
   // Transform cart items to order medications format
   const orderMedications: TOrderMedication[] = cart
@@ -115,12 +116,20 @@ export default function CheckoutPage() {
       
       await createOrder.mutateAsync(completeOrder)
 
-      toast.success('Order placed successfully!')
+      toast({
+        title: 'Order placed successfully',
+        description: 'Your order has been placed successfully.',
+        variant: 'success',
+      })
       clearCart()
       setCurrentStep(3) // Move to success/payment step
     } catch (error) {
       console.error('Order submission failed:', error)
-      toast.error('Failed to place order')
+      toast({
+        title: 'Order submission failed',
+        description: 'There was an error placing your order. Please try again.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -163,6 +172,7 @@ const PersonalInfoStep = ({
   const patientId = user?.userId || ''
    const { data } = useGetPatientProfileByUserId(patientId)
    const profile = data?.data || null
+   const { toast } = useToast()
 
   const createProfile = useCreatePatientProfile()
   const updateProfile = useUpdatePatientProfile()
@@ -207,7 +217,11 @@ const PersonalInfoStep = ({
     e.preventDefault()
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form')
+      toast({
+        title: 'Form validation failed',
+        description: 'Please fix the errors in the form.',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -222,7 +236,11 @@ const PersonalInfoStep = ({
       onSubmit(payload)
     } catch (error) {
       console.error('Error saving profile:', error)
-      toast.error('Failed to save personal information')
+      toast({
+        title: 'Failed to save personal information',
+        description: 'There was an error saving your information. Please try again.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -361,9 +379,8 @@ const OrderDetailsStep = ({
   const userId = user?.userId || ''
   const {data} = useGetPatientProfileByUserId(userId)
   const profile = data?.data || null
+  const {toast} = useToast()
 
-  console.log('profile', profile)
-  
   const [formData, setFormData] = useState({
     delivery_address: profile?.address || '',
     delivery_method: DeliveryMethod.HOME_DELIVERY,
@@ -395,7 +412,11 @@ const OrderDetailsStep = ({
  const handleSubmit = async (e: React.FormEvent) => {
    e.preventDefault()
    if (!validateForm()) {
-     toast.error('Please fix the errors in the form')
+     toast({
+       title: 'Form validation failed',
+       description: 'Please fix the errors in the form.',
+       variant: 'destructive',
+     })
      return
    }
 

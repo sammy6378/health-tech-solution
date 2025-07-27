@@ -12,10 +12,11 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 
 export function CreateDoctorDialog() {
   const [open, setOpen] = useState(false)
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -31,7 +32,11 @@ export function CreateDoctorDialog() {
     try {
       // Replace with actual API call
       // await createDoctor(formData)
-      toast.success('Doctor created successfully!')
+      toast({
+        title: 'Doctor created successfully!',
+        description: 'The doctor has been registered.',
+        variant: 'success',
+      })
       setOpen(false)
       setFormData({
         first_name: '',
@@ -40,7 +45,11 @@ export function CreateDoctorDialog() {
         role: 'doctor',
       })
     } catch (error) {
-      toast.error('Error creating doctor')
+      toast({
+        title: 'Failed to create doctor',
+        description: 'There was an error creating the doctor. Please try again.',
+        variant: 'destructive',
+      })
     }
   }
 

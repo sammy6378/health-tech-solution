@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { CalendarIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { useCreateMedication } from '@/hooks/useMedication'
 
 interface EditMedicationDialogProps {
@@ -41,6 +41,7 @@ export function CreateMedDialog({
   onClose,
 }: EditMedicationDialogProps) {
     const {mutateAsync: createMedication} = useCreateMedication()
+    const {toast} = useToast()
 
 
   const [formData, setFormData] = useState<TMedication>({
@@ -108,12 +109,19 @@ export function CreateMedDialog({
 
     createMedication(createMed)
       .then(() => {
-        toast.success('Medication created successfully')
+        toast({
+          title: 'Medication created successfully',
+          description: 'Your medication has been created.',
+          variant: 'success',})
         onClose()
       })
       .catch((error) => {
         console.error('Error creating medication:', error)
-        toast.error('Failed to create medication')
+        toast({
+          title: 'Failed to create medication',
+          description: error.message || 'There was an error creating the medication.',
+          variant: 'destructive',
+        })
       })
 
   }

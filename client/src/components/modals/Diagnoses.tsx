@@ -14,7 +14,7 @@ import {
 } from 'react-icons/fi'
 import { uploadFile } from '@/hooks/useUpload'
 import { getErrorMessage } from '../utils/handleError'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { useAuthStore } from '@/store/store'
 import { useGetAppointment } from '@/hooks/useAppointments'
 
@@ -27,12 +27,7 @@ const validationSchema = Yup.object({
 export default function DiagnosesPage() {
   const { mutate, isSuccess, isPending } = useCreateDiagnosis()
   const { appointment } = useParams({ strict: false })
-  // if (!appointment) {
-  //   toast.error(
-  //     'Missing appointment ID. Please access this form through a valid appointment.',
-  //   )
-  //   return null
-  // }
+  const {toast} = useToast()
   const { data: appointmnet } = useGetAppointment(appointment!)
   const {user} = useAuthStore()
   const doctorId = user.userId;
@@ -55,9 +50,11 @@ export default function DiagnosesPage() {
     validationSchema,
     onSubmit: async (values) => {
       if (!appointment) {
-        toast.error(
-          'Missing appointment ID. Please access this form through a valid appointment.',
-        )
+        toast({
+          title: 'No appointment ID provided',
+          description: 'Please return to the appointment page and try again.',
+          variant: 'destructive',
+        })
         return
       }
 

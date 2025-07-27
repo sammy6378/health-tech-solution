@@ -31,26 +31,6 @@ export interface TUser {
   orders?: TOrder[]
 }
 
-export interface TRegister {
-  first_name: string
-  last_name: string
-  email: string
-  password: string
-}
-
-export interface TRegisterResponse {
-  success: boolean
-  message: string
-  data: {
-    user_id: string
-    full_name: string
-    username: string
-    email: string
-    phone_number: string
-    role: string
-  }
-}
-
 
 
 export interface TDoctor {

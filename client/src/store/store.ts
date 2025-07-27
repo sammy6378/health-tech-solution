@@ -30,6 +30,7 @@ const initialState: TUser = {
   },
 }
 
+
 export const authStore = new Store<TUser>(initialState)
 
 // Add this hook to subscribe to store changes

@@ -15,12 +15,13 @@ import { Separator } from '@/components/ui/separator'
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
 import { useUserData } from '@/hooks/useDashboard'
 import type { TUser } from '@/types/Tuser'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 
 const PER_PAGE = 10
 
 function ManageUsers() {
     const {patients} = useUserData()
+    const { toast } = useToast()
   const [users, setUsers] = useState<TUser[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
@@ -84,7 +85,11 @@ function ManageUsers() {
         setUsers(users)
         setTotalUsers(patients.length)
       } catch (err) {
-        toast.error('Error fetching users')
+        toast({
+          title: 'Error fetching users',
+          description: 'There was an error loading the users. Please try again.',
+          variant: 'destructive',
+        })
       } finally {
         setIsLoading(false)
       }
@@ -102,10 +107,18 @@ function ManageUsers() {
       const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete')
 
-      toast.success('User deleted successfully')
+      toast({
+        title: 'User deleted',
+        description: 'The user has been successfully deleted.',
+        variant: 'success',
+      })
       setUsers(users.filter((user) => user.user_id !== userId))
     } catch {
-      toast.error('Delete failed')
+      toast({
+        title: 'Delete failed',
+        description: 'There was an error deleting the user. Please try again.',
+        variant: 'destructive',
+      })
     }
   }
 

@@ -14,11 +14,12 @@ import {
   User,
   Stethoscope,
 } from 'lucide-react'
-import { toast } from "sonner"
+import { useToast } from '@/hooks/use-toast'
 
 const DoctorProfile = () => {
   const {user} = useAuthStore()
   const userId = user?.userId || ''
+    const { toast } = useToast()
 
   const { doctorProfile } = useGetDoctorProfileByUserId(userId)
   const {mutateAsync: updateProfile} = useUpdateDoctorProfile()
@@ -30,9 +31,17 @@ const DoctorProfile = () => {
         const imageUrl = await uploadFile(file);
          if (doctor?.profile_id) {
            await updateProfile({ id: doctor.profile_id, data: { avatar: imageUrl } })
-           toast.success(`Profile image updated successfully!`)
+           toast({
+            title: 'Profile image updated',
+            description: 'Your profile image has been successfully updated.',
+            variant: 'success',
+           })
          } else {
-          toast.error(`Profile image update failed`)
+          toast({
+            title: 'Profile image update failed',
+            description: 'There was an error updating your profile image. Please try again.',
+            variant: 'destructive',
+          })
            console.error("Doctor profile_id is undefined.")
          }
       }

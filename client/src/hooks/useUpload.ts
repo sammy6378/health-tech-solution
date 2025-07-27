@@ -1,11 +1,13 @@
 import { getErrorMessage } from '@/components/utils/handleError'
 import { baseUrl } from '@/lib/baseUrl'
 import { authStore } from '@/store/store'
-import { toast } from 'sonner'
+import { useToast } from './use-toast'
 
 const base = `${baseUrl}/upload`
 
 export const uploadFile = async (file: File): Promise<string> => {
+  const { toast } = useToast()
+
   const formData = new FormData()
   formData.append('file', file)
 
@@ -22,7 +24,11 @@ export const uploadFile = async (file: File): Promise<string> => {
   if (!response.ok) {
     const errorText = await response.text()
     const msg = getErrorMessage(errorText)
-    toast.error(`Upload failed: ${msg}`)
+    toast({
+      title: 'Upload failed',
+      description: msg,
+      variant: 'destructive',
+    })
   }
 
   const data = await response.json()

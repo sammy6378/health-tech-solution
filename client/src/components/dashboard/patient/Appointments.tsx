@@ -19,7 +19,7 @@ import {
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
 import { useCreateMeetingLink, useUpdateAppointmentStatus } from '@/hooks/useAppointments'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { useCreateAppointmentPayment, useGetPaymentsByAppointment, useVerifyAppointmentPayment } from '@/hooks/usePayments'
 import { getErrorMessage } from '@/components/utils/handleError'
 import PaystackModal from '@/components/modals/paystack'
@@ -38,6 +38,7 @@ const AppointmentPage = () => {
     direction: 'ascending' | 'descending'
   } | null>(null)
   const { mutateAsync: createMeetingLink } = useCreateMeetingLink()
+  const {toast} = useToast()
 
   const { appointments, user } = useUserData()
   const {user: currentUser} = useAuthStore()
@@ -73,10 +74,18 @@ const AppointmentPage = () => {
         id: appointmentId,
         status: AppointmentStatus.COMPLETED,
       })
-      toast.success('Appointment marked as complete')
+      toast({
+        title: 'Appointment marked as complete',
+        description: 'The appointment has been successfully marked as complete.',
+        variant: 'success',
+      })
     } catch (error) {
       console.error('Failed to mark appointment as complete:', error)
-      toast.error('Failed to mark appointment as complete')
+      toast({
+        title: 'Failed to mark appointment as complete',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -125,10 +134,18 @@ const AppointmentPage = () => {
   const createLink = async (appointmentId: string) => {
     try {
       await createMeetingLink(appointmentId)
-      toast.success('Meeting link created successfully')
+      toast({
+        title: 'Meeting link created',
+        description: 'The meeting link has been successfully created.',
+        variant: 'success',
+      })
     } catch (error) {
       console.error('Failed to create meeting link:', error)
-      toast.error('Failed to create meeting link')
+      toast({
+        title: 'Failed to create meeting link',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -150,7 +167,11 @@ const AppointmentPage = () => {
       })
 
       if (res.message === 'Payment already initiated') {
-        toast.info('Payment already initialized, redirecting…')
+        toast({
+          title: 'Payment already initialized',
+          description: 'Redirecting…',
+          variant: 'info',
+        })
         return // Don't proceed if payment already initiated
       }
 
@@ -168,7 +189,11 @@ const AppointmentPage = () => {
     } catch (error) {
       console.error('Failed to initiate payment:', error)
       const message = getErrorMessage(error)
-      toast.error(message)
+      toast({
+        title: 'Payment initiation failed',
+        description: message,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -180,7 +205,11 @@ const AppointmentPage = () => {
       setPaymentData(null) // Clear payment data
     } catch (error) {
       console.error('Payment verification failed:', error)
-      toast.error('Payment verification failed')
+      toast({
+        title: 'Payment verification failed',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      })
     }
   }
 

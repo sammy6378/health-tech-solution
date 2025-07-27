@@ -2,7 +2,26 @@ import { sendEmailDto } from 'src/types/mailer';
 import { MailService } from './mails.service';
 
 export const Mailer = (mailService: MailService) => {
-  // onboardng emails
+  // activation email
+  const activationEmail = async (data: {
+    name: string;
+    email: string;
+    activationCode: string;
+  }) => {
+    const payload: sendEmailDto = {
+      recipients: data.email,
+      subject: 'Activate Your Account',
+      template: 'activate-account.ejs',
+      context: {
+        name: data.name,
+        email: data.email,
+        activationCode: data.activationCode,
+      },
+    };
+
+    await mailService.sendEmail(payload);
+  };
+  // onboarding emails
   const welcomeEmail = async (data: { name: string; email: string }) => {
     const payload: sendEmailDto = {
       recipients: data.email,
@@ -140,6 +159,7 @@ export const Mailer = (mailService: MailService) => {
   };
 
   return {
+    activationEmail,
     welcomeEmail,
     passwordResetEmail,
     meetingLinkEmail,

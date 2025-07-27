@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 
 // Extend the Window interface to include PaystackPop
 declare global {
@@ -28,6 +28,7 @@ export default function PaystackModal({
   autoTrigger = true,
 }: PaystackModalProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     // Check if script already exists and PaystackPop is available
@@ -50,7 +51,11 @@ export default function PaystackModal({
 
       script.onerror = () => {
         console.error('Failed to load Paystack script')
-        toast.error('Failed to load payment system')
+        toast({
+          title: 'Failed to load payment gateway',
+          description: 'Please try again later.',
+          variant: 'destructive',
+        })
       }
 
       document.body.appendChild(script)
@@ -84,12 +89,20 @@ export default function PaystackModal({
           ref: reference,
           callback: function (response: any) {
             console.log('Payment successful:', response)
-            toast.success('Payment successful!')
+            toast({
+              title: 'Payment successful',
+              description: `Your payment was successful. Reference: ${response.reference}`,
+              variant: 'success',
+            })
             onSuccess?.(response.reference)
           },
           onClose: function () {
             console.log('Payment window closed')
-            toast.info('Payment window closed.')
+            toast({
+              title: 'Payment window closed',
+              description: 'You closed the payment window before completing the transaction.',
+              variant: 'info',
+            })
             onClose?.()
           },
         })
@@ -100,7 +113,11 @@ export default function PaystackModal({
         }, 100)
       } catch (error) {
         console.error('Error initializing Paystack:', error)
-        toast.error('Failed to initialize payment')
+        toast({
+          title: 'Payment initialization failed',
+          description: 'There was an error initializing the payment gateway. Please try again.',
+          variant: 'destructive',
+        })
       }
     }
   }, [

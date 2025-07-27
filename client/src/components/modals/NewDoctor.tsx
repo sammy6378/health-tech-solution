@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react'
 import { useCreateDoctorProfile } from '@/hooks/useDoctorProfile'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { getErrorMessage } from '../utils/handleError'
 import { uploadFile } from '@/hooks/useUpload'
 import { Gender } from '@/types/Tuser'
@@ -97,6 +97,7 @@ export const CreateDoctorForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { mutate: createDoctorProfile } = useCreateDoctorProfile()
   const { doctorId } = useParams({strict: false})
+  const { toast } = useToast()
 
 
 
@@ -135,13 +136,21 @@ export const CreateDoctorForm = () => {
           user_id: doctorId,
           sex: values.sex as Gender,
         })
-        toast.success('Doctor created successfully!')
+        toast({
+          title: 'Doctor profile created successfully',
+          description: 'Your doctor profile has been created.',
+          variant: 'success',
+        })
         
         // Reset form after successful submission
         formik.resetForm()
       } catch (error) {
         const msg = getErrorMessage(error)
-        toast.error(msg || 'Error creating doctor. Please try again.')
+        toast({
+          title: 'Error creating doctor profile',
+          description: msg,
+          variant: 'destructive',
+        })
       } finally {
         setIsSubmitting(false)
       }

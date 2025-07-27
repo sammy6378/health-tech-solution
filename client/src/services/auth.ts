@@ -6,10 +6,10 @@ import {
   type TLoginRequest,
   type TUser,
 } from '@/store/store'
-import type { TRegister } from '@/types/Tuser'
 import { useNavigate } from '@tanstack/react-router'
 import { getErrorMessage } from '@/components/utils/handleError'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
+import type { Role } from '@/types/Tuser'
 
 export interface TLoginResponse {
   success: boolean
@@ -25,6 +25,27 @@ export interface TResetEmailResponse {
   }
 }
 
+export interface TRegister {
+  first_name: string
+  last_name: string
+  email: string
+  password: string
+  role? : Role
+}
+
+export interface TRegisterResponse {
+  success: boolean
+  message: string
+  data: {
+    activationCode: string
+    token: string
+  }
+}
+export interface TActivate{
+  activation_code: string
+  activation_token: string
+}
+
 // register
 export const authSignup = async (data: TRegister) => {
   try {
@@ -37,6 +58,25 @@ export const authSignup = async (data: TRegister) => {
     })
 
     await handleApiResponse(res) // This will throw if not ok
+    const resp = await res.json()
+    return resp
+  } catch (error: any) {
+    throw error
+  }
+}
+
+// activate
+export const authActivate = async (data: TActivate) => {
+  try {
+    const res = await fetch(`${baseUrl}/auth/activate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    await handleApiResponse(res)
     const resp = await res.json()
     return resp
   } catch (error: any) {
@@ -65,6 +105,7 @@ export const authLogin = async (data: TLoginRequest) => {
 
 // reset email
 export const resetEmail = async (email: string) => {
+  const { toast } = useToast()
   try {
     const res = await fetch(`${baseUrl}/auth/reset-email`, {
       method: 'POST',
@@ -80,7 +121,11 @@ export const resetEmail = async (email: string) => {
   } catch (error: any) {
   const errormessage = getErrorMessage(error)
         console.error(`Reset email failed: ${errormessage}`)
-        toast.error(`Reset email failed: ${errormessage}`)
+        toast({
+          title: 'Reset email failed',
+          description: errormessage,
+          variant: 'destructive',
+        })
   }
 }
 

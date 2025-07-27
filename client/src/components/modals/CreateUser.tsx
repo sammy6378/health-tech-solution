@@ -4,12 +4,13 @@ import { useForm } from '@tanstack/react-form'
 import { AlertCircle, X } from 'lucide-react'
 import { useAuthRegister } from '@/hooks/useAuthHook'
 import { Role } from '@/types/Tuser'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 
 function CreateUser({ handleCloseModal }: { handleCloseModal: () => void }) {
   // Define the form data
   type FormData = z.infer<typeof validateSignup>
   const authRegister = useAuthRegister()
+  const { toast } = useToast()
 
   const validateField = <T,>(value: T, schema: z.ZodType<T>) => {
     const res = schema.safeParse(value)
@@ -35,12 +36,20 @@ function CreateUser({ handleCloseModal }: { handleCloseModal: () => void }) {
       }
       try {
         await authRegister.mutateAsync(value)
-        toast.success('User created successfully!')
+        toast({
+          title: 'User created successfully',
+          description: 'Registered successfully. You can now log in.',
+          variant: 'success',
+        })
         reset()
         handleCloseModal() // Close modal on success
-      } catch (error) {
+      } catch (error:any) {
         console.error('Registration failed:', error)
-        toast.error('Registration failed. Please try again.')
+        toast({
+          title: 'Registration failed',
+          description: error.message || 'There was an error creating the user.',
+          variant: 'destructive',
+        })
       }
     },
   })

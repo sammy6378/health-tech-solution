@@ -16,6 +16,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JWTPayload } from './strategies/at.strategy';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { ActivateUserDto } from './dto/activate-user.dto';
 
 export interface RequestWithUser extends Request {
   user: {
@@ -35,6 +36,13 @@ export class AuthController {
   @Post('signup')
   async SignUp(@Body() CreateUserDto: CreateUserDto) {
     return await this.authService.signUp(CreateUserDto);
+  }
+
+  // activate
+  @Public()
+  @Post('activate')
+  async activateUser(@Body() ActivateUserDto: ActivateUserDto) {
+    return await this.authService.activateUser(ActivateUserDto);
   }
 
   // auth/signin

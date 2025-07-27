@@ -14,11 +14,25 @@ import { currentUser } from '../types/jwtUser';
 import { createResponse } from 'src/utils/apiResponse';
 import { MailService } from 'src/mails/mails.service';
 import { Mailer } from 'src/mails/helperEmail';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { CreateUserDto, Role } from 'src/users/dto/create-user.dto';
+import { ActivateUserDto } from './dto/activate-user.dto';
 
 interface decodedToken {
   user_id: string;
   email: string;
+}
+
+export interface IActivationToken {
+  activationCode: string;
+  token: string;
+}
+
+interface IUser {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role: string;
 }
 
 @Injectable()
@@ -127,34 +141,81 @@ export class AuthService {
       throw new NotFoundException('User already exists');
     }
 
-    // create user
-    const newUser = this.userRepository.create(CreateUserDto);
-
-    // save user
-    const savedUser = await this.userRepository.save(newUser);
-
-    // create tokens
-    const { access_token, refresh_token } = await this.createTokens(
-      savedUser.user_id,
-      savedUser.email,
-    );
-
-    // save refresh token in the database
-    await this.saveRefreshToken(savedUser.user_id, refresh_token);
-
-    const res = {
-      tokens: {
-        access_token,
-        refresh_token,
-      },
-      user: {
-        userId: savedUser.user_id,
-        role: savedUser.role,
-      },
+    const user = {
+      first_name: CreateUserDto.first_name,
+      last_name: CreateUserDto.last_name,
+      email: CreateUserDto.email,
+      password: CreateUserDto.password,
+      role: CreateUserDto.role,
     };
 
-    // return response
-    return createResponse(res, 'User signed up successfully');
+    const activationToken = this.createVerificationCode(user);
+    const activationCode = activationToken.activationCode;
+
+    const mailer = Mailer(this.mailService);
+    // send activation email
+    await mailer.activationEmail({
+      activationCode,
+      name: user.first_name,
+      email: user.email,
+    });
+
+    return createResponse(
+      activationToken,
+      `Activation code sent to ${user.email}`,
+    );
+  }
+
+  // create 4 digit verification code
+  private createVerificationCode(user: IUser): IActivationToken {
+    const activationCode = Math.floor(Math.random() * 9000 + 1000).toString(); // 4-digit code
+    const token = this.jwtService.sign(
+      { user, activationCode },
+      {
+        secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        expiresIn: '5m',
+      },
+    );
+    return { activationCode, token };
+  }
+
+  // activate user
+  async activateUser(activateUserDto: ActivateUserDto) {
+    try {
+      // verify the token
+      const decoded: { user: IUser; activationCode: string } =
+        this.jwtService.verify(activateUserDto.activation_token, {
+          secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        });
+
+      if (activateUserDto.activation_code !== decoded.activationCode) {
+        throw new UnauthorizedException('Invalid activation code');
+      }
+
+      // create user
+      const newUser = decoded.user;
+      const user = this.userRepository.create({
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        email: newUser.email,
+        password: newUser.password,
+        role: newUser.role as Role,
+      });
+
+      await this.userRepository.save(user);
+
+      // send welcome email
+      const mailer = Mailer(this.mailService);
+      await mailer.welcomeEmail({
+        name: user.first_name,
+        email: user.email,
+      });
+
+      return createResponse(user, 'User created successfully');
+    } catch (error) {
+      console.error('Activation error:', error);
+      throw new UnauthorizedException('Invalid or expired activation token');
+    }
   }
 
   // sign in users

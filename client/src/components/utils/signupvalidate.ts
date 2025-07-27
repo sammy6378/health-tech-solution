@@ -12,18 +12,18 @@ export const validateSignup = z.object({
     .min(2, 'Last name must be at least 2 characters long')
     .max(50, 'Last name must be at most 50 characters long'),
 
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').optional(),
 
-  role: z.enum(Object.values(Role) as [string, ...string[]]),
+  role: z.enum(Object.values(Role) as [string, ...string[]]).optional(),
 
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters long')
-    .max(128, 'Password must be at most 128 characters long') // Increased limit
+    .max(128, 'Password must be at most 128 characters long')
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-    ),
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+    )
 })
 
 export const validateSignin = z.object({

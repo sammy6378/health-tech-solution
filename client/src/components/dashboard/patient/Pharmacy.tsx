@@ -34,7 +34,7 @@ import {
 import { useCartStore } from '@/store/cart/add'
 import { useAuthStore } from '@/store/store'
 import { EditMedicationDialog } from '@/components/modals/EditMedications'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { CreateMedDialog } from '@/components/modals/CreateMedication'
 
 const Pharmacy = () => {
@@ -50,6 +50,7 @@ const Pharmacy = () => {
   )
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
    const [selectedMed, setSelectedMed] = React.useState<TMedication | null>(null)
+   const {toast} = useToast()
  
    const handleEdit = (med: TMedication) => {
      setSelectedMed(med)
@@ -65,17 +66,29 @@ const Pharmacy = () => {
      try {
        updateMed({id,data: updatedMed})
        .then(() => {
-               toast.success('Medication updated successfully')
+               toast({
+                 title: 'Medication updated successfully',
+                 description: 'The medication details have been updated.',
+                 variant: 'success',
+               })
              })
              .catch((error) => {
                console.error('Error updating medication:', error)
-               toast.error('Failed to update medication')
+               toast({
+                  title: 'Failed to update medication',
+                  description: 'There was an error updating the medication.',
+                  variant: 'destructive',
+               })
              })
       //  setIsDialogOpen(false)
       //  setSelectedMed(null)
       //  toast.success('Medication updated successfully')
      } catch (error) {
-      toast.error('Failed to update medication')
+      toast({
+        title: 'Error updating medication',
+        description: 'There was an error updating the medication.',
+        variant: 'destructive',
+      })
      }finally{
         setIsDialogOpen(false)
         setSelectedMed(null)

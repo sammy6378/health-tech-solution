@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useGetPatientProfileByUserId, useUpdatePatientProfile } from '@/hooks/usePatientProfile'
 import { uploadFile } from '@/hooks/useUpload'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { useAuthStore } from '@/store/store'
 
 export default function ProfilePage() {
@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const {mutateAsync: updateProfile} = useUpdatePatientProfile()
   const {data: patientProfile} = useGetPatientProfileByUserId(userId)
   const profile = patientProfile?.data
+  const {toast} = useToast()
 
   const [profileData, setProfileData] = useState({
     firstName: '',
@@ -73,9 +74,15 @@ export default function ProfilePage() {
         },
       })
       setIsUpdating(false)
-    toast.success('Profile updated successfully!')
+    toast({
+      title: 'Profile updated successfully!',
+      variant: 'success',
+    })
     } catch (error) {
-      toast.error('Failed to update profile')
+      toast({
+        title: 'Failed to update profile',
+        variant: 'destructive',
+      })
     } finally {
       setIsUpdating(false)
     }

@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress'
 import React, { useEffect, useState } from 'react'
 import DownloadInvoice from '@/components/modals/Download'
 import { useCreatePayment, useVerifyPayment } from '@/hooks/usePayments'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { getErrorMessage } from '@/components/utils/handleError'
 import { useGetOrder, useUpdateOrderStatus } from '@/hooks/useOrders'
 import { useAuthStore } from '@/store/store'
@@ -81,8 +81,7 @@ export default function OrderInfo() {
   const orderFound = orders.find((o) => o.order_number === order)
   const { data: profile } = useGetOrder(orderFound?.order_id!)
   const patient = profile?.data.patient;
-  console.log('Order Found:', orderFound)
-  console.log('Patient Found:', patient)
+  const { toast } = useToast()
 
     useEffect(() => {
       if (!document.getElementById('paystack-script')) {
@@ -151,7 +150,11 @@ export default function OrderInfo() {
       })
 
       if (response.message === 'Payment already initiated') {
-        toast.info('Payment already initialized, redirecting…')
+        toast({
+          title: 'Payment already initialized',
+          description: 'Redirecting…',
+          variant: 'info',
+        })
       }
 
 
@@ -166,7 +169,11 @@ export default function OrderInfo() {
     } catch (error) {
       console.error('Failed to initiate payment:', error)
       const message = getErrorMessage(error)
-      toast.error(message)
+      toast({
+        title: 'Payment initiation failed',
+        description: message,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -189,11 +196,19 @@ export default function OrderInfo() {
         status: status as DeliveryStatus,
       })
 
-      toast.success(`Order status updated to ${status}`)
+      toast({
+        title: 'Order status updated',
+        description: `Order status updated to ${status}`,
+        variant: 'success',
+      })
     } catch (error) {
       console.error('Failed to update order status:', error)
       const message = getErrorMessage(error)
-      toast.error(message)
+      toast({
+        title: 'Failed to update order status',
+        description: message,
+        variant: 'destructive',
+      })
     }
 
   }

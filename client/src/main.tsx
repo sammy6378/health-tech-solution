@@ -10,6 +10,7 @@ import { routeTree } from './routeTree.gen'
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 import { ThemeProvider } from './components/themes/ThemeToggle.tsx'
+import ProviderFunction from './components/context/authContext.tsx'
 
 // Create a new router instance
 const router = createRouter({
@@ -37,9 +38,11 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <TanStackQueryProvider.Provider>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <RouterProvider router={router} />
-      </ThemeProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <ProviderFunction>
+            <RouterProvider router={router} />
+          </ProviderFunction>
+        </ThemeProvider>
       </TanStackQueryProvider.Provider>
     </StrictMode>,
   )

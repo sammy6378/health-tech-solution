@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { Plus, Trash2 } from 'lucide-react'
 
 interface PrescriptionItem {
@@ -32,6 +32,7 @@ export default function PrescriptionFormSheet({
   const { mutateAsync: create, isPending } = useCreatePrescription()
   const { data } = useGetMedications()
   const medications = data?.data || []
+  const {toast} = useToast()
 
   // Initialize with one empty prescription item
   const [prescriptionItems, setPrescriptionItems] = useState<
@@ -67,7 +68,11 @@ export default function PrescriptionFormSheet({
       console.log("errors", hasErrors)
 
       if (hasErrors) {
-        toast.error('Please fill all fields for each medication')
+        toast({
+          title: 'Form validation failed',
+          description: 'Please fix the errors in the form.',
+          variant: 'destructive',
+        })
         return
       }
 
@@ -86,7 +91,11 @@ export default function PrescriptionFormSheet({
 
       try {
         await create(payload)
-        toast.success('Prescription created successfully')
+        toast({
+          title: 'Prescription created successfully',
+          description: 'Your prescription has been created.',
+          variant: 'success',
+        })
         formik.resetForm()
         setPrescriptionItems([
           {
@@ -99,7 +108,11 @@ export default function PrescriptionFormSheet({
         ])
         onSuccess?.()
       } catch (err) {
-        toast.error('Failed to create prescription')
+        toast({
+          title: 'Failed to create prescription',
+          description: 'There was an error creating your prescription.',
+          variant: 'destructive',
+        })
       }
     },
   })
