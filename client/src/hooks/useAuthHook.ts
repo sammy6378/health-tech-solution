@@ -36,7 +36,7 @@ export const useLogin = () => {
       toast({
         title: 'Login successful',
         description: data.message || 'Welcome back!',
-        variant: 'default',
+        variant: 'success',
       })
       navigate({ to: getRedirectPath(role) })
     },
@@ -78,7 +78,7 @@ export const useAuthRegister = () => {
         toast({
           title: 'Registration successful',
           description: data.message || 'Welcome aboard!',
-          variant: 'default',
+          variant: 'success',
         })
         if (data.success) {
           authSlice.login(data.data)
@@ -106,7 +106,7 @@ export const useResetEmail = () => {
     onSuccess: () => {
       toast({
         title: 'Reset email sent successfully!',
-        variant: 'default',
+        variant: 'success',
       })
     },
     onError: (error) => {
@@ -145,8 +145,9 @@ export const useResetPassword = () => {
     onSuccess: (data) => {
       toast({
         title: 'Password reset successful!',
-        description: data.message || 'You can now log in with your new password.',
-        variant: 'default',
+        description:
+          data.message || 'You can now log in with your new password.',
+        variant: 'success',
       })
       navigate({ to: '/auth-signin' })
     },

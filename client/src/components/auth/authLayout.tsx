@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 const AuthLayout = ({ children }:{children: ReactNode})  =>{
   return (
     // right side of the form
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-white dark:bg-gray-900">
       <div className="w-1/2 relative hidden md:flex flex-col justify-center items-center p-8">
         <img
           src="/auth.jpg"

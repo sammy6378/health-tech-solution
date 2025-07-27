@@ -31,6 +31,7 @@ import { UploadModule } from './upload/upload.module';
 import { SocketsModule } from './sockets/sockets.module';
 import { SocketsService } from './sockets/sockets.service';
 import { SocketGateway } from './sockets/socket.gateway';
+import { ChatappModule } from './chatapp/chatapp.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { SocketGateway } from './sockets/socket.gateway';
     UploadModule,
     SocketsModule,
     SocketGateway,
+    ChatappModule,
   ],
   controllers: [],
   providers: [

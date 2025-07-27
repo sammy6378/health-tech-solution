@@ -245,8 +245,7 @@ function getBmiCategory(bmi: number | null) {
 }
 
 function BmiTrackerCard({ onAddClick }: { onAddClick: () => void }) {
-  // Mock data - replace with your useUserData hook
-  const bmiRecord = { bmi: 23.5 } // Example BMI value
+  const { bmiRecord } = useUserData()
   const bmi = bmiRecord?.bmi ?? null
 
   const category = bmi !== null ? getBmiCategory(bmi) : null
@@ -285,7 +284,9 @@ function BmiTrackerCard({ onAddClick }: { onAddClick: () => void }) {
           {/* Current BMI Display */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg mb-2">
-              <span className="text-2xl font-bold">{bmi.toFixed(1)}</span>
+              <span className="text-2xl font-bold">
+                {bmi}
+              </span>
             </div>
             <p className={`text-lg font-semibold ${category?.color} mb-1`}>
               {category?.label}
@@ -324,7 +325,7 @@ function BmiTrackerCard({ onAddClick }: { onAddClick: () => void }) {
                 >
                   <div className="absolute -top-10 left-1/2 transform -translate-x-1/2">
                     <div className="bg-gray-800 dark:bg-white text-white dark:text-gray-800 text-xs px-2 py-1 rounded whitespace-nowrap">
-                      You: {bmi.toFixed(1)}
+                      You: {bmi}
                     </div>
                     <div className="w-2 h-2 bg-gray-800 dark:bg-white transform rotate-45 mx-auto -mt-1"></div>
                   </div>

@@ -4,7 +4,7 @@ import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import type { QueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { authSlice } from '@/store/store.ts'
-import { Toaster } from 'sonner'
+import { Toaster } from '@/components/ui/toaster.tsx'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -38,7 +38,7 @@ function RootRouteComponent() {
   return (
     <>
       <Outlet />
-      <Toaster position="top-right" richColors />
+      <Toaster />
       <TanStackQueryLayout />
     </>
   )

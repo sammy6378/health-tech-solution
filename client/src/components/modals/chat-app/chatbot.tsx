@@ -1,7 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
@@ -9,23 +9,30 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { MessageCircle, Send, User, Bot, Loader2 } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
+import {
+  MessageCircle,
+  Send,
+  User,
+  Bot,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
+import { useKnowledgeBase } from './knowledgebase'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import ReactMarkdown from 'react-markdown'
+import rehypeExternalLinks from 'rehype-external-links'
+import remarkGfm from 'remark-gfm'
+import { baseUrl } from '@/lib/baseUrl'
+import { getAuthHeaders } from '@/services/api-call'
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-}
-
-interface ChatSession {
-  userId?: string
-  userName?: string
-  sessionId: string
-  startTime: Date
+  kbContent?: string
 }
 
 const ChatInterface = () => {
@@ -33,29 +40,10 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [apiKey, setApiKey] = useState(
-    localStorage.getItem('openrouter_api_key') || '',
-  )
-  const [systemInstructions, setSystemInstructions] = useState(
-    localStorage.getItem('system_instructions') ||
-      'You are a helpful medical assistant for Mediconnect. Provide informative, empathetic responses while always reminding users to consult healthcare professionals for serious concerns. Never provide specific diagnoses or treatment recommendations.',
-  )
-  const [session] = useState<ChatSession>({
-    sessionId: `session_${Date.now()}`,
-    startTime: new Date(),
-    userName: 'Patient',
-  })
+  const { search, isLoaded, error } = useKnowledgeBase()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
-
-  useEffect(() => {
-    localStorage.setItem('openrouter_api_key', apiKey)
-  }, [apiKey])
-
-  useEffect(() => {
-    localStorage.setItem('system_instructions', systemInstructions)
-  }, [systemInstructions])
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
@@ -65,87 +53,95 @@ const ChatInterface = () => {
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
 
-    if (!apiKey) {
-      toast({
-        title: 'API Key Required',
-        description: 'Please configure your OpenRouter API key in settings.',
-        variant: 'destructive',
-      })
-      return
-    }
+    // Get knowledge base content
+    const kbContent = search(input)
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
       role: 'user',
       content: input,
       timestamp: new Date(),
+      kbContent,
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const currentInput = input
     setInput('')
     setIsLoading(true)
 
     try {
       const chatMessages = [
-        {
-          role: 'system',
-          content: `${systemInstructions}\n\nSession Info: Patient ${session.userName}, Session ID: ${session.sessionId}, Started: ${session.startTime.toLocaleString()}`,
-        },
         ...messages.map((msg) => ({
           role: msg.role,
           content: msg.content,
         })),
         {
           role: 'user',
-          content: input,
+          content: currentInput,
         },
       ]
 
-      const response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Mediconnect',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'deepseek/deepseek-r1-0528:free',
-            messages: chatMessages,
-            temperature: 0.4,
-            max_tokens: 700,
-          }),
-        },
-      )
+      const response = await fetch(`${baseUrl}/chatapp/chat-with-context`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          messages: chatMessages,
+        }),
+      })
 
       if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`)
       }
 
-      const data = await response.json()
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let assistantContent = ''
 
-      if (data.choices && data.choices[0]?.message?.content) {
+      if (reader) {
+        // Create assistant message placeholder
         const assistantMessage: Message = {
           id: `msg_${Date.now()}_assistant`,
           role: 'assistant',
-          content: data.choices[0].message.content,
+          content: '',
           timestamp: new Date(),
         }
 
         setMessages((prev) => [...prev, assistantMessage])
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          assistantContent += chunk
+
+          // Update the assistant message with accumulated content
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessage.id
+                ? { ...msg, content: assistantContent }
+                : msg,
+            ),
+          )
+        }
       } else {
-        throw new Error('Invalid response format')
+        throw new Error('No response body received')
+      }
+
+      if (!assistantContent.trim()) {
+        throw new Error('Empty response received')
       }
     } catch (error) {
       console.error('Chat error:', error)
       toast({
         title: 'Error',
-        description:
-          'Failed to get response. Please check your API key and try again.',
+        description: 'Failed to get response from Gemini. Please try again.',
         variant: 'destructive',
       })
+
+      // Remove any placeholder message if there was an error
+      setMessages((prev) => prev.filter((msg) => msg.content.trim() !== ''))
     } finally {
       setIsLoading(false)
     }
@@ -156,14 +152,6 @@ const ChatInterface = () => {
       e.preventDefault()
       sendMessage()
     }
-  }
-
-  const clearChat = () => {
-    setMessages([])
-    toast({
-      title: 'Chat Cleared',
-      description: 'All messages have been removed.',
-    })
   }
 
   return (
@@ -179,21 +167,30 @@ const ChatInterface = () => {
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-2xl h-[500px] flex flex-col p-0">
+        <DialogContent className="sm:max-w-2xl h-[500px] flex flex-col p-0 bg-white dark:bg-gray-900 dark:text-white">
           <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5 text-primary" />
-              Mediconnect Assistant
+              MediConnect Assistant
+              {!isLoaded && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+              {error && <AlertCircle className="h-4 w-4 text-destructive" />}
             </DialogTitle>
           </DialogHeader>
 
           <Tabs defaultValue="chat" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="mx-6 mt-2 flex-shrink-0">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="chat" className="flex-1 flex flex-col min-h-0">
+              {/* Knowledge Base Status */}
+              {error && (
+                <Alert className="mx-6 mt-2" variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Knowledge base error: {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Messages Area with proper scrolling */}
               <div className="flex-1 overflow-hidden px-6">
                 <ScrollArea className="h-full">
@@ -201,10 +198,16 @@ const ChatInterface = () => {
                     {messages.length === 0 && (
                       <div className="text-center text-muted-foreground py-8">
                         <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Hello! I'm your Mediconnect assistant.</p>
+                        <p>Hello! I'm your Mediconnect assistant</p>
                         <p className="text-sm mt-2">
                           How can I help you today?
                         </p>
+                        {!isLoaded && (
+                          <p className="text-xs mt-2 flex items-center justify-center gap-2">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Loading knowledge base...
+                          </p>
+                        )}
                       </div>
                     )}
 
@@ -218,29 +221,54 @@ const ChatInterface = () => {
                         }`}
                       >
                         {message.role === 'assistant' && (
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Bot className="h-4 w-4 text-primary" />
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                            <Bot className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                           </div>
                         )}
 
                         <div
-                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          className={`max-w-[80%] rounded-lg px-4 py-2 shadow-sm ${
                             message.role === 'user'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
+                              ? 'bg-blue-500 text-white dark:bg-blue-600'
+                              : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                           }`}
                         >
                           <p className="text-sm whitespace-pre-wrap">
-                            {message.content}
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[
+                                [
+                                  rehypeExternalLinks,
+                                  {
+                                    target: '_blank',
+                                    rel: ['noopener', 'noreferrer'],
+                                  },
+                                ],
+                              ]}
+                              components={{
+                                a: ({ node, ...props }) => (
+                                  <a
+                                    {...props}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline text-blue-200 hover:text-blue-100"
+                                  >
+                                    {props.children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
                           </p>
-                          <p className="text-xs opacity-70 mt-1">
+                          <p className="text-xs mt-1 opacity-70 px-1">
                             {message.timestamp.toLocaleTimeString()}
                           </p>
                         </div>
 
                         {message.role === 'user' && (
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                            <User className="h-4 w-4" />
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-300 dark:bg-blue-700 flex items-center justify-center">
+                            <User className="h-4 w-4 text-white" />
                           </div>
                         )}
                       </div>
@@ -275,7 +303,7 @@ const ChatInterface = () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Type your message..."
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 bg-white text-black dark:bg-gray-900 dark:text-white border border-gray-300 dark:border-gray-700"
                   />
                   <Button
                     onClick={sendMessage}
@@ -285,53 +313,6 @@ const ChatInterface = () => {
                   >
                     <Send className="h-4 w-4" />
                   </Button>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent
-              value="settings"
-              className="flex-1 p-6 space-y-6 overflow-auto"
-            >
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="api-key">OpenRouter API Key</Label>
-                  <Input
-                    id="api-key"
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your OpenRouter API key"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Your API key is stored locally in your browser.
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="system-instructions">
-                    System Instructions
-                  </Label>
-                  <Textarea
-                    id="system-instructions"
-                    value={systemInstructions}
-                    onChange={(e) => setSystemInstructions(e.target.value)}
-                    placeholder="Define how the assistant should behave..."
-                    className="mt-2 min-h-[120px]"
-                  />
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={clearChat}
-                      variant="outline"
-                      className="flex-1 cursor-pointer"
-                    >
-                      Clear Chat
-                    </Button>
-                  </div>
                 </div>
               </div>
             </TabsContent>

@@ -1,4 +1,5 @@
-import { CreateDoctorForm } from '@/components/modals/NewDoctor'
+
+import { ProfileHandler } from '@/components/dashboard/doctor/ProfileHandler'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/dashboard/admin/doctor/$doctorId/new')({
@@ -6,5 +7,6 @@ export const Route = createFileRoute('/dashboard/admin/doctor/$doctorId/new')({
 })
 
 function RouteComponent() {
-  return <CreateDoctorForm />
+  const { doctorId } = Route.useParams()
+  return <ProfileHandler isAdminView={true} doctorId={doctorId} />
 }

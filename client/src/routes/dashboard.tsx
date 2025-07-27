@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/dashboard/Sidebar'
 import { Outlet } from '@tanstack/react-router'
 import { authStore, useAuthStore } from '@/store/store'
 import type { Role } from '@/types/Tuser'
-import ChatInterface from '@/components/modals/chatbot'
+import ChatInterface from '@/components/modals/chat-app/chatbot'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: ({ location }) => {

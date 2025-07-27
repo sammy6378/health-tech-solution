@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Stock } from './entities/stocks.entity';
 import { CreateStockDto } from './dto/create-stock.dto';
 import { UpdateMedicationDto } from './dto/update-stock.dto';
@@ -68,6 +68,28 @@ export class StocksService {
     }
 
     return createResponse(med, 'Medication found');
+  }
+
+  async searchByNameFuzzy(q: string): Promise<ApiResponse<Stock[]>> {
+    const meds = await this.medicationRepository.find({
+      where: { name: ILike(`%${q}%`) },
+      take: 20,
+    });
+    return createResponse(
+      meds,
+      meds.length ? 'Medications found' : 'No medications found',
+    );
+  }
+
+  async searchByManufacturerFuzzy(q: string): Promise<ApiResponse<Stock[]>> {
+    const meds = await this.medicationRepository.find({
+      where: { manufacturer: ILike(`%${q}%`) },
+      take: 20,
+    });
+    return createResponse(
+      meds,
+      meds.length ? 'Medications found' : 'No medications found',
+    );
   }
 
   async update(

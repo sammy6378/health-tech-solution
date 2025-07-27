@@ -1,4 +1,5 @@
-import DoctorProfile from '@/components/dashboard/doctor/Profile'
+
+import { ProfileHandler } from '@/components/dashboard/doctor/ProfileHandler'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/dashboard/doctor/profile')({
@@ -6,5 +7,5 @@ export const Route = createFileRoute('/dashboard/doctor/profile')({
 })
 
 function RouteComponent() {
-  return <DoctorProfile />
+  return <ProfileHandler isAdminView={false} />
 }
