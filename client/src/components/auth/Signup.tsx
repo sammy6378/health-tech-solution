@@ -32,7 +32,9 @@ function Signup() {
         return
       }
      try {
-      await authRegister.mutateAsync(value)
+      // If value.role exists, cast or map it to the correct Role type
+      const roleValue = value.role as (typeof authRegister.variables extends { role: infer R } ? R : undefined) | undefined;
+      await authRegister.mutateAsync({ ...value, role: roleValue })
       reset() // Reset the form after successful registration
      } catch (error) {
       console.error('Registration failed:', error)

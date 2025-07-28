@@ -35,7 +35,13 @@ function CreateUser({ handleCloseModal }: { handleCloseModal: () => void }) {
         return
       }
       try {
-        await authRegister.mutateAsync(value)
+        // If value.role exists, cast or map it to the correct Role type
+        const roleValue = value.role as
+          | (typeof authRegister.variables extends { role: infer R }
+              ? R
+              : undefined)
+          | undefined
+        await authRegister.mutateAsync({ ...value, role: roleValue })
         toast({
           title: 'User created successfully',
           description: 'Registered successfully. You can now log in.',

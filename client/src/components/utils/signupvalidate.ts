@@ -12,7 +12,7 @@ export const validateSignup = z.object({
     .min(2, 'Last name must be at least 2 characters long')
     .max(50, 'Last name must be at most 50 characters long'),
 
-  email: z.string().email('Invalid email address').optional(),
+  email: z.string().email('Invalid email address'),
 
   role: z.enum(Object.values(Role) as [string, ...string[]]).optional(),
 

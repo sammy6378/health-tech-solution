@@ -112,27 +112,34 @@ function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Phone className="w-5 h-5" />
+                <span>Our Doctors</span>
+              </Link>
+              <Link
+                to="/contact"
+                className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
+              >
+                <Phone className="w-4 h-4" />
                 <span>Contact</span>
               </Link>
 
               {/* Mobile Auth Links */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                <a
-                  href="/login"
+                <Link
+                  to="/auth-signin"
                   className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LogIn className="w-5 h-5" />
                   <span>Login</span>
-                </a>
-                <a
-                  href="/signup"
+                </Link>
+                <Link
+                  to="/auth-signup"
                   className="flex items-center space-x-3 px-3 py-2 mx-3 mt-2 bg-[#1A94E5] text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <UserPlus className="w-5 h-5" />
                   <span>Sign Up</span>
-                </a>
+                </Link>
               </div>
             </div>
           </div>
