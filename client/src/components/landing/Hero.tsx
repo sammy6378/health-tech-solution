@@ -118,6 +118,7 @@ function Hero() {
 
             <motion.button
               variants={buttonVariants}
+              onClick={() => window.location.href ='/dashboard/appointments'}
               whileHover="hover"
               whileTap="tap"
               className="group px-8 py-4 bg-white/10 cursor-pointer backdrop-blur-sm text-white border-2 border-white/30 rounded-lg font-semibold text-lg hover:bg-white/20 hover:border-white/50 transition-all duration-300"

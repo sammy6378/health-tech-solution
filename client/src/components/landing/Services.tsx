@@ -298,6 +298,7 @@ function Services() {
             >
               <motion.button
                 variants={buttonVariants}
+                onClick={() => window.location.href = '/auth-signup'}
                 whileHover="hover"
                 whileTap="tap"
                 className="inline-flex items-center space-x-2 px-8 py-4 bg-[#1A94E5] text-white rounded-lg font-semibold text-lg hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"

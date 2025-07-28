@@ -233,6 +233,7 @@ export const Ourdoctors = () => {
           </button>
           <button
             className="flex-1 bg-green-600 cursor-pointer hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors"
+            onClick={() => window.location.href = `/dashboard/doctors`}
             disabled={!doctor.availability}
           >
             Book Appointment
