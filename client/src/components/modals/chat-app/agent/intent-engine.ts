@@ -1,4 +1,4 @@
-import { DetectedQuery } from '../interfaces/query-kinds';
+import type { DetectedQuery } from "./interfaces/query-kinds";
 import { INTENT_PATTERNS } from './intent';
 
 const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();

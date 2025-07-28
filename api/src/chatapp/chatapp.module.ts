@@ -15,7 +15,6 @@ import { PatientProfile } from 'src/user-profile/entities/user-profile.entity';
 import { MedicalRecord } from 'src/medical-records/entities/medical-record.entity';
 import { MailService } from 'src/mails/mails.service';
 import { AuthService } from 'src/auth/auth.service';
-import { AiQueryService } from 'src/ai-tool/service/select-services';
 import { StocksService } from 'src/pharmacy-stock/stocks.service';
 
 @Module({
@@ -40,7 +39,6 @@ import { StocksService } from 'src/pharmacy-stock/stocks.service';
     StocksService,
     MailService,
     AuthService,
-    AiQueryService,
   ],
   exports: [ChatappService],
 })

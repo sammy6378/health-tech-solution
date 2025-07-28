@@ -7,29 +7,23 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { ChatMessage } from 'src/types/model';
-import { Role } from 'src/users/dto/create-user.dto';
-import { AiQueryService } from 'src/ai-tool/service/select-services';
 
 @Injectable()
 export class ChatappService {
   private genAI: GoogleGenerativeAI;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly aiQueryService: AiQueryService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.getOrThrow<string>('GEMINI_API_KEY');
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
+  // Simplified handler without data querying
   async handleRequest(messages: ChatMessage[], res: Response): Promise<void> {
     const keepAlive = setInterval(() => res.write(':keep-alive\n\n'), 15000);
 
     try {
       const stream = await this.generateResponse(messages);
 
-      console.log('stream', stream);
-
       res.setHeader('X-Accel-Buffering', 'no');
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
@@ -55,37 +49,58 @@ export class ChatappService {
     }
   }
 
-  async handleRequestWithPatientContext(
+  // Handler that accepts pre-processed context from frontend
+  async handleRequestWithContext(
     messages: ChatMessage[],
     res: Response,
-    userId: string,
+    contextData?: any,
+    userId?: string,
   ): Promise<void> {
     const keepAlive = setInterval(() => res.write(':keep-alive\n\n'), 15000);
 
     try {
-      // Create a copy of messages to avoid mutating the original
-      const enrichedMessages = [...messages];
+      // If context data is provided, enrich the last message
+      if (contextData && messages.length > 0) {
+        const enrichedMessages = [...messages];
+        const lastMessageIndex = enrichedMessages.length - 1;
+        const lastMessage = enrichedMessages[lastMessageIndex];
 
-      // Enrich prompt with patient data queries
-      const queryResult = await this.handleQueryConversation(
-        enrichedMessages,
-        userId,
-      );
+        if (lastMessage.role === 'user') {
+          enrichedMessages[lastMessageIndex] = {
+            ...lastMessage,
+            content: this.createContextualMessage(
+              lastMessage.content,
+              contextData,
+            ),
+          };
+        }
 
-      console.log('Query result:', queryResult);
+        const stream = await this.generateResponse(enrichedMessages, userId);
 
-      // Generate final response with enriched context
-      const stream = await this.generateResponse(enrichedMessages, userId);
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Transfer-Encoding', 'chunked');
 
-      res.setHeader('X-Accel-Buffering', 'no');
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.setHeader('Transfer-Encoding', 'chunked');
+        for await (const chunk of stream) {
+          const text = chunk.text();
+          if (text) res.write(text);
+        }
+      } else {
+        // No context, just generate response normally
+        const stream = await this.generateResponse(messages, userId);
 
-      for await (const chunk of stream) {
-        const text = chunk.text();
-        if (text) res.write(text);
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Transfer-Encoding', 'chunked');
+
+        for await (const chunk of stream) {
+          const text = chunk.text();
+          if (text) res.write(text);
+        }
       }
 
       res.end();
@@ -99,112 +114,109 @@ export class ChatappService {
       res.end();
     } finally {
       clearInterval(keepAlive);
-    }
-  }
-
-  // ----------------------------
-  // Query injection before AI call
-  // ----------------------------
-  private async handleQueryConversation(
-    messages: ChatMessage[],
-    userId?: string,
-  ): Promise<{ summary: string; data: any } | null> {
-    console.log('user id for query', userId);
-
-    const lastUserMessage = messages
-      .slice()
-      .reverse()
-      .find((msg) => msg.role === 'user')?.content;
-
-    if (!lastUserMessage) return null;
-
-    try {
-      // For platform-wide queries (doctors, stock), don't require userId
-      const queryResult = await this.aiQueryService.handleQuery(
-        userId || 'platform', // Use 'platform' for non-user-specific queries
-        Role.PATIENT,
-        lastUserMessage,
-      );
-
-      console.log('Raw query result:', queryResult);
-
-      if (queryResult && queryResult.summary) {
-        const lastUserMessageIndex = messages.length - 1;
-        const originalMessage = messages[lastUserMessageIndex].content;
-
-        const contextualMessage = this.createContextualMessage(
-          originalMessage,
-          queryResult,
-          userId,
-        );
-
-        messages[lastUserMessageIndex] = {
-          role: 'user',
-          content: contextualMessage,
-        };
-
-        console.log('Enhanced message:', messages[lastUserMessageIndex]);
-        return queryResult;
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Error in handleQueryConversation:', error);
-      return null;
     }
   }
 
   private createContextualMessage(
     originalMessage: string,
-    queryResult: { summary: string; data: unknown } | null,
-    userId?: string,
+    contextData: any,
   ): string {
-    const hasData =
-      queryResult &&
-      typeof queryResult === 'object' &&
-      'data' in queryResult &&
-      (Array.isArray(queryResult.data)
-        ? (queryResult.data as unknown[]).length > 0
-        : queryResult.data !== null && queryResult.data !== undefined);
+    // Don't add context for simple greetings or casual conversation
+    if (this.isSimpleGreeting(originalMessage)) {
+      return originalMessage;
+    }
 
-    if (hasData && queryResult) {
-      // Determine if this is platform data or personal data
-      const isPersonalData =
-        userId &&
-        (originalMessage.toLowerCase().includes('my ') ||
-          originalMessage.toLowerCase().includes('appointment') ||
-          originalMessage.toLowerCase().includes('order') ||
-          originalMessage.toLowerCase().includes('payment'));
+    if (
+      contextData &&
+      typeof contextData === 'object' &&
+      'summary' in contextData &&
+      typeof (contextData as { summary?: unknown }).summary === 'string'
+    ) {
+      const summary = (contextData as { summary: string }).summary;
 
-      if (isPersonalData) {
-        return `Based on your MediConnect account data: ${queryResult.summary}
+      // Don't add medical context if the summary indicates no relevant data
+      if (summary.includes('No ') && summary.includes('found')) {
+        return `${summary}
+
+User's question: ${originalMessage}
+
+Please provide a helpful response and suggest alternatives if needed.`;
+      }
+
+      // Determine query type for more specific context
+      const isDoctorQuery =
+        originalMessage.toLowerCase().includes('doctor') ||
+        originalMessage.toLowerCase().includes('dr.') ||
+        /(?:do (?:you|we) have|is there|got any|have any)\s+(?:doctor|dr\.)\s*[a-zA-Z]/i.test(
+          originalMessage,
+        );
+
+      const isStockQuery =
+        originalMessage.toLowerCase().includes('stock') ||
+        originalMessage.toLowerCase().includes('medicine') ||
+        originalMessage.toLowerCase().includes('medication') ||
+        originalMessage.toLowerCase().includes('drug') ||
+        /(?:do (?:you|we) have|is there|got any|have any)\s+[a-zA-Z](?!.*doctor)/i.test(
+          originalMessage,
+        );
+
+      const isPersonalQuery =
+        originalMessage.toLowerCase().includes('my ') ||
+        originalMessage.toLowerCase().includes('appointment') ||
+        originalMessage.toLowerCase().includes('order') ||
+        originalMessage.toLowerCase().includes('payment') ||
+        originalMessage.toLowerCase().includes('diagnosis');
+
+      if (isDoctorQuery) {
+        return `MediConnect Doctor Information: ${summary}
+
+User's question: ${originalMessage}
+
+Please provide specific information about the requested doctor including their name, specialization, and availability. Focus only on doctor-related information.`;
+      } else if (isStockQuery && !isPersonalQuery) {
+        return `MediConnect Pharmacy Inventory: ${summary}
+
+User's question: ${originalMessage}
+
+Please provide information about what medications are available in our pharmacy for purchase. Do not refer to these as the user's personal medications.`;
+      } else if (isPersonalQuery) {
+        return `Based on your personal MediConnect account: ${summary}
 
 User's question: ${originalMessage}
 
 Please provide a helpful response based on this personal information and answer their question directly.`;
       } else {
-        return `Based on MediConnect platform data: ${queryResult.summary}
+        return `Based on MediConnect platform data: ${summary}
 
 User's question: ${originalMessage}
 
-Please provide a helpful response showing what's available on the platform and answer their question directly.`;
+Please provide a helpful response based on this information and answer their question directly.`;
       }
-    } else if (queryResult) {
-      return `I searched MediConnect but ${queryResult.summary}
-
-User's question: ${originalMessage}
-
-Please provide helpful guidance and suggest alternatives.`;
-    } else {
-      return `User's question: ${originalMessage}
-
-Please provide helpful guidance and suggest alternatives.`;
     }
+
+    return originalMessage;
+  }
+
+  private isSimpleGreeting(message: string): boolean {
+    const lowerMessage = message.toLowerCase().trim();
+
+    const greetingPatterns = [
+      /^(hi|hello|hey|good morning|good afternoon|good evening|good day)$/,
+      /^(hi|hello|hey)\s*[!.]*$/,
+      /^good\s+(morning|afternoon|evening|day)\s*[!.]*$/,
+      /^how\s+(are\s+you|is\s+everything)[\s?!.]*$/,
+      /^(thank\s+you|thanks|bye|goodbye|see\s+you)[\s!.]*$/,
+      /^what\s+can\s+you\s+do[\s?!.]*$/,
+      /^who\s+are\s+you[\s?!.]*$/,
+      /^help[\s!.]*$/,
+    ];
+
+    return greetingPatterns.some((pattern) => pattern.test(lowerMessage));
   }
 
   private async generateResponse(messages: ChatMessage[], userId?: string) {
     console.log('Generating response for user:', userId);
-    console.log('Messages:', JSON.stringify(messages, null, 2));
+    console.log('Messages count:', messages.length);
 
     const modelName = 'gemini-1.5-flash';
 
@@ -217,8 +229,6 @@ Please provide helpful guidance and suggest alternatives.`;
       role: 'user',
       parts: [{ text: this.getSystemPrompt(userId) }],
     };
-
-    console.log('Transformed messages count:', transformedMessages.length);
 
     const model: GenerativeModel = this.genAI.getGenerativeModel({
       model: modelName,
@@ -238,81 +248,79 @@ Please provide helpful guidance and suggest alternatives.`;
     return response.stream as AsyncIterable<{ text(): string }>;
   }
 
-  // system instructions
+  //   // system instructions
   private getSystemPrompt(userId?: string): string {
     const now = new Date();
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }); // e.g., "Monday"
+    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
     const currentDate = now.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }); // e.g., "July 27, 2025"
+    });
 
-    let basePrompt = `You are a helpful and professional medical assistant at MediConnect. Your role is to provide informative, concise, and empathetic responses to users' health-related questions.
+    let basePrompt = `You are a helpful and professional medical assistant at MediConnect.
 
 CURRENT DATE AND TIME:
 - Today is ${currentDay}, ${currentDate}
-- When asked about "today" or "available today", compare with the doctors' available days
-- If a doctor's days include "${currentDay}" or variations like "${currentDay.toLowerCase()}" or "${currentDay.substring(0, 3)}", they are available today
+
+CONVERSATION GUIDELINES:
+- For simple greetings (hi, hello, good morning, etc.), respond warmly and briefly without mentioning medical data
+- Only discuss medical information when the user specifically asks about health-related topics
+- Keep greeting responses conversational and welcoming
+- FOCUS ON THE SPECIFIC QUESTION ASKED - do not provide unrelated information
+
+CONTEXT DATA TYPES:
+1. PHARMACY INVENTORY: Medications available for purchase in our pharmacy
+2. PERSONAL DATA: User's appointments, orders, diagnoses, prescriptions
+3. PLATFORM DATA: Available doctors and general services
 
 Response Guidelines:
 
 Formatting Rules:
-- Write in plain text only - NO markdown formatting, NO bold text (**text**), NO headings (#), NO italic text (*text*), and NO HTML tags
+- Write in plain text only - NO markdown formatting, NO bold text, NO headings, NO HTML tags
 - Do not use asterisks (*), hashtags (#), underscores (_), or any special formatting characters
 - Write responses as simple paragraphs and numbered lists using regular text only
-- When mentioning links, write them naturally in plain text without HTML tags
 
 Content Guidelines:
-- Use the provided MediConnect knowledge base as your primary source for platform-related questions
-- When asked about doctor availability, use the availability and days information provided in the context
-- If specific availability times are mentioned, provide them clearly to the user
-- For real-time scheduling, always direct users to the MediConnect appointment booking system
-- Respond quickly and to the point - avoid long introductions
-- Use a warm, professional tone while keeping responses concise
-- ONLY recommend MediConnect services and doctors - do not suggest external platforms, other websites, or third-party services
+- ANSWER ONLY THE SPECIFIC QUESTION ASKED - do not add unrelated information
+- For greetings: Be warm and welcoming, ask how you can help with their health questions
+- For doctor queries: Provide specific information about the requested doctor including name, specialization, availability
+- For pharmacy stock queries: Present specific information about the requested medication
+- For personal data queries: Use the provided context to give specific, helpful responses
+- Use a warm, professional tone while keeping responses concise and focused
+- ONLY recommend MediConnect services and doctors
+
+DOCTOR QUERY RESPONSES:
+- When asked about a specific doctor, provide their full name, specialization, and availability if found
+- If doctor is not found, clearly state they are not available
+- Include booking information if the doctor is available
+- Do not mention unrelated topics like pharmacy stock when answering doctor questions
+
+PHARMACY STOCK RESPONSES:
+- When discussing pharmacy inventory, say "we have" or "available in our pharmacy"
+- Never say "you have" when referring to pharmacy stock
+- Present medications as available for purchase or prescription
+- Include pricing and quantity if available
+- Suggest consulting with a doctor for prescriptions
+- Do not mention doctors when answering medication questions unless specifically asked
 
 Medical Guidelines:
 - Never provide specific diagnoses or treatment recommendations
 - Always remind users to consult a licensed healthcare professional for medical concerns
-- For urgent symptoms, advise users to seek immediate medical attention or visit an emergency room
+- For urgent symptoms, advise users to seek immediate medical attention
 - Focus on general health information and MediConnect platform guidance
-- Do not recommend external medical platforms, telehealth services, or other appointment systems
-
-PLATFORM LIMITATIONS:
-- You can ONLY help with MediConnect doctors, services, and appointments
-- If a doctor is not available today, suggest checking their next available day on MediConnect
-- If no suitable doctor is available, suggest contacting MediConnect support for assistance
-- For urgent medical needs, direct users to emergency services, but do not recommend other medical platforms
-- Never suggest external websites, apps, or competing medical services
-
-IMPORTANT CONTEXT USAGE:
-- DOCTORS & PHARMACY STOCK: These are platform-wide resources available to all users
-- PERSONAL DATA: Appointments, orders, payments, diagnoses are user-specific
-- When asked about doctors or medications, show ALL available options on the platform
-- When asked about appointments/orders, only show the user's personal data
-- DOCTOR AVAILABILITY: When availability and days information is provided in the context, share it with the user
-- TODAY'S AVAILABILITY: Compare today's day (${currentDay}) with each doctor's available days to determine who is available today`;
+- Stay focused on the user's specific question without adding unrelated medical advice`;
 
     if (userId) {
       basePrompt += `
 
-You are currently assisting patient ID: ${userId}. The CONTEXT provided contains:
-1. PLATFORM DATA: All doctors and pharmacy stock available on MediConnect (for everyone)
-2. PERSONAL DATA: Your specific appointments, orders, payments, and medical records
-
-When answering:
-- For doctor/medication questions: Use the platform-wide data to show ALL available options including availability schedules
-- For appointment/order questions: Use only your personal data
-- Always be clear about what's available on the platform vs. what's specific to this user
-- When asked about today's availability, check if today (${currentDay}) matches any doctor's available days
-- If requested services are not available today, suggest the next available appointment on MediConnect only`;
-    } else {
-      basePrompt += `
-
-You are assisting a general user without access to personal account data. Show platform-wide information about doctors and medications, including availability schedules, but direct them to log in for personal medical records.
-- When asked about today's availability, check if today (${currentDay}) matches any doctor's available days
-- If requested services are not available today, suggest the next available appointment on MediConnect only`;
+You are currently assisting patient ID: ${userId}.
+- For casual conversation: Respond naturally without mentioning medical data
+- For health questions: Use the provided context to give personalized responses
+- For pharmacy stock: Present as available inventory, not personal medications
+- For doctor queries: Provide specific doctor information and availability
+- Always be clear about what information is pharmacy inventory vs. personal medical data
+- STAY FOCUSED on answering the specific question asked`;
     }
 
     return basePrompt;

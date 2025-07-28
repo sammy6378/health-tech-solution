@@ -26,10 +26,10 @@ import { Calendar} from 'lucide-react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { ConsultationType } from '@/types/api-types'
-import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/store'
 import { getErrorMessage } from '../utils/handleError'
+import { useToast } from '@/hooks/use-toast'
 
 interface AddAppointmentModalProps {
   open: boolean
@@ -51,6 +51,7 @@ export const AppointmentModal = ({
   const { mutateAsync: addAppointment } = useCreateAppointment()
   const {user} = useAuthStore()
   const userId = user.userId;
+  const { toast } = useToast()
 
   const bookedTimes = (bookedAppointments?.data || []).map(
     (appt) => appt.start_time,
@@ -123,11 +124,19 @@ export const AppointmentModal = ({
 
       try {
         await addAppointment(appointmentData)
-        toast.success('Appointment added successfully!')
+        toast({
+          title: 'Appointment created successfully',
+          description: `Appointment with ${values.doctorName} on ${values.appointment_date} at ${values.start_time}`,
+          variant: 'success',
+        })
         resetForm()
         onClose()
       } catch (error) {
-        toast.error(getErrorMessage(error))
+        toast({
+          title: 'Error creating appointment',
+          description: getErrorMessage(error),
+          variant: 'destructive',
+        })
       }
     },
   })

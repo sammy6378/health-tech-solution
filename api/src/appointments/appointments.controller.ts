@@ -89,6 +89,13 @@ export class AppointmentsController {
     return this.appointmentsService.getAppointmentsNeedingMeetingLinks();
   }
 
+  // cancel
+  @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
+  @Patch(':id/cancel')
+  cancelAppointment(@Param('id') id: string) {
+    return this.appointmentsService.cancel(id);
+  }
+
   // update status
   @Roles(Role.DOCTOR, Role.ADMIN)
   @Patch(':id/status')

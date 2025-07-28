@@ -15,18 +15,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { Search, Filter, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
-import { PaymentMethod, PaymentStatus} from '@/types/api-types'
+import { formatCurrency, PaymentMethod, PaymentStatus } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 
+const PER_PAGE = 10
+
 export default function BillingPage() {
-  const {payments} = useUserData()
+  const { payments } = useUserData()
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [methodFilter, setMethodFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Filter payments based on selected filters and search query
   const filteredPayments = payments.filter((payment) => {
@@ -45,14 +55,40 @@ export default function BillingPage() {
     return matchesStatus && matchesMethod && matchesSearch
   })
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredPayments.length / PER_PAGE)
+  const paginatedPayments = filteredPayments.slice(
+    (currentPage - 1) * PER_PAGE,
+    currentPage * PER_PAGE,
+  )
+
+  // Reset to first page when filters change
+  const handleFilterChange = (
+    filterType: 'status' | 'method' | 'search',
+    value: string,
+  ) => {
+    setCurrentPage(1)
+    switch (filterType) {
+      case 'status':
+        setStatusFilter(value)
+        break
+      case 'method':
+        setMethodFilter(value)
+        break
+      case 'search':
+        setSearchQuery(value)
+        break
+    }
+  }
+
   // Calculate summary statistics
   const totalPaid = payments
     .filter((p) => p.payment_status === PaymentStatus.PAID)
-    .reduce((sum, payment) => sum + payment.amount, 0)
-  
+    .reduce((sum, payment) => sum + Number(payment.amount), 0)
+
   const pendingAmount = payments
     .filter((p) => p.payment_status === PaymentStatus.PENDING)
-    .reduce((sum, payment) => sum + payment.amount, 0)
+    .reduce((sum, payment) => sum + Number(payment.amount), 0)
 
   const getStatusBadge = (status: PaymentStatus) => {
     const statusMap = {
@@ -69,7 +105,10 @@ export default function BillingPage() {
     const methodMap = {
       [PaymentMethod.CASH]: { text: 'Cash', variant: 'default' },
       [PaymentMethod.CREDIT_CARD]: { text: 'Credit Card', variant: 'default' },
-      [PaymentMethod.MOBILE_MONEY]: { text: 'Mobile Money', variant: 'default' },
+      [PaymentMethod.MOBILE_MONEY]: {
+        text: 'Mobile Money',
+        variant: 'default',
+      },
     }
     const { text, variant } = methodMap[method]
     return <Badge variant={variant as any}>{text}</Badge>
@@ -105,7 +144,7 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                KES {Number(totalPaid)}
+                {formatCurrency(totalPaid)}
               </div>
             </CardContent>
           </Card>
@@ -118,7 +157,7 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                KES {pendingAmount.toLocaleString()}
+                {formatCurrency(pendingAmount)}
               </div>
             </CardContent>
           </Card>
@@ -137,12 +176,15 @@ export default function BillingPage() {
                   placeholder="Search by order # or transaction ID"
                   className="pl-10 w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-600 dark:focus:border-blue-600"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
                 />
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => handleFilterChange('status', value)}
+                >
                   <SelectTrigger className="w-[180px]">
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4" />
@@ -168,7 +210,10 @@ export default function BillingPage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                <Select
+                  value={methodFilter}
+                  onValueChange={(value) => handleFilterChange('method', value)}
+                >
                   <SelectTrigger className="w-[180px]">
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4" />
@@ -208,7 +253,7 @@ export default function BillingPage() {
         </Card>
 
         {/* Payments Table */}
-        <Card className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all overflow-hidden">
+        <div className="overflow-auto rounded-md border shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-100 dark:bg-gray-700">
@@ -217,18 +262,19 @@ export default function BillingPage() {
                 <TableHead>Method</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Transaction ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPayments.length > 0 ? (
-                filteredPayments.map((payment) => (
+              {paginatedPayments.length > 0 ? (
+                paginatedPayments.map((payment) => (
                   <TableRow
                     key={payment.payment_id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
                     <TableCell className="font-medium text-blue-600 dark:text-blue-400">
-                      {payment.order_number}
+                      {payment.order_number ? payment.order_number : 'N/A'}
                     </TableCell>
                     <TableCell>
                       {format(new Date(payment.payment_date), 'MMM dd, yyyy')}
@@ -242,6 +288,7 @@ export default function BillingPage() {
                     <TableCell>
                       {getStatusBadge(payment.payment_status)}
                     </TableCell>
+                    <TableCell>{payment.payment_type || '-'}</TableCell>
                     <TableCell>{payment.paystack_reference || '-'}</TableCell>
                   </TableRow>
                 ))
@@ -257,7 +304,48 @@ export default function BillingPage() {
               )}
             </TableBody>
           </Table>
-        </Card>
+
+          {/* Pagination */}
+          {filteredPayments.length > 0 && (
+            <div className="mt-4 flex justify-between items-center p-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * PER_PAGE + 1} of{' '}
+                {filteredPayments.length}
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      className={
+                        currentPage === 1
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

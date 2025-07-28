@@ -1,6 +1,5 @@
-import { PaymentStatus, DeliveryStatus } from 'src/orders/dto/create-order.dto';
-import { AppointmentStatus } from 'src/appointments/dto/create-appointment.dto';
-import { DetectedQuery, QueryKind } from '../interfaces/query-kinds';
+import { AppointmentStatus, ConsultationType, DeliveryStatus, PaymentStatus } from "@/types/api-types";
+import type { DetectedQuery, QueryKind } from "./interfaces/query-kinds";
 
 export type ArgExtractor = (
   match: RegExpMatchArray | null,
@@ -11,6 +10,7 @@ export interface IntentDef {
   kind: QueryKind;
   patterns: Array<string | RegExp>;
   extractArgs?: ArgExtractor;
+  confidence?: number;
 }
 
 const toLower = (s: string) => s.toLowerCase().trim();
@@ -33,7 +33,6 @@ const deliveryStatusFromPrompt = (p: string): DeliveryStatus | undefined => {
   return undefined;
 };
 
-import { ConsultationType } from 'src/appointments/dto/create-appointment.dto';
 
 const consultationTypeFromPrompt = (
   p: string,
@@ -82,6 +81,7 @@ export const INTENT_PATTERNS: IntentDef[] = [
   },
   {
     kind: 'doctor:byName',
+    confidence: 0.9,
     patterns: [
       /(?:doctor|dr|physician)\s+(\w+(?:\s+\w+)*)/i,
       /(?:find|show|get).*(?:doctor|dr|physician).*(?:named?|called)\s*(\w+(?:\s+\w+)*)/i,
@@ -89,10 +89,23 @@ export const INTENT_PATTERNS: IntentDef[] = [
       /(?:what.*days?|when).*(?:is|does).*(?:doctor|dr|physician)\s+(\w+(?:\s+\w+)*).*(?:available|work)/i, // ← ADD THIS
       /(\w+(?:\s+\w+)*).*(?:doctor|dr|physician).*(?:available|schedule|days?)/i, // ← ADD THIS
     ],
-    extractArgs: (match, prompt) => {
-      const name = match?.[1]?.trim() || '';
-      return { name };
+    extractArgs: (match) => {
+      const name = match?.[1]?.trim() || ''
+      return { name }
     },
+  },
+  {
+    kind: 'doctor:search',
+    patterns: [
+      /(?:search|find|look for)\s+(?:doctor|dr)/i,
+      /(?:what|which)\s+doctors?\s+(?:do (?:you|we) have|available)/i,
+    ],
+    confidence: 0.8,
+    extractArgs: (_match, prompt) => ({
+      query: prompt
+        .replace(/^(?:search|find|look for|what|which)\s*/i, '')
+        .trim(),
+    }),
   },
 
   // ----------------------------------------------------------------
@@ -107,9 +120,9 @@ export const INTENT_PATTERNS: IntentDef[] = [
       /order(?:s)?.*(?:paid|completed|payment)/i,
     ],
     extractArgs: (_m, p) => {
-      const lower = toLower(p);
-      const status = paymentStatusFromPrompt(lower) ?? PaymentStatus.PENDING;
-      return { status };
+      const lower = toLower(p)
+      const status = paymentStatusFromPrompt(lower) ?? PaymentStatus.PENDING
+      return { status }
     },
   },
   {
@@ -121,10 +134,9 @@ export const INTENT_PATTERNS: IntentDef[] = [
       /in progress orders?/i,
     ],
     extractArgs: (_m, p) => {
-      const lower = toLower(p);
-      const status =
-        deliveryStatusFromPrompt(lower) ?? DeliveryStatus.DELIVERED;
-      return { status };
+      const lower = toLower(p)
+      const status = deliveryStatusFromPrompt(lower) ?? DeliveryStatus.DELIVERED
+      return { status }
     },
   },
   {
@@ -167,8 +179,8 @@ export const INTENT_PATTERNS: IntentDef[] = [
       /physical (?:appointments?|consultations?)/i,
     ],
     extractArgs: (_m, p) => {
-      const ct = consultationTypeFromPrompt(toLower(p));
-      return ct ? { consultationType: ct } : {};
+      const ct = consultationTypeFromPrompt(toLower(p))
+      return ct ? { consultationType: ct } : {}
     },
   },
 
@@ -185,9 +197,9 @@ export const INTENT_PATTERNS: IntentDef[] = [
       /completed payments?/i,
     ],
     extractArgs: (_m, p) => {
-      const lower = toLower(p);
-      const status = paymentStatusFromPrompt(lower) ?? PaymentStatus.PENDING;
-      return { status };
+      const lower = toLower(p)
+      const status = paymentStatusFromPrompt(lower) ?? PaymentStatus.PENDING
+      return { status }
     },
   },
   {
@@ -202,30 +214,7 @@ export const INTENT_PATTERNS: IntentDef[] = [
   },
 
   // ----------------------------------------------------------------
-  // DIAGNOSES / PRESCRIPTIONS
-  // ----------------------------------------------------------------
-  {
-    kind: 'diagnoses:latest',
-    patterns: [
-      /(?:latest|recent|last|current).*(?:diagnosis|condition|prescription|medication)/i,
-      /(?:what|which).*(?:diagnosis|condition|prescription).*(?:do i have|current)/i,
-      /my.*(?:current|latest).*(?:diagnosis|prescription|medication)/i,
-    ],
-  },
-  {
-    kind: 'diagnoses:all',
-    patterns: [
-      /(?:my|show|list).*(?:diagnosis|diagnoses|prescription|medication|medical history)/i,
-      /(?:what|which).*(?:diagnosis|condition|prescription).*(?:do i have|history)/i,
-      /medical.*(?:history|record)/i,
-    ],
-  },
-
-  // ----------------------------------------------------------------
   // PHARMACY STOCK (expanded coverage)
-  // ----------------------------------------------------------------
-  // ----------------------------------------------------------------
-  // PHARMACY STOCK (expanded coverage + natural questions)
   // ----------------------------------------------------------------
   {
     kind: 'stock:all',
@@ -238,6 +227,37 @@ export const INTENT_PATTERNS: IntentDef[] = [
     ],
   },
   {
+    kind: 'stock:available',
+    patterns: [
+      /(?:any|other|more|available)\s+(?:medicines?|medications?|drugs?|stock)/i,
+    ],
+    extractArgs: () => ({}),
+  },
+  {
+    kind: 'stock:search',
+    patterns: [
+      /(?:do (?:you|we) have|is there|got any|have any)\s+([a-zA-Z]+)/i,
+      /(?:search|find|look for)\s+([a-zA-Z]+)/i,
+      /(?:any|got)\s+([a-zA-Z]+)\s*(?:\?|$)/i,
+    ],
+    confidence: 0.8,
+    extractArgs: (match, prompt) => ({
+      query:
+        match?.[1]?.trim() ||
+        prompt.replace(/^(?:search|find|look for|what|which)\s*/i, '').trim(),
+    }),
+  },
+  {
+    kind: 'stock:available',
+    patterns: [
+      /(?:what|which).*(?:stock|medication|medicine|drug).*(?:do (?:you|we) have|available|in (?:the )?pharmacy)/i,
+      /(?:show|list|display).*(?:pharmacy|stock|inventory)/i,
+      /(?:any|other|more).*(?:medicine|medication|drug).*(?:available|in stock)/i,
+    ],
+    confidence: 0.7,
+    extractArgs: () => ({}),
+  },
+  {
     kind: 'stock:oneById',
     patterns: [/\b(?:stock|medication)\s*(?:id|code)\s*([a-z0-9-]+)\b/i],
     extractArgs: (m) => ({ id: m?.[1]?.trim() }),
@@ -245,13 +265,48 @@ export const INTENT_PATTERNS: IntentDef[] = [
   {
     kind: 'stock:byName',
     patterns: [
-      /(?:do (?:you|we) (?:have|stock|carry)|is there|can i (?:get|find|buy)).*?([a-z][a-z0-9\s\-]{2,50})(?:\s+(?:available|in stock|medicine|medication|drug|tablet|pill))?/i,
-      /(?:availability|stock) (?:of|for).*?([a-z][a-z0-9\s\-]{2,50})/i,
-      /(?:find|search|look for|check).*?([a-z][a-z0-9\s\-]{2,50})(?:\s+(?:medicine|medication|drug|stock))?/i,
-      /(?:medicine|medication|drug|tablet|pill).*?([a-z][a-z0-9\s\-]{2,50})/i,
-      /([a-z][a-z0-9\s\-]{2,50})\s+(?:available|in stock|stock)/i,
+      /(?:do (?:you|we) have|is there|got any|have any)\s+([a-zA-Z][a-zA-Z0-9\s\-]*[a-zA-Z0-9])\s*\??$/i,
+      /(?:any|got)\s+([a-zA-Z][a-zA-Z0-9\s\-]*[a-zA-Z0-9])\s*(?:available|in stock)?\s*\??$/i,
+      /(?:cetirizine|paracetamol|ibuprofen|aspirin|amoxicillin|antibiotics|painkillers)/i,
     ],
-    extractArgs: (m) => ({ name: m?.[1]?.trim() }),
+    confidence: 0.9, // High confidence for medication queries
+    extractArgs: (match, prompt) => {
+      // Extract medication name from various patterns
+      let name = ''
+
+      // Pattern 1: "do we have X?" or "do you have X?"
+      const pattern1 = prompt.match(
+        /(?:do (?:you|we) have|is there|got any|have any)\s+([a-zA-Z][a-zA-Z0-9\s\-]*[a-zA-Z0-9])\s*\??$/i,
+      )
+      if (pattern1) {
+        name = pattern1[1].trim()
+      }
+
+      // Pattern 2: "any X?" or "got X?"
+      const pattern2 = prompt.match(
+        /(?:any|got)\s+([a-zA-Z][a-zA-Z0-9\s\-]*[a-zA-Z0-9])\s*(?:available|in stock)?\s*\??$/i,
+      )
+      if (pattern2) {
+        name = pattern2[1].trim()
+      }
+
+      // Pattern 3: Direct medication name mention
+      const commonMeds = [
+        'cetirizine',
+        'paracetamol',
+        'ibuprofen',
+        'aspirin',
+        'amoxicillin',
+      ]
+      for (const med of commonMeds) {
+        if (prompt.toLowerCase().includes(med)) {
+          name = med
+          break
+        }
+      }
+
+      return { name: name || match?.[1]?.trim() || '' }
+    },
   },
   {
     kind: 'stock:byManufacturer',
@@ -275,7 +330,27 @@ export const INTENT_PATTERNS: IntentDef[] = [
     patterns: [/stock .*type (.+)/i, /\btype\s+([a-z0-9 \-]+)\s+stock\b/i],
     extractArgs: (m) => ({ type: m?.[1]?.trim() }),
   },
-];
+
+  // ----------------------------------------------------------------
+  // DIAGNOSES / PRESCRIPTIONS
+  // ----------------------------------------------------------------
+  {
+    kind: 'diagnoses:latest',
+    patterns: [
+      /(?:latest|recent|last|current).*(?:diagnosis|condition|prescription|medication)/i,
+      /(?:what|which).*(?:diagnosis|condition|prescription).*(?:do i have|current)/i,
+      /my.*(?:current|latest).*(?:diagnosis|prescription|medication)/i,
+    ],
+  },
+  {
+    kind: 'diagnoses:all',
+    patterns: [
+      /(?:my|show|list).*(?:diagnosis|diagnoses|prescription|medication|medical history)/i,
+      /(?:what|which).*(?:diagnosis|condition|prescription).*(?:do i have|history)/i,
+      /medical.*(?:history|record)/i,
+    ],
+  },
+]
 
 const EXTRACTORS = {
   extractMedicationName: (match: RegExpMatchArray, prompt: string): string => {
@@ -298,7 +373,7 @@ const EXTRACTORS = {
     return name || '';
   },
 
-  extractDoctorName: (match: RegExpMatchArray, prompt: string): string => {
+  extractDoctorName: (match: RegExpMatchArray, _prompt: string): string => {
     let name = match?.[1]?.trim();
     if (!name) return '';
 
@@ -311,7 +386,7 @@ const EXTRACTORS = {
     return name;
   },
 
-  extractSpecialization: (match: RegExpMatchArray, prompt: string): string => {
+  extractSpecialization: (match: RegExpMatchArray, _prompt: string): string => {
     const spec = match?.[1]?.trim();
 
     // Map common terms to proper specializations
@@ -335,8 +410,7 @@ const EXTRACTORS = {
 };
 
 export function detectQueryFromPrompt(prompt: string): DetectedQuery {
-  const cleanPrompt = prompt.trim().toLowerCase();
-
+ 
   // Try each intent pattern
   for (const intent of INTENT_PATTERNS) {
     for (const pattern of intent.patterns) {
@@ -427,7 +501,7 @@ function calculateConfidence(
   return Math.min(confidence, 1.0);
 }
 
-function getFallbackQueries(intentKey: string, prompt: string): QueryKind[] {
+function getFallbackQueries(intentKey: string, _prompt: string): QueryKind[] {
   // Suggest alternative queries if primary intent fails
   const fallbacks: Record<string, QueryKind[]> = {
     'doctor:byName': ['doctor:bySpecialization', 'doctor:all'],

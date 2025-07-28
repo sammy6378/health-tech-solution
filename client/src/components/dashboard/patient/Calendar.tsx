@@ -166,12 +166,18 @@ export function MyCalendar() {
                                       ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
                                       : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
                                   </h3>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    <p
+                                    className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]"
+                                    title={
+                                      user.role === 'patient'
+                                      ? appointment.doctor?.doctorProfile?.specialization
+                                      : appointment.patient?.email
+                                    }
+                                    >
                                     {user.role === 'patient'
-                                      ? appointment.doctor?.doctorProfile
-                                          ?.specialization
+                                      ? appointment.doctor?.doctorProfile?.specialization
                                       : appointment.patient?.email}
-                                  </p>
+                                    </p>
                                 </div>
                                 <Badge
                                   className={getStatusColor(

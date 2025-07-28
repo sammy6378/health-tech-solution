@@ -83,6 +83,20 @@ export const useCreateMeetingLink = () => {
   })
 }
 
+// cancel appointment
+export const useCancelAppointment = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => updateItem<TAppointment>(`${base}/${id}/cancel`, {}),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['appointment', id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'], exact: false })
+    },
+  })
+}
+
 // update status
 export const useUpdateAppointmentStatus = () => {
   const queryClient = useQueryClient()

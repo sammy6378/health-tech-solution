@@ -8,26 +8,19 @@ import {
   UseGuards,
   Get,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { ChatappService } from './chatapp.service';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { ChatRequestDto, TestQueryDto } from './dto/chatMessage.dto';
+import { ChatRequestDto, ChatWithContextDto } from './dto/chatMessage.dto';
 import { AtGuard } from 'src/auth/guards/at.guard';
 import {
   CurrentUser,
   CurrentUserData,
 } from 'src/auth/decorators/currentuser.decorator';
-import { UsersService } from 'src/users/users.service';
-import { AiQueryService } from 'src/ai-tool/service/select-services';
-import { Role } from 'src/users/dto/create-user.dto';
 
 @Controller('chatapp')
 export class ChatappController {
-  constructor(
-    private readonly chatappService: ChatappService,
-    private readonly usersService: UsersService,
-    private readonly chatService: AiQueryService,
-  ) {}
+  constructor(private readonly chatappService: ChatappService) {}
 
   @Post('chat')
   @Public()
@@ -49,30 +42,17 @@ export class ChatappController {
   @Header('Connection', 'keep-alive')
   @Header('Transfer-Encoding', 'chunked')
   async chatWithContext(
-    @Body(ValidationPipe) chatRequest: ChatRequestDto,
+    @Body(ValidationPipe) chatRequest: ChatWithContextDto,
     @CurrentUser() user: CurrentUserData,
     @Res() res: Response,
   ): Promise<void> {
-    await this.chatappService.handleRequestWithPatientContext(
+    console.log('user', user);
+    await this.chatappService.handleRequestWithContext(
       chatRequest.messages,
       res,
+      chatRequest.contextData,
       user.id,
     );
-  }
-
-  @Post('test')
-  @UseGuards(AtGuard)
-  async chatquery(
-    @CurrentUser() user: CurrentUserData,
-    @Body(ValidationPipe) testQuery: TestQueryDto, // Change this line
-  ) {
-    console.log('Test query received:', testQuery.query);
-    console.log('User', user.id);
-    return await this.chatService.handleQuery(
-      user.id,
-      Role.PATIENT,
-      testQuery.query,
-    ); // Change this line
   }
 
   @Get('health')

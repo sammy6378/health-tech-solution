@@ -26,6 +26,7 @@ import rehypeExternalLinks from 'rehype-external-links'
 import remarkGfm from 'remark-gfm'
 import { baseUrl } from '@/lib/baseUrl'
 import { getAuthHeaders } from '@/services/api-call'
+import { useDashboardAiQueryService } from './agent/select-services'
 
 interface Message {
   id: string
@@ -41,6 +42,7 @@ const ChatInterface = () => {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { search, isLoaded, error } = useKnowledgeBase()
+  const { handleQuery } = useDashboardAiQueryService()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -53,23 +55,41 @@ const ChatInterface = () => {
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
 
-    // Get knowledge base content
-    const kbContent = search(input)
-
-    const userMessage: Message = {
-      id: `msg_${Date.now()}`,
-      role: 'user',
-      content: input,
-      timestamp: new Date(),
-      kbContent,
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    const currentInput = input
-    setInput('')
     setIsLoading(true)
 
     try {
+      // Get dashboard data and KB content
+      const kbContent = search(input)
+
+      // Create user message object
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: input,
+        timestamp: new Date(),
+        kbContent,
+      }
+
+      // Add user message to UI immediately
+      setMessages((prev) => [...prev, userMessage])
+
+      const currentInput = input
+      setInput('')
+
+       const isGreeting = isSimpleGreeting(currentInput)
+      // Prepare messages for backend (clean format without kbContent)
+      let dashboardSummary = ''
+      let dashboardData = null
+      let dashboardKbContent = ''
+
+      if (!isGreeting) {
+        const dashboardResult = handleQuery(currentInput)
+        dashboardSummary = dashboardResult.summary
+        dashboardData = dashboardResult.data
+        dashboardKbContent = search(currentInput)
+      }
+
+      // Prepare messages for backend
       const chatMessages = [
         ...messages.map((msg) => ({
           role: msg.role,
@@ -77,16 +97,31 @@ const ChatInterface = () => {
         })),
         {
           role: 'user',
-          content: currentInput,
+          content: currentInput, // Keep original message for greetings
         },
       ]
 
+      // Prepare enriched content with both dashboard data and KB content
+      let enrichedContent = currentInput
+
+      if (dashboardSummary) {
+        enrichedContent = `Dashboard Data: ${dashboardSummary}\n\n`
+      }
+
+      if (dashboardKbContent) {
+        enrichedContent += `Knowledge Base: ${dashboardKbContent}\n\n`
+      }
+
+      enrichedContent += `User Question: ${currentInput}`
+
+      // Send enriched message to backend
       const response = await fetch(`${baseUrl}/chatapp/chat-with-context`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          messages: chatMessages,
-        }),
+       body: JSON.stringify({
+        messages: chatMessages,
+        contextData: !isGreeting && dashboardSummary ? { summary: dashboardSummary, data: dashboardData, kbContent: dashboardKbContent } : undefined,
+      }),
       })
 
       if (!response.ok) {
@@ -136,7 +171,7 @@ const ChatInterface = () => {
       console.error('Chat error:', error)
       toast({
         title: 'Error',
-        description: 'Failed to get response from Gemini. Please try again.',
+        description: 'Failed to get response from assistant. Please try again.',
         variant: 'destructive',
       })
 
@@ -145,6 +180,23 @@ const ChatInterface = () => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const isSimpleGreeting = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase().trim()
+
+    const greetingPatterns = [
+      /^(hi|hello|hey|good morning|good afternoon|good evening|good day)$/,
+      /^(hi|hello|hey)\s*[!.]*$/,
+      /^good\s+(morning|afternoon|evening|day)\s*[!.]*$/,
+      /^how\s+(are\s+you|is\s+everything)[\s?!.]*$/,
+      /^(thank\s+you|thanks|bye|goodbye|see\s+you)[\s!.]*$/,
+      /^what\s+can\s+you\s+do[\s?!.]*$/,
+      /^who\s+are\s+you[\s?!.]*$/,
+      /^help[\s!.]*$/,
+    ]
+
+    return greetingPatterns.some((pattern) => pattern.test(lowerMessage))
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

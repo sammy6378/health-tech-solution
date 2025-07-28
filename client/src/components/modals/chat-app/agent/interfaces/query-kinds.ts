@@ -1,4 +1,4 @@
-// src/ai/query-kinds.ts
+
 export type QueryKind =
   | 'orders:paymentStatus'
   | 'orders:deliveryStatus'
@@ -11,17 +11,24 @@ export type QueryKind =
   | 'payments:all'
   | 'diagnoses:all'
   | 'diagnoses:latest'
+  | 'doctor:search'
   | 'doctor:all'
   | 'doctor:availableToday'
   | 'doctor:byName'
   | 'doctor:bySpecialization'
   | 'stock:all'
+  | 'stock:available'
+  | 'stock:search'
   | 'stock:oneById'
   | 'stock:byName'
   | 'stock:byCategory'
   | 'stock:byType'
   | 'stock:byManufacturer'
-  | 'unknown';
+  | 'records:all'
+  | 'prescriptions:all'
+  | 'prescriptions:active'
+  | 'prescriptions:pending'
+  | 'unknown'
 
 export interface DetectedQuery {
   kind: QueryKind;

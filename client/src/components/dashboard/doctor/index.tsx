@@ -184,7 +184,7 @@ import { useGetDoctorProfileByUserId } from '@/hooks/useDoctorProfile'
         </Card>
 
         {/* Calendar Card */}
-        <Card className="p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
+        <Card className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
           <MyCalendar />
         </Card>
       </div>

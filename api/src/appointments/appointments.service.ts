@@ -368,6 +368,22 @@ export class AppointmentsService {
     return createResponse(appointment, 'Appointment found');
   }
 
+  // cancel appointmnet and delete
+  async cancel(id: string): Promise<ApiResponse<Appointment>> {
+    const appointment = await this.appointmentRepository.findOne({
+      where: { appointment_id: id },
+      relations: ['patient', 'doctor'],
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    appointment.status = AppointmentStatus.CANCELLED;
+    const updated = await this.appointmentRepository.save(appointment);
+    return createResponse(updated, 'Appointment cancelled successfully');
+  }
+
   async update(
     id: string,
     dto: UpdateAppointmentDto,
