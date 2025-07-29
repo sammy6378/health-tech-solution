@@ -90,11 +90,7 @@ async function bootstrap() {
   const PORT = configService.getOrThrow<number>('PORT');
 
   const corsOptions = {
-    origin: [
-      'http://localhost:3000',
-      'https://health-tech-solution.onrender.com',
-      'https://mediconnect-health.vercel.app',
-    ],
+    origin: ['http://localhost:3000', 'https://mediconnect-health.vercel.app'],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: [
