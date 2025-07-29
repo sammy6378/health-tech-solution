@@ -37,23 +37,11 @@ export default function BmiModal({
   const { mutateAsync: createRecord } = useCreateMedicalRecord()
   const { mutateAsync: updateRecord } = useUpdateMedicalRecord()
   const { toast } = useToast()
-
-  const [bmiResult, setBmiResult] = useState<null | {
-    bmi: number
-    category: string
-  }>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open) refetch()
   }, [open, refetch])
-
-  const getBmiCategory = (bmi: number) => {
-    if (bmi < 18.5) return 'Underweight'
-    if (bmi < 25) return 'Normal'
-    if (bmi < 30) return 'Overweight'
-    return 'Obese'
-  }
 
   const {
     values,
@@ -73,9 +61,6 @@ export default function BmiModal({
       const heightInMeters = Number(values.height) / 100
       const bmi = Number(values.weight) / (heightInMeters * heightInMeters)
       const roundedBmi = parseFloat(bmi.toFixed(2))
-      const category = getBmiCategory(roundedBmi)
-
-      setBmiResult({ bmi: roundedBmi, category })
 
       try {
         setLoading(true)
@@ -135,7 +120,6 @@ export default function BmiModal({
       onOpenChange={(open) => {
         if (!open) {
           resetForm()
-          setBmiResult(null)
         }
         onOpenChange(open)
       }}
