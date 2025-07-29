@@ -19,7 +19,8 @@ import {
 export const checkRole = (role: Role) => {
   switch (role) {
     case Role.ADMIN:
-      return navGroups.filter((group) => ['Admin'].includes(group.label))
+    case Role.PHARMACY:
+      return navGroups.filter((group) => ['Admin', 'Pharmacy'].includes(group.label))
     case Role.DOCTOR:
       return navGroups.filter((group) => ['Doctor'].includes(group.label))
     case Role.PATIENT:

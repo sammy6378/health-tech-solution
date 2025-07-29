@@ -29,7 +29,8 @@ export const useLogin = () => {
 
       const getRedirectPath = (role: string) => {
         switch (role) {
-          case 'admin':
+            case 'admin':
+            case 'pharmacy':
             return '/dashboard/admin'
           case 'doctor':
             return '/dashboard/doctor'

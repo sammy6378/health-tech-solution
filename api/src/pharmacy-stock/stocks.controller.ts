@@ -21,7 +21,7 @@ import { Role } from 'src/users/dto/create-user.dto';
 export class StocksController {
   constructor(private readonly StocksService: StocksService) {}
 
-  @Roles(Role.PHARMACY)
+  @Roles(Role.PHARMACY, Role.ADMIN)
   @Post()
   create(@Body() createMedicationDto: CreateStockDto) {
     return this.StocksService.create(createMedicationDto);
@@ -33,13 +33,13 @@ export class StocksController {
     return this.StocksService.findAll();
   }
 
-  @Roles(Role.PHARMACY)
+  @Roles(Role.PHARMACY, Role.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.StocksService.findOne(id);
   }
 
-  @Roles(Role.PHARMACY)
+  @Roles(Role.PHARMACY, Role.ADMIN)
   @Patch(':id')
   update(
     @Param('id') id: string,

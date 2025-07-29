@@ -219,7 +219,7 @@ const Pharmacy = () => {
             {role && role === 'admin' && (
               <button
                 onClick={handleCreate}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer dark:bg-blue-500 dark:text-white font-medium shadow hover:bg-primary/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer dark:bg-blue-500 dark:text-white font-medium shadow transition-colors"
               >
                 <span className="inline-flex items-center">
                   <svg

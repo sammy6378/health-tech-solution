@@ -263,9 +263,6 @@ export function PharmacyDashboard() {
                               {med.medication.name}
                             </span>
                             <span className="text-xs text-muted-foreground ml-2">
-                              Qty: <span className="font-semibold">{med.medication.dosage}</span>
-                            </span>
-                            <span className="text-xs text-muted-foreground ml-2">
                               Batch: <span className="font-semibold">{med.medication.medication_code}</span>
                             </span>
                           </li>

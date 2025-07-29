@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { useAuthStore } from '@/store/store'
 import { useUserData } from '@/hooks/useDashboard'
+import { chatDbService } from '@/store/db/chats'
 import {
   MessageCircle,
   Send,
@@ -28,44 +29,14 @@ type Message = {
 
 const Chat = () => {
   const { user } = useAuthStore()
-  const {user:currentuser} = useUser(user.userId);
+  const { user: currentuser } = useUser(user.userId)
   const { myPatients, myDoctors } = useUserData()
   const currentUserId = user.userId || 'defaultUserId'
-  const userName = currentuser?.first_name + ' ' + currentuser?.last_name;
-  console.log("name", userName)
+  const userName = currentuser?.first_name + ' ' + currentuser?.last_name
 
   const contacts = (user.role === 'doctor' ? myPatients : myDoctors) || []
 
- const socketRef = useRef<ReturnType<typeof io> | null>(null)
-
- useEffect(() => {
-   const socket = io('http://localhost:8000', {
-     query: { userId: currentUserId },
-   })
-   socketRef.current = socket
-
-   socket.on('chat:message', (data) => {
-     setMessages((prev) => {
-       // Check if we already have this message (optimistic update)
-       if (!prev.some((msg) => msg.id === data.id)) {
-         return [...prev, data]
-       }
-       return prev
-     })
-   })
-
-   socket.on('notification:new', (notification) => {
-     console.log('New notification:', notification)
-   })
-
-   return () => {
-     socket.disconnect()
-     socket.off('chat:message')
-     socket.off('notification:new')
-   }
- }, [currentUserId])
-
-
+  const socketRef = useRef<ReturnType<typeof io> | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedContact, setSelectedContact] = useState<{
     id: string
@@ -74,49 +45,126 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
+  // Initialize database and socket
+  useEffect(() => {
+    const initializeChat = async () => {
+      // Initialize database
+      try {
+        await chatDbService.initDatabase()
+        console.log('Chat database initialized')
+      } catch (error) {
+        console.error('Failed to initialize chat database:', error)
+      }
+
+      // Initialize socket
+      const socket = io('http://localhost:8000', {
+        query: { userId: currentUserId },
+      })
+      socketRef.current = socket
+
+      socket.on('chat:message', async (data) => {
+        // Save incoming message to IndexedDB
+        try {
+          await chatDbService.addMessage({
+            id: data.id,
+            senderId: data.senderId,
+            senderName: data.senderName,
+            receiverId: data.receiverId,
+            message: data.message,
+            timestamp: data.timestamp,
+          })
+        } catch (error) {
+          console.error('Failed to save incoming message:', error)
+        }
+
+        setMessages((prev) => {
+          // Check if we already have this message (optimistic update)
+          if (!prev.some((msg) => msg.id === data.id)) {
+            return [...prev, data]
+          }
+          return prev
+        })
+      })
+
+      socket.on('notification:new', (notification) => {
+        console.log('New notification:', notification)
+      })
+    }
+
+    initializeChat()
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current.off('chat:message')
+        socketRef.current.off('notification:new')
+      }
+    }
+  }, [currentUserId])
+
+  // Load messages when contact is selected
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (selectedContact) {
+        try {
+          const conversationMessages =
+            await chatDbService.getConversationMessages(
+              currentUserId,
+              selectedContact.id,
+            )
+          setMessages(conversationMessages)
+        } catch (error) {
+          console.error('Failed to load conversation messages:', error)
+        }
+      }
+    }
+
+    loadMessages()
+  }, [selectedContact, currentUserId])
+
   // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
-
-  // Filter messages for the selected contact
-  const visibleMessages = messages.filter(
-    (msg) =>
-      (msg.senderId === user.userId &&
-        msg.receiverId === selectedContact?.id) ||
-      (msg.senderId === selectedContact?.id && msg.receiverId === user.userId),
-  )
-
-  console.log('Visible messages:', visibleMessages)
 
   // Scroll to bottom when messages update
   useEffect(() => {
     scrollToBottom()
   }, [messages])
 
-//   Send message function
- const sendMessage = (e: { preventDefault: () => void }) => {
-   e.preventDefault()
-   if (!selectedContact || newMessage.trim() === '') return
-   const messageId = Date.now().toString() // Unique ID
-   const messageData = {
-     id: messageId,
-     senderId: currentUserId,
-     senderName: userName,
-     receiverId: selectedContact.id,
-     message: newMessage,
-     timestamp: new Date().toISOString(),
-   }
+  // Send message function
+  const sendMessage = async (e: { preventDefault: () => void }) => {
+    e.preventDefault()
+    if (!selectedContact || newMessage.trim() === '') return
 
-   console.log("messagedata", messageData)
+    const messageId = Date.now().toString()
+    const messageData = {
+      id: messageId,
+      senderId: currentUserId,
+      senderName: userName,
+      receiverId: selectedContact.id,
+      message: newMessage,
+      timestamp: new Date().toISOString(),
+    }
 
-   // Optimistic update
-   setMessages((prev) => [...prev, messageData])
-   setNewMessage('')
+    try {
+      // Save to IndexedDB
+      await chatDbService.addMessage(messageData)
 
-   socketRef.current?.emit('chat:message', messageData)
- }
+      // Optimistic update
+      setMessages((prev) => [...prev, messageData])
+      setNewMessage('')
 
+      // Send via socket
+      socketRef.current?.emit('chat:message', messageData)
+    } catch (error) {
+      console.error('Failed to save message:', error)
+      // Still send via socket even if local save fails
+      setMessages((prev) => [...prev, messageData])
+      setNewMessage('')
+      socketRef.current?.emit('chat:message', messageData)
+    }
+  }
 
   return (
     <div className="flex w-full h-[80vh] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
@@ -129,14 +177,6 @@ const Chat = () => {
               <MessageCircle className="text-blue-500" size={20} />
               Messages
             </h2>
-            {/* <div className="flex items-center gap-3">
-              <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Phone size={18} className="text-gray-600 dark:text-gray-400" />
-              </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Video size={18} className="text-gray-600 dark:text-gray-400" />
-              </button>
-            </div> */}
           </div>
 
           {/* Search Bar */}
@@ -245,8 +285,8 @@ const Chat = () => {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
           {selectedContact ? (
-            visibleMessages.length > 0 ? (
-              visibleMessages.map((msg, index) => (
+            messages.length > 0 ? (
+              messages.map((msg, index) => (
                 <div
                   key={index}
                   className={`flex ${

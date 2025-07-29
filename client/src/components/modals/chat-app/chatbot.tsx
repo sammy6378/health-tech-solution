@@ -333,9 +333,24 @@ const ChatInterface = () => {
                         </div>
                         <div className="bg-muted rounded-lg px-4 py-2">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Thinking...
+                            <span className="flex items-center h-5">
+                              <span className="dot bg-muted-foreground rounded-full w-2 h-2 mx-0.5 animate-bounce" style={{ animationDelay: '0s' }} />
+                              <span className="dot bg-muted-foreground rounded-full w-2 h-2 mx-0.5 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                              <span className="dot bg-muted-foreground rounded-full w-2 h-2 mx-0.5 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                            </span>
                           </div>
+                          <style>
+                            {`
+                              .animate-bounce {
+                                display: inline-block;
+                                animation: bounce 1s infinite;
+                              }
+                              @keyframes bounce {
+                                0%, 80%, 100% { transform: translateY(0); }
+                                40% { transform: translateY(-8px); }
+                              }
+                            `}
+                          </style>
                         </div>
                       </div>
                     )}
