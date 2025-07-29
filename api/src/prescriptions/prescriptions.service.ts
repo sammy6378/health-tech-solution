@@ -111,12 +111,21 @@ export class PrescriptionsService {
       const prescriptionWithRelations =
         await this.prescriptionRepository.findOne({
           where: { prescription_id: savedPrescription.prescription_id },
-          relations: ['diagnosis', 'diagnosis.patient', 'diagnosis.doctor'],
+          relations: [
+            'diagnosis',
+            'diagnosis.patient',
+            'diagnosis.doctor',
+            'prescriptionMedications',
+            'prescriptionMedications.medication',
+          ],
         });
 
       if (!prescriptionWithRelations) {
         throw new NotFoundException('Prescription not found after creation');
       }
+
+      const prescriptionMedications_safe =
+        prescriptionWithRelations.prescriptionMedications || [];
 
       // send email notification
       const emailData = {
@@ -125,15 +134,14 @@ export class PrescriptionsService {
           ' ' +
           prescriptionWithRelations.diagnosis.patient.last_name,
         email: prescriptionWithRelations.diagnosis.patient.email,
-        prescriptionDetails:
-          prescriptionWithRelations.prescriptionMedications.map((med) => ({
-            medication: med.medication.name,
-            dosage: med.dosage_instructions.join(', '),
-            frequency: med.frequency_per_day,
-            quantity: med.quantity_prescribed,
-            duration_days: med.duration_days,
-            dosage_instructions: med.dosage_instructions,
-          })),
+        prescriptionDetails: prescriptionMedications_safe.map((med) => ({
+          medication: med.medication.name,
+          dosage: med.dosage_instructions.join(', '),
+          frequency: med.frequency_per_day,
+          quantity: med.quantity_prescribed,
+          duration_days: med.duration_days,
+          dosage_instructions: med.dosage_instructions,
+        })),
       };
 
       const mail = Mailer(this.mailService);

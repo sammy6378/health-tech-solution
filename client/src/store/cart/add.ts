@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { type TMedication } from '@/types/api-types'
-import { useToast } from '@/hooks/use-toast'
 
 export interface CartItem extends TMedication {
   quantity: number
@@ -22,7 +21,6 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       cart: [],
       addToCart: (item, quantity = 1) => {
-        const { toast } = useToast();
         const existing = get().cart.find(
           (i) => i.medication_code === item.medication_code,
         )
@@ -49,18 +47,6 @@ export const useCartStore = create<CartStore>()(
               },
             ],
           }))
-          toast({
-            title: 'Item added to cart',
-            description: `${item.name} has been added to your cart.`,
-            variant: 'success',
-          })
-        }
-        if (item.stock_quantity < quantity) {
-          toast({
-            title: 'Insufficient stock',
-            description: `Only ${item.stock_quantity} items available in stock for ${item.name}`,
-            variant: 'destructive',
-          })
         }
       },
 

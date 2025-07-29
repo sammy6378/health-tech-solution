@@ -318,7 +318,14 @@ const Pharmacy = () => {
                             </div>
                           ) : (
                             <button
-                              onClick={() => addToCart(med)}
+                              onClick={() => {
+                              addToCart(med)
+                              toast({
+                                title: 'Added to cart',
+                                description: `${med.name} has been added to your cart.`,
+                                variant: 'success',
+                              })
+                              }}
                               disabled={!!role && role !== 'patient'}
                               className="px-3 py-1 text-sm border dark:border-gray-700 cursor-pointer dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >

@@ -196,17 +196,6 @@ export default function BmiModal({
             </Button>
           </div>
         </form>
-
-        {bmiResult && (
-          <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-            <p>
-              <strong>BMI:</strong> {bmiResult.bmi}
-            </p>
-            <p>
-              <strong>Category:</strong> {bmiResult.category}
-            </p>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )

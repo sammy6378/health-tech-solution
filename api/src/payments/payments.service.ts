@@ -302,13 +302,12 @@ export class PaymentsService {
         throw new NotFoundException('Doctor not found');
       }
 
-      // check if doctor payment exists and status paid
+      // Check if payment for this specific appointment exists and is paid
       const existingPaid = await this.paymentRepository.findOne({
         where: {
-          doctor: { user_id: createPaymentDto.doctor_id },
-          email: createPaymentDto.email, // Add patient email to make it specific
+          appointment_id: createPaymentDto.appointment_id,
           payment_status: PaymentStatus.PAID,
-          payment_type: PaymentType.APPOINTMENTS, // Ensure it's appointment payment
+          payment_type: PaymentType.APPOINTMENTS,
         },
       });
 
@@ -316,10 +315,9 @@ export class PaymentsService {
         return createResponse(existingPaid, 'Payment already completed');
       }
 
-      // delete an existing pending payment for a clean retry
+      // Delete any existing pending payment for this specific appointment
       await this.paymentRepository.delete({
-        doctor: { user_id: createPaymentDto.doctor_id },
-        email: createPaymentDto.email, // Add patient email specificity
+        appointment_id: createPaymentDto.appointment_id,
         payment_status: PaymentStatus.PENDING,
         payment_type: PaymentType.APPOINTMENTS,
       });
@@ -333,6 +331,9 @@ export class PaymentsService {
           currency: 'KES',
           metadata: {
             full_name: createPaymentDto.full_name,
+            appointment_id: createPaymentDto.appointment_id,
+            doctor_id: createPaymentDto.doctor_id,
+            user_id: createPaymentDto.user_id,
           },
         },
         {

@@ -26,6 +26,28 @@ export const useGetAppointmentsByUser = (userId: string) =>
     enabled: !!userId,
   })
 
+  // get appointmnets by doctor id
+export const useGetAppointmentsByDoctor = (doctorId: string) =>
+  useQuery({
+    queryKey: ['appointments', 'doctor', doctorId],
+    queryFn: () => fetchList<TAppointment>(`${base}?doctorId=${doctorId}`),
+    enabled: !!doctorId,
+  })
+
+
+// ✅ Get appointments by user role and ID
+export const useGetAppointmentsByUserRole = (userId: string, role: 'doctor' | 'patient') =>
+  useQuery({
+    queryKey: ['appointments', 'user-role', userId, role],
+    queryFn: () => {
+      const endpoint = role === 'doctor' 
+        ? `${base}/by-doctor/${userId}`
+        : `${base}/by-patient/${userId}`
+      return fetchList<TAppointment>(endpoint)
+    },
+    enabled: !!userId && !!role,
+  })
+
 // ✅ Get a single appointment
 export const useGetAppointment = (id: string) =>
   useQuery({

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Calendar,
   Clock,
@@ -18,7 +18,7 @@ import {
 } from '@/types/api-types'
 import { useUserData } from '@/hooks/useDashboard'
 import { Link } from '@tanstack/react-router'
-import { useCancelAppointment, useCreateMeetingLink, useUpdateAppointmentStatus } from '@/hooks/useAppointments'
+import { useCancelAppointment, useCreateMeetingLink, useGetAppointmentsByUserRole, useUpdateAppointmentStatus } from '@/hooks/useAppointments'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateAppointmentPayment, useGetPaymentsByAppointment, useVerifyAppointmentPayment } from '@/hooks/usePayments'
 import { getErrorMessage } from '@/components/utils/handleError'
@@ -38,31 +38,52 @@ const AppointmentPage = () => {
     direction: 'ascending' | 'descending'
   } | null>(null)
   const { mutateAsync: createMeetingLink } = useCreateMeetingLink()
-  const {toast} = useToast()
+  const { toast } = useToast()
 
-  const { appointments, user } = useUserData()
-  const {user: currentUser} = useAuthStore()
+  const { user: currentUser } = useAuthStore()
   const userId = currentUser?.userId ?? ''
+  const userRole = currentUser?.role as 'doctor' | 'patient'
+
+  const { data: appointmentsData, isLoading } = useGetAppointmentsByUserRole(
+    userId,
+    userRole,
+  )
+  const appointments = appointmentsData?.data || []
+
+  const { user } = useUserData()
   const { mutateAsync: updateStatus } = useUpdateAppointmentStatus()
   const { mutateAsync: createPayment } = useCreateAppointmentPayment()
   const { mutateAsync: verifyPayment } = useVerifyAppointmentPayment()
   const { mutateAsync: cancelAppointment } = useCancelAppointment()
   const { data } = useGetPatientProfileByUserId(userId)
-  const appointmentUserId = appointments.find(
-    (appt) => appt.patient?.user_id === userId,
-  )?.appointment_id ?? ''
+  
+  // For now, we'll handle payment queries differently to avoid the hooks rule violation
+  // We'll query payments only when needed in the render loop
+  const appointmentUserId =
+    appointments.find((appt) => appt.patient?.user_id === userId)
+      ?.appointment_id ?? ''
   const { data: userPayment } = useGetPaymentsByAppointment(appointmentUserId)
-  const patient = data?.data
-  const paymentStatus = userPayment?.data.map((payment) => payment.payment_status) || []
 
-  if (!appointments || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">
-          Loading appointments...
-        </p>
-      </div>
-    )
+  const patient = data?.data
+
+ 
+
+  // Helper function to check if an appointment is paid
+  // This is a simplified approach - you may need to modify based on your data structure
+  const isAppointmentPaid = (appointmentId: string) => {
+    // For now, we'll use a simple check. You might need to implement a more sophisticated
+    // solution depending on your requirements, such as:
+    // 1. Fetching all payments at a higher level component
+    // 2. Using a global state management solution
+    // 3. Modifying your API to include payment status with appointments
+    
+    // Temporary solution: check if this is the user's appointment and if it's paid
+    if (appointmentId === appointmentUserId && userPayment?.data) {
+      return userPayment.data.some(payment => payment.payment_status === PaymentStatus.PAID)
+    }
+    
+    // For other appointments, you might want to return false or implement different logic
+    return false
   }
 
   // cancel appointment
@@ -93,7 +114,8 @@ const AppointmentPage = () => {
       })
       toast({
         title: 'Appointment marked as complete',
-        description: 'The appointment has been successfully marked as complete.',
+        description:
+          'The appointment has been successfully marked as complete.',
         variant: 'success',
       })
     } catch (error) {
@@ -176,8 +198,7 @@ const AppointmentPage = () => {
         amount: appointment.doctor?.doctorProfile?.consultation_fee,
         full_name: name,
         email: appointment.patient?.email ?? 'user@example.com',
-        phone_number:
-          patient?.phone_number ?? '0000000000',
+        phone_number: patient?.phone_number ?? '0000000000',
         doctor_id: appointment.doctor?.user_id,
         user_id: patient?.user_id,
         appointment_id: appointment.appointment_id,
@@ -396,7 +417,7 @@ const AppointmentPage = () => {
                     onClick={() => requestSort('doctor')}
                   >
                     <div className="flex items-center">
-                      {user?.role === 'doctor' ? 'Patient' : 'Doctor'}
+                      {userRole === 'doctor' ? 'Patient' : 'Doctor'}
                       <ArrowUpDown size={14} className="ml-1" />
                     </div>
                   </th>
@@ -448,185 +469,195 @@ const AppointmentPage = () => {
                   >
                     Consultation Fee
                   </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                  {userRole === 'doctor' && (
                     <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                    {user.role === 'doctor' && (
-                       <th
                       scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                     >
                       Complete
                     </th>
-                    )}
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {sortedAppointments.length > 0 ? (
-                  sortedAppointments.map((appointment) => (
-                    <tr
-                      key={appointment.appointment_id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="ml-4">
-                        <div className="text-sm font-medium">
-                          {user?.role === 'doctor'
-                          ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
-                          : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
-                        </div>
-                        </div>
-                      </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm">
-                        {appointment.appointment_date} :{' '}
-                        {formatTime(appointment.start_time ?? '')}
-                      </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                        appointment.consultation_type ===
-                        ConsultationType.IN_PERSON
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : appointment.consultation_type ===
-                            ConsultationType.VIRTUAL
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        }`}
+                  sortedAppointments.map((appointment) => {
+                    const isPaid = isAppointmentPaid(appointment.appointment_id ?? '')
+
+                    return (
+                      <tr
+                        key={appointment.appointment_id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
-                        {appointment.consultation_type}
-                      </span>
-                      </td>
-                      <td className='className="px-6 py-4 whitespace-nowrap text-sm"'>
-                      {appointment.status}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {appointment.duration_minutes} mins
-                      </td>
-                      <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                        {appointment.meeting_link && appointment.start_url ? (
-                        <a
-                          href={
-                          user.role === 'doctor'
-                            ? appointment.start_url
-                            : appointment.meeting_link
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          Join
-                        </a>
-                        ) : user.role === 'doctor' ? (
-                        <button
-                          onClick={() =>
-                          createLink(appointment.appointment_id ?? '')
-                          }
-                          disabled={consultationFees(appointment) === false}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Create Link
-                        </button>
-                        ) : "No Link"}
-                      </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {consultationFees(appointment) ? (
-                          appointment.status === AppointmentStatus.CANCELLED ? (
-                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                              Cancelled
-                            </span>
-                          ) : appointment.status === AppointmentStatus.COMPLETED ? (
-                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                              Completed
-                            </span>
-                          ) : paymentStatus.includes(PaymentStatus.PAID) ? (
-                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              Paid
-                            </span>
-                          ) : user.role === 'patient' ? (
-                            <button
-                              onClick={() => initiatePayment(appointment)}
-                              className="p-2 cursor-pointer rounded-md shadow-lg text-white bg-green-400 hover:bg-green-500 transition-colors duration-300"
-                            >
-                              Checkout{' '}
-                              {formatCurrency(consultationFees(appointment) as number).replace(/\.00$/, '')}
-                            </button>
-                          ) : (
-                            <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                              Unpaid
-                            </span>
-                          )
-                        ) : (
-                          <span className="text-gray-500 dark:text-gray-400">
-                            Free
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="ml-4">
+                              <div className="text-sm font-medium">
+                                {user?.role === 'doctor'
+                                  ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
+                                  : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm">
+                            {appointment.appointment_date} :{' '}
+                            {formatTime(appointment.start_time ?? '')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              appointment.consultation_type ===
+                              ConsultationType.IN_PERSON
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : appointment.consultation_type ===
+                                    ConsultationType.VIRTUAL
+                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            }`}
+                          >
+                            {appointment.consultation_type}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {appointment.status}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {appointment.duration_minutes} mins
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                            {appointment.meeting_link && appointment.start_url ? (
+                              <a
+                                href={
+                                  userRole === 'doctor'
+                                    ? appointment.start_url
+                                    : appointment.meeting_link
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Join
+                              </a>
+                            ) : userRole === 'doctor' ? (
+                              <button
+                                onClick={() =>
+                                  createLink(appointment.appointment_id ?? '')
+                                }
+                                disabled={!isPaid}
+                                className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Create Link
+                              </button>
+                            ) : (
+                              'No Link'
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {consultationFees(appointment) ? (
+                            appointment.status === AppointmentStatus.CANCELLED ? (
+                              <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                Cancelled
+                              </span>
+                            ) : appointment.status ===
+                              AppointmentStatus.COMPLETED ? (
+                              <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                Completed
+                              </span>
+                            ) : isPaid ? (
+                              <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Paid
+                              </span>
+                            ) : userRole === 'patient' ? (
+                              <button
+                                onClick={() => initiatePayment(appointment)}
+                                className="p-2 cursor-pointer rounded-md shadow-lg text-white bg-green-400 hover:bg-green-500 transition-colors duration-300"
+                              >
+                                Checkout{' '}
+                                {formatCurrency(
+                                  consultationFees(appointment) as number,
+                                ).replace(/\.00$/, '')}
+                              </button>
+                            ) : (
+                              <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                Unpaid
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400">
+                              Free/Paid
+                            </span>
+                          )}
+                        </td>
+
+                        {userRole === 'doctor' && (
+                          <>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <Link
+                                to="/dashboard/doctor/appointments/$appointment/add-diagnosis"
+                                params={{
+                                  appointment: appointment.appointment_id ?? '',
+                                }}
+                                className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
+                              >
+                                Add Diagnosis
+                              </Link>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <button
+                                className="inline-flex cursor-pointer items-center px-3 py-1 rounded-md bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() =>
+                                  handleMarkComplete(
+                                    appointment.appointment_id ?? '',
+                                  )
+                                }
+                                disabled={
+                                  appointment.status ===
+                                  AppointmentStatus.COMPLETED
+                                }
+                                title="Mark as Complete"
+                              >
+                                <CheckCircle2 size={16} className="mr-1" />
+                                Mark Complete
+                              </button>
+                            </td>
+                          </>
                         )}
-                      </td>
 
-                      {user.role === 'doctor' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link
-                          to="/dashboard/doctor/appointments/$appointment/add-diagnosis"
-                          params={{
-                          appointment: appointment.appointment_id ?? '',
-                          }}
-                          className="text-blue-600 cursor-pointer hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
-                        >
-                          Add Diagnosis
-                        </Link>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          className="inline-flex cursor-pointer items-center px-3 py-1 rounded-md bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={() =>
-                          handleMarkComplete(
-                            appointment.appointment_id ?? '',
-                          )
-                          }
-                          disabled={
-                          appointment.status ===
-                          AppointmentStatus.COMPLETED
-                          }
-                          title="Mark as Complete"
-                        >
-                          <CheckCircle2 size={16} className="mr-1" />
-                          Mark Complete
-                        </button>
-                        </td>
-                      </>
-                      )}
-
-                      {user.role === 'patient' && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                        className="inline-flex cursor-pointer items-center px-3 py-1 rounded-md bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() =>
-                          handleCancelAppointment(
-                          appointment.appointment_id ?? '',
-                          )
-                        }
-                        disabled={
-                          appointment.status === AppointmentStatus.CANCELLED ||
-                          appointment.status === AppointmentStatus.COMPLETED
-                        }
-                        title="Cancel Appointment"
-                        >
-                        <XCircle size={16} className="mr-1" />
-                        Cancel
-                        </button>
-                      </td>
-                      )}
-                    </tr>
-                  ))
+                        {userRole === 'patient' && (
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <button
+                              className="inline-flex cursor-pointer items-center px-3 py-1 rounded-md bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={() =>
+                                handleCancelAppointment(
+                                  appointment.appointment_id ?? '',
+                                )
+                              }
+                              disabled={
+                                appointment.status ===
+                                  AppointmentStatus.CANCELLED ||
+                                appointment.status === AppointmentStatus.COMPLETED
+                              }
+                              title="Cancel Appointment"
+                            >
+                              <XCircle size={16} className="mr-1" />
+                              Cancel
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td
@@ -636,7 +667,7 @@ const AppointmentPage = () => {
                       No {activeTab} appointments found
                     </td>
                   </tr>
-                )}
+                )} 
               </tbody>
             </table>
           </div>

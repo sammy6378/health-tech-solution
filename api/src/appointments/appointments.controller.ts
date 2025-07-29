@@ -62,14 +62,14 @@ export class AppointmentsController {
 
   // ✅ 3. Use clear names for doctor/patient/user-based filters
   @Roles(Role.DOCTOR, Role.ADMIN)
-  @Get('by-doctor')
-  findAppointmentsByDoctor(@Query('doctorId') doctorId: string) {
+  @Get('by-doctor/:id')
+  findAppointmentsByDoctor(@Param('id') doctorId: string) {
     return this.appointmentsService.findAppointmentsByDoctor(doctorId);
   }
 
   @Roles(Role.DOCTOR, Role.ADMIN, Role.PATIENT)
-  @Get('by-patient')
-  findAppointmentsByPatient(@Query('patientId') patientId: string) {
+  @Get('by-patient/:id')
+  findAppointmentsByPatient(@Param('id') patientId: string) {
     return this.appointmentsService.findAppointmentsByPatient(patientId);
   }
 
