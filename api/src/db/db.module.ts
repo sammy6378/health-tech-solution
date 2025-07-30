@@ -1,50 +1,42 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { join } from 'path';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        const isProduction =
-          configService.get<string>('NODE_ENV') === 'production';
-
-        // Use individual PostgreSQL environment variables
-        const host = configService.get<string>('PGHOST');
-        const username = configService.get<string>('PGUSER');
-        const password = configService.get<string>('PGPASSWORD');
-        const database = configService.get<string>('PGDATABASE');
-        const port = configService.get<number>('PGPORT') || 5432;
-
-        // SSL configuration based on environment
-        const sslMode = configService.get<string>('PGSSLMODE');
-        // const channelBinding = configService.get<string>('PGCHANNELBINDING');
-
-        let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
-
-        if (isProduction || sslMode === 'require') {
-          sslConfig = true;
-        }
-
-        return {
-          type: 'postgres',
-          host,
-          port,
-          username,
-          password,
-          database,
-          entities: [join(process.cwd(), 'dist/**/*.entity.js')],
-          synchronize: configService.get('DB_SYNC') === 'true',
-          logging: false,
-          migrations: [join(process.cwd(), '/../migrations/**/*{.js,ts}')],
-          autoLoadEntities: true,
-          ssl: sslConfig,
-        };
-      },
       inject: [ConfigService],
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
+        const logger = new Logger('DatabaseModule');
+
+        try {
+          const config: TypeOrmModuleOptions = {
+            type: 'postgres',
+            host: configService.getOrThrow<string>('DB_HOST'),
+            port: configService.getOrThrow<number>('DB_PORT'),
+            username: configService.getOrThrow<string>('DB_USERNAME'),
+            password: configService.getOrThrow<string>('DB_PASSWORD'),
+            database: configService.getOrThrow<string>('DB_DATABASE'),
+            entities: [__dirname + '/..//*.entity{.ts,.js}'],
+            synchronize: configService.get<boolean>('DB_SYNC', true),
+            logging: configService.get<boolean>('DB_LOGGING', false),
+            ssl: {
+              rejectUnauthorized: false,
+            },
+          };
+          logger.log('Successfully loaded database config');
+
+          return config;
+        } catch (error) {
+          logger.error(
+            'Failed to load database config or connect to the database',
+            error,
+          );
+          throw error;
+        }
+      },
     }),
   ],
 })
