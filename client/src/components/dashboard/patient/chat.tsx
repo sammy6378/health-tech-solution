@@ -15,6 +15,7 @@ import {
   Paperclip,
   Mic,
   Smile,
+  ArrowLeft,
 } from 'lucide-react'
 import { useUser } from '@/hooks/useUserHook'
 
@@ -43,6 +44,7 @@ const Chat = () => {
     name: string
   } | null>(null)
   const [newMessage, setNewMessage] = useState('')
+  const [showSidebar, setShowSidebar] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   // Initialize database and socket
@@ -169,7 +171,9 @@ const Chat = () => {
   return (
     <div className="flex w-full h-[80vh] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
       {/* Sidebar Contacts */}
-      <div className="w-1/3 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+      <div
+        className={`${showSidebar ? 'w-full md:w-1/3' : 'hidden md:flex md:w-1/3'} border-r border-gray-200 dark:border-gray-800 flex flex-col`}
+      >
         {/* Contacts Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center justify-between">
@@ -197,12 +201,13 @@ const Chat = () => {
           {contacts?.map((contact) => (
             <div
               key={contact.user_id}
-              onClick={() =>
+              onClick={() => {
                 setSelectedContact({
                   id: contact.user_id!,
                   name: contact.first_name + ' ' + contact.last_name,
                 })
-              }
+                setShowSidebar(false) // Hide sidebar on mobile when contact is selected
+              }}
               className={`flex items-center gap-3 p-4 cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-gray-800 ${
                 selectedContact?.id === contact.user_id
                   ? 'bg-blue-50 dark:bg-gray-800 border-l-4 border-blue-500'
@@ -234,11 +239,23 @@ const Chat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="w-2/3 flex flex-col bg-gray-50 dark:bg-gray-900">
+      <div
+        className={`${showSidebar ? 'hidden md:flex md:w-2/3' : 'w-full md:w-2/3'} flex flex-col bg-gray-50 dark:bg-gray-900`}
+      >
         {/* Chat Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900">
           {selectedContact ? (
             <div className="flex items-center gap-3">
+              {/* Back button for mobile */}
+              <button
+                onClick={() => setShowSidebar(true)}
+                className="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ArrowLeft
+                  size={20}
+                  className="text-gray-600 dark:text-gray-400"
+                />
+              </button>
               <div className="relative">
                 <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 w-10 h-10 rounded-full flex items-center justify-center">
                   <User size={18} />
@@ -262,14 +279,20 @@ const Chat = () => {
           )}
 
           {selectedContact && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 md:gap-3">
               <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Phone size={20} className="text-gray-600 dark:text-gray-400" />
+                <Phone
+                  size={16}
+                  className="text-gray-600 dark:text-gray-400"
+                />
               </button>
               <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <Video size={20} className="text-gray-600 dark:text-gray-400" />
+                <Video
+                  size={16}
+                  className="text-gray-600 dark:text-gray-400"
+                />
               </button>
-              <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <button className="hidden sm:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <Info size={20} className="text-gray-600 dark:text-gray-400" />
               </button>
               <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -302,16 +325,18 @@ const Chat = () => {
                         : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-bl-none'
                     }`}
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                       <div className="flex-1">
-                        <p className="font-medium mb-1">
+                        <p className="font-medium mb-1 text-sm">
                           {msg.senderId === currentUserId
                             ? 'You'
                             : msg.senderName}
                         </p>
-                        <p className="whitespace-pre-wrap">{msg.message}</p>
+                        <p className="whitespace-pre-wrap text-sm">
+                          {msg.message}
+                        </p>
                       </div>
-                      <span className="text-xs opacity-70">
+                      <span className="text-xs opacity-70 self-end sm:self-start">
                         {new Date(msg.timestamp).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -322,28 +347,28 @@ const Chat = () => {
                 </div>
               ))
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <div className="bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 p-4 rounded-full mb-4">
-                  <MessageCircle size={48} />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                <div className="bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 p-3 md:p-4 rounded-full mb-4">
+                  <MessageCircle size={32} className="md:w-12 md:h-12" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white mb-2">
                   Start a conversation
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-md">
+                <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-md">
                   You haven't sent any messages to {selectedContact.name} yet.
                   Send your first message to start your conversation.
                 </p>
               </div>
             )
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <div className="bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 p-4 rounded-full mb-4">
-                <MessageCircle size={48} />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 md:p-8">
+              <div className="bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300 p-3 md:p-4 rounded-full mb-4">
+                <MessageCircle size={32} className="md:w-12 md:h-12" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white mb-2">
                 Welcome to MediConnect Chat
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-md">
+              <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-md">
                 Select a contact from the list to start a conversation. You can
                 message patients, schedule appointments, or discuss medical
                 cases.
@@ -360,13 +385,13 @@ const Chat = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+                  className="hidden sm:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                 >
                   <Paperclip size={20} />
                 </button>
                 <button
                   type="button"
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+                  className="hidden sm:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                 >
                   <Smile size={20} />
                 </button>
@@ -377,11 +402,11 @@ const Chat = () => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="w-full pl-4 pr-12 py-3 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-4 pr-10 sm:pr-12 py-3 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+                    className="hidden sm:block absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
                   >
                     <Mic size={20} />
                   </button>
@@ -389,9 +414,9 @@ const Chat = () => {
 
                 <button
                   type="submit"
-                  className="p-3 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center"
+                  className="p-2 sm:p-3 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center"
                 >
-                  <Send size={18} />
+                  <Send size={16} className="sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
             </form>

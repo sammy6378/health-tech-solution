@@ -17,7 +17,7 @@ export default function CartPage() {
         <div className="flex items-center gap-3 mb-8">
           <ShoppingCart className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Your Medication Cart
+            Your Cart
           </h1>
           <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
             {cart.length} items

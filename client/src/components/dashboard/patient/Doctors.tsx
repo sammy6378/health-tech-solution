@@ -165,7 +165,7 @@ export default function DoctorsPage() {
                         })
                       }
                       onClick={() => setSelectedDoctor(user)}
-                      className="cursor-pointer"
+                      className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Book Appointment
                     </Button>
