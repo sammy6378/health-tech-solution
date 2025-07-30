@@ -24,7 +24,9 @@ import { join } from 'path';
           ssl: isProduction
             ? {
                 rejectUnauthorized: false,
-                sslmode: 'require',
+                ca: undefined,
+                cert: undefined,
+                key: undefined,
               }
             : false,
         };
