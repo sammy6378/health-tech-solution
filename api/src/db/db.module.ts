@@ -26,9 +26,7 @@ import { join } from 'path';
         let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
 
         if (isProduction || sslMode === 'require') {
-          sslConfig = {
-            rejectUnauthorized: false,
-          };
+          sslConfig = true;
         }
 
         return {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
   Calendar,
   Clock,
@@ -44,7 +44,7 @@ const AppointmentPage = () => {
   const userId = currentUser?.userId ?? ''
   const userRole = currentUser?.role as 'doctor' | 'patient'
 
-  const { data: appointmentsData, isLoading } = useGetAppointmentsByUserRole(
+  const { data: appointmentsData } = useGetAppointmentsByUserRole(
     userId,
     userRole,
   )
