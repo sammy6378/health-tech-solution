@@ -123,7 +123,7 @@ const PatientStatsPage = () => {
                 <Cl
                   mode="single"
                   defaultMonth={date}
-                  numberOfMonths={2}
+                  numberOfMonths={typeof window !== 'undefined' && window.innerWidth < 768 ? 1 : 2}
                   selected={date}
                   onSelect={setDate}
                   className="w-full bg-white dark:bg-gray-900"

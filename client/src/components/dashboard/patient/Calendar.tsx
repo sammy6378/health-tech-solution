@@ -108,7 +108,11 @@ export function MyCalendar() {
                   <Calendar
                     mode="single"
                     defaultMonth={date}
-                    numberOfMonths={2}
+                    numberOfMonths={
+                      typeof window !== 'undefined' && window.innerWidth < 768
+                        ? 1
+                        : 2
+                    }
                     selected={date}
                     onSelect={setDate}
                     className="rounded-lg border shadow-sm dark:border-gray-600"
@@ -166,18 +170,20 @@ export function MyCalendar() {
                                       ? `${appointment.patient?.first_name} ${appointment.patient?.last_name}`
                                       : `${appointment.doctor?.first_name} ${appointment.doctor?.last_name}`}
                                   </h3>
-                                    <p
+                                  <p
                                     className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]"
                                     title={
                                       user.role === 'patient'
-                                      ? appointment.doctor?.doctorProfile?.specialization
-                                      : appointment.patient?.email
+                                        ? appointment.doctor?.doctorProfile
+                                            ?.specialization
+                                        : appointment.patient?.email
                                     }
-                                    >
+                                  >
                                     {user.role === 'patient'
-                                      ? appointment.doctor?.doctorProfile?.specialization
+                                      ? appointment.doctor?.doctorProfile
+                                          ?.specialization
                                       : appointment.patient?.email}
-                                    </p>
+                                  </p>
                                 </div>
                                 <Badge
                                   className={getStatusColor(
@@ -190,7 +196,8 @@ export function MyCalendar() {
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                 <Clock className="w-4 h-4" />
-                                {appointment.appointment_date} {formatTime(appointment.start_time ?? '')}
+                                {appointment.appointment_date}{' '}
+                                {formatTime(appointment.start_time ?? '')}
                               </div>
                               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 <MapPin className="w-4 h-4" />
@@ -270,14 +277,20 @@ export function MyCalendar() {
                                   <Phone className="w-4 h-4 text-gray-400" />
                                 }
                               >
-                                {user.role === 'doctor' ? appointment.patient?.patientProfile?.phone_number : appointment.doctor?.doctorProfile?.phone_number}
+                                {user.role === 'doctor'
+                                  ? appointment.patient?.patientProfile
+                                      ?.phone_number
+                                  : appointment.doctor?.doctorProfile
+                                      ?.phone_number}
                               </InfoRow>
                               <InfoRow
                                 icon={
                                   <Mail className="w-4 h-4 text-gray-400" />
                                 }
                               >
-                                {user.role === 'doctor' ? appointment.patient?.email : appointment.doctor?.email}
+                                {user.role === 'doctor'
+                                  ? appointment.patient?.email
+                                  : appointment.doctor?.email}
                               </InfoRow>
                             </div>
 
