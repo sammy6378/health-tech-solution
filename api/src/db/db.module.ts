@@ -10,6 +10,9 @@ import { join } from 'path';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbUrl = configService.get<string>('POSTGRES_URL');
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
+
         return {
           type: 'postgres',
           url: dbUrl,
@@ -18,10 +21,12 @@ import { join } from 'path';
           logging: false,
           migrations: [join(process.cwd(), '/../migrations/**/*{.js,ts}')],
           autoLoadEntities: true,
-          ssl:
-            configService.get<string>('DB_SSL') === 'true'
-              ? { rejectUnauthorized: false }
-              : false,
+          ssl: isProduction
+            ? {
+                rejectUnauthorized: false,
+                sslmode: 'require',
+              }
+            : false,
         };
       },
       inject: [ConfigService],
