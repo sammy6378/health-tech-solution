@@ -226,8 +226,6 @@ export class UsersService {
       order: { created_at: 'DESC' },
     });
 
-    console.log('Diagnoses:', diagnoses);
-
     // 3. Get patient prescriptions (flattened from diagnoses)
     const prescriptions = await this.prescriptionRepository.find({
       where: {
@@ -247,8 +245,6 @@ export class UsersService {
       order: { created_at: 'DESC' },
     });
 
-    console.log('Prescriptions:', prescriptions);
-
     // my doctors [interacted with in appintments, prescrption or diagnoses]
     const myDoctors = new Set([
       ...appointments.map((a) => a.doctor),
@@ -261,15 +257,11 @@ export class UsersService {
       relations: ['doctorProfile'],
     });
 
-    console.log('My Doctors:', myDoctorsList);
-
     // medical records
     const medicalRecord = await this.medicalRecordRepository.findOne({
       where: { patient: { user_id: userId } },
       relations: ['patient'],
     });
-
-    console.log('medical records', medicalRecord);
 
     // 4. Get patient orders
     const orders = await this.orderRepository.find({

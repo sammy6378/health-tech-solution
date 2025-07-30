@@ -129,11 +129,38 @@ export const Ourdoctors = () => {
             alt={doctor.user?.first_name}
             className="w-20 h-20 rounded-full object-cover"
           />
-          <div
-            className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white ${
-              doctor.availability ? 'bg-green-500' : 'bg-gray-400'
-            }`}
-          ></div>
+            <div className="absolute bottom-1 right-1 flex -space-x-1">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayShort) => {
+              // Map dayShort to full day name for comparison if needed
+              const dayMap: Record<string, string> = {
+                Mon: 'Monday',
+                Tue: 'Tuesday',
+                Wed: 'Wednesday',
+                Thu: 'Thursday',
+                Fri: 'Friday',
+                Sat: 'Saturday',
+                Sun: 'Sunday',
+              }
+              const isAvailable =
+                doctor.days &&
+                doctor.days.some(
+                (d: string) =>
+                  d.toLowerCase().slice(0, 3) === dayShort.toLowerCase() ||
+                  d.toLowerCase() === dayMap[dayShort].toLowerCase()
+                )
+              return (
+                <span
+                key={dayShort}
+                title={dayMap[dayShort]}
+                className={`w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold ${
+                  isAvailable ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-400'
+                }`}
+                >
+                {dayShort[0]}
+                </span>
+              )
+              })}
+            </div>
         </div>
 
         <div className="flex-1">
@@ -200,7 +227,7 @@ export const Ourdoctors = () => {
           <div className="flex items-center space-x-2">
             <DollarSign className="w-4 h-4 text-gray-400" />
             <span className="text-gray-600 dark:text-gray-400">
-              ${doctor.consultation_fee} as Consultation fee
+            Consultation: ${doctor.consultation_fee}
             </span>
           </div>
         </div>
