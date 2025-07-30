@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { Analytics } from '@vercel/analytics/react'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 
@@ -23,7 +24,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
-  defaultNotFoundComponent: NotFound
+  defaultNotFoundComponent: NotFound,
 })
 
 // Register the router instance for type safety
@@ -43,6 +44,7 @@ if (rootElement && !rootElement.innerHTML) {
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
           <ProviderFunction>
             <RouterProvider router={router} />
+            <Analytics />
           </ProviderFunction>
         </ThemeProvider>
       </TanStackQueryProvider.Provider>

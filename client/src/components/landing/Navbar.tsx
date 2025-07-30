@@ -111,12 +111,12 @@ function Navbar() {
                 className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-[#E8EDF2] dark:hover:bg-gray-800 hover:text-[#1A94E5] transition-colors duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <Phone className="w-5 h-5" />
+                <HeartHandshake className="w-4 h-4" />
                 <span>Our Doctors</span>
               </Link>
               <Link
                 to="/contact"
-                className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
+                className="flex items-center space-x-3 px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-[#1A94E5] dark:hover:text-[#1A94E5] transition-colors duration-200"
               >
                 <Phone className="w-4 h-4" />
                 <span>Contact</span>
