@@ -61,8 +61,8 @@ const Contact: React.FC = () => {
     {
       icon: <Phone className="w-6 h-6" />,
       title: 'Phone',
-      details: ['+1 (555) 123-4567', '+1 (555) 987-6543'],
-      description: 'Mon-Fri 8AM-6PM EST',
+      details: ['+254 (555) 123-4567', '+254 (555) 987-6543'],
+      description: 'Mon-Fri 8AM-6PM EAT',
     },
     {
       icon: <Mail className="w-6 h-6" />,
@@ -79,7 +79,7 @@ const Contact: React.FC = () => {
     {
       icon: <Clock className="w-6 h-6" />,
       title: 'Business Hours',
-      details: ['Monday - Friday: 8AM - 6PM', 'Saturday: 9AM - 4PM'],
+      details: ['Monday - Friday: 8AM - 6PM', 'Sunday: 9AM - 4PM'],
       description: 'EST Time Zone',
     },
   ]
@@ -101,7 +101,7 @@ const Contact: React.FC = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-green-600 py-0 px-0 sm:px-0 lg:px-0 relative">
+        <div className="py-0 px-0 sm:px-0 lg:px-0 relative">
           <img
             src="/contact-hero.avif"
             alt="Contact MediConnect"
@@ -167,7 +167,7 @@ const Contact: React.FC = () => {
                   For urgent technical issues affecting patient care:
                 </p>
                 <p className="text-red-800 font-bold text-lg">
-                  +1 (555) URGENT-1
+                  +254 (555) URGENT-1
                 </p>
                 <p className="text-red-600 text-sm">
                   Available 24/7 for healthcare emergencies

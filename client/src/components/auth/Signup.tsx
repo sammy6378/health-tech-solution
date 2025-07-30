@@ -211,7 +211,7 @@ function Signup() {
                   to="/auth-signin"
                   className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-semibold transition-colors"
                 >
-                  Sign in here
+                  Sign
                 </Link>
               </p>
             </div>

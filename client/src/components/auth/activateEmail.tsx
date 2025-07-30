@@ -220,7 +220,7 @@ function ActivateEmail() {
               to="/auth-signin"
               className="text-gray-600 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-sm transition-colors"
             >
-              Back to Sign In
+              Sign In
             </Link>
           </div>
         </div>

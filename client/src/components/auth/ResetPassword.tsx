@@ -231,7 +231,7 @@ function ResetPassword() {
                   to="/auth-signin"
                   className="text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 font-semibold transition-colors"
                 >
-                  Sign In here
+                  Sign In
                 </Link>
               </p>
             </div>
