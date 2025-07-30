@@ -157,7 +157,12 @@ export default function DoctorsPage() {
                     <Button
                       size="sm"
                       disabled={
-                        !doctor.availability || !validateAvailability(doctor)
+                        !validateAvailability({
+                          ...doctor,
+                          days: doctor.days ?? [],
+                          start_time: doctor.start_time ?? '08:00',
+                          end_time: doctor.end_time ?? '17:00',
+                        })
                       }
                       onClick={() => setSelectedDoctor(user)}
                       className="cursor-pointer"
