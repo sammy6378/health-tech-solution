@@ -14,12 +14,8 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
         try {
           const config: TypeOrmModuleOptions = {
             type: 'postgres',
-            host: configService.getOrThrow<string>('DB_HOST'),
-            port: configService.getOrThrow<number>('DB_PORT'),
-            username: configService.getOrThrow<string>('DB_USERNAME'),
-            password: configService.getOrThrow<string>('DB_PASSWORD'),
-            database: configService.getOrThrow<string>('DB_DATABASE'),
-            entities: [__dirname + '/..//*.entity{.ts,.js}'],
+            url: configService.getOrThrow<string>('DATABASE_URL'),
+            entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: configService.get<boolean>('DB_SYNC', true),
             logging: configService.get<boolean>('DB_LOGGING', false),
             ssl: {
