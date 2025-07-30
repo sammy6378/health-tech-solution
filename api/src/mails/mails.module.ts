@@ -13,31 +13,35 @@ import { join } from 'path';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        transport: {
-          host: configService.getOrThrow<string>('SMTP_HOST'),
-          port: configService.getOrThrow<number>('SMTP_PORT'),
-          secure: configService.getOrThrow<boolean>('SMTP_SECURE'),
-          auth: {
-            user: configService.getOrThrow<string>('SMTP_USER'),
-            pass: configService.getOrThrow<string>('SMTP_PASS'),
+      useFactory: (configService: ConfigService) => {
+        const smtpPort = configService.get<number>('SMTP_PORT');
+        const isSecure = smtpPort === 465;
+        const requireTLS = smtpPort === 587;
+
+        return {
+          transport: {
+            host: configService.getOrThrow<string>('SMTP_HOST'),
+            port: smtpPort,
+            secure: isSecure, // true for 465, false for 587
+            requireTLS: requireTLS, // true for 587, false for 465
+            auth: {
+              user: configService.getOrThrow<string>('SMTP_USER'),
+              pass: configService.getOrThrow<string>('SMTP_PASS'),
+            },
+            tls: {
+              rejectUnauthorized: false, // optional: for dev, remove for prod if possible
+            },
           },
-          requireTLS: false, // Set to true if your SMTP requires TLS
-          tls: {
-            rejectUnauthorized: false, // For development with self-signed certificates
+          defaults: {
+            from: `MediConnect <${configService.get<string>('SMTP_USER')}>`,
           },
-        },
-        defaults: {
-          from: `MediConnect`,
-        },
-        template: {
-          dir: join(__dirname, 'templates'), // mail/templates/…
-          adapter: new EjsAdapter({
-            inlineCssEnabled: true, // Enable inline CSS for email templates
-          }),
-          options: { strict: false },
-        },
-      }),
+          template: {
+            dir: join(__dirname, 'templates'),
+            adapter: new EjsAdapter({ inlineCssEnabled: true }),
+            options: { strict: false },
+          },
+        };
+      },
     }),
   ],
 })
