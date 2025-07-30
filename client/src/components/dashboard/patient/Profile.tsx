@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useGetPatientProfileByUserId, useUpdatePatientProfile } from '@/hooks/usePatientProfile'
+import { useCreatePatientProfile, useGetPatientProfileByUserId, useUpdatePatientProfile } from '@/hooks/usePatientProfile'
 import { uploadFile } from '@/hooks/useUpload'
 import { useToast } from '@/hooks/use-toast'
 import { useAuthStore } from '@/store/store'
@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const {user} = useAuthStore()
   const userId = user?.userId || ''
   const {mutateAsync: updateProfile} = useUpdatePatientProfile()
+  const {mutateAsync: createPatientProfile} = useCreatePatientProfile()
   const {user: userData} = useUser(userId)
   const {data: patientProfile} = useGetPatientProfileByUserId(userId)
   const profile = patientProfile?.data
@@ -45,16 +46,16 @@ export default function ProfilePage() {
   const [isUpdating, setIsUpdating] = useState(false)
 
   // Load user data on component mount
-  useEffect(() => {
-    if (profile) {
-      setProfileData({
-        firstName: userData?.first_name || '',
-        lastName: userData?.last_name || '',
-        email: userData?.email || '',
-        profilePicture: profile?.avatar || '',
-      })
-    }
-  }, [profile])
+ useEffect(() => {
+  if (userData) {
+    setProfileData({
+      firstName: userData.first_name || '',
+      lastName: userData.last_name || '',
+      email: userData.email || '',
+      profilePicture: profile?.avatar || '', // Will be empty if no profile
+    })
+  }
+}, [userData, profile])
 
  const handleImageUpload = async (file: File) => {
    try {
@@ -66,20 +67,29 @@ export default function ProfilePage() {
  }
 
   const handleProfileUpdate = async () => {
-
     setIsUpdating(true)
     try {
-      await updateProfile({
-        id: profile?.profile_id ?? '',
-        data: {
+      if (profile?.profile_id) {
+        await updateProfile({
+          id: profile.profile_id,
+          data: {
+            avatar: profileData.profilePicture,
+          },
+        })
+        toast({
+          title: 'Profile updated successfully!',
+          variant: 'success',
+        })
+      } else {
+        await createPatientProfile({
+          user_id: userId,
           avatar: profileData.profilePicture,
-        },
-      })
-      setIsUpdating(false)
-    toast({
-      title: 'Profile updated successfully!',
-      variant: 'success',
-    })
+        })
+        toast({
+          title: 'Profile created successfully!',
+          variant: 'success',
+        })
+      }
     } catch (error) {
       toast({
         title: 'Failed to update profile',

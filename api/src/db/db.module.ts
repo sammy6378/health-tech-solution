@@ -18,9 +18,11 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: configService.get<boolean>('DB_SYNC', true),
             logging: configService.get<boolean>('DB_LOGGING', false),
-            ssl: {
-              rejectUnauthorized: false,
-            },
+            // ssl: configService.get<boolean>('DB_SSL_ENABLED', false)
+            //   ? {
+            //       rejectUnauthorized: false,
+            //     }
+            //   : false,
           };
           logger.log('Successfully loaded database config');
 
