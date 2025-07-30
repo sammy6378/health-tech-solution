@@ -129,38 +129,35 @@ export const Ourdoctors = () => {
             alt={doctor.user?.first_name}
             className="w-20 h-20 rounded-full object-cover"
           />
-            <div className="absolute bottom-1 right-1 flex -space-x-1">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayShort) => {
-              // Map dayShort to full day name for comparison if needed
-              const dayMap: Record<string, string> = {
-                Mon: 'Monday',
-                Tue: 'Tuesday',
-                Wed: 'Wednesday',
-                Thu: 'Thursday',
-                Fri: 'Friday',
-                Sat: 'Saturday',
-                Sun: 'Sunday',
+            {/* Online status dot based on current day availability */}
+            {(() => {
+              const dayMap: Record<number, string> = {
+              0: 'Sunday',
+              1: 'Monday',
+              2: 'Tuesday',
+              3: 'Wednesday',
+              4: 'Thursday',
+              5: 'Friday',
+              6: 'Saturday',
               }
-              const isAvailable =
-                doctor.days &&
-                doctor.days.some(
+              const today = new Date().getDay()
+              const todayName = dayMap[today]
+              const isAvailableToday =
+              doctor.days &&
+              doctor.days.some(
                 (d: string) =>
-                  d.toLowerCase().slice(0, 3) === dayShort.toLowerCase() ||
-                  d.toLowerCase() === dayMap[dayShort].toLowerCase()
-                )
-              return (
-                <span
-                key={dayShort}
-                title={dayMap[dayShort]}
-                className={`w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold ${
-                  isAvailable ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-400'
-                }`}
-                >
-                {dayShort[0]}
-                </span>
+                d.toLowerCase() === todayName.toLowerCase() ||
+                d.toLowerCase().slice(0, 3) === todayName.slice(0, 3).toLowerCase()
               )
-              })}
-            </div>
+              return (
+              <span
+                title={isAvailableToday ? 'Available today' : 'Not available today'}
+                className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white ${
+                isAvailableToday ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              />
+              )
+            })()}
         </div>
 
         <div className="flex-1">
