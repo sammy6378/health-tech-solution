@@ -55,7 +55,7 @@ const PatientStatsPage = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Current
                 </p>
-                <h3 className="text-2xl font-bold">{bmiRecord?.bmi}</h3>
+                <h3 className="text-2xl font-bold">{bmiRecord?.bmi ? bmiRecord.bmi : 'N/A'}</h3>
               </div>
               <div className="p-3 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300">
                 <Activity size={24} />

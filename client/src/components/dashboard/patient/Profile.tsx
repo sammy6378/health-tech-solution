@@ -10,11 +10,13 @@ import { useGetPatientProfileByUserId, useUpdatePatientProfile } from '@/hooks/u
 import { uploadFile } from '@/hooks/useUpload'
 import { useToast } from '@/hooks/use-toast'
 import { useAuthStore } from '@/store/store'
+import { useUser } from '@/hooks/useUserHook'
 
 export default function ProfilePage() {
   const {user} = useAuthStore()
   const userId = user?.userId || ''
   const {mutateAsync: updateProfile} = useUpdatePatientProfile()
+  const {user: userData} = useUser(userId)
   const {data: patientProfile} = useGetPatientProfileByUserId(userId)
   const profile = patientProfile?.data
   const {toast} = useToast()
@@ -46,9 +48,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setProfileData({
-        firstName: profile?.patient?.first_name || '',
-        lastName: profile?.patient?.last_name || '',
-        email: profile?.patient?.email || '',
+        firstName: userData?.first_name || '',
+        lastName: userData?.last_name || '',
+        email: userData?.email || '',
         profilePicture: profile?.avatar || '',
       })
     }
