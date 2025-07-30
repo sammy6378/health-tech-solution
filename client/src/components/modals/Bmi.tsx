@@ -85,7 +85,7 @@ export default function BmiModal({
           onOpenChange(false)
 
         } else {
-          await createRecord(payload)
+            await createRecord({ ...payload, patient_id })
           toast({
             title: 'BMI record created successfully',
             description: 'Your BMI record has been created.',

@@ -200,7 +200,7 @@ function ActivateEmail() {
             </button>
           </form>
 
-          <div className="text-center mt-6 pt-6 border-t border-gray-200 dark:border-white/10">
+          {/* <div className="text-center mt-6 pt-6 border-t border-gray-200 dark:border-white/10">
             <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
               Didn't receive the code?
             </p>
@@ -213,16 +213,7 @@ function ActivateEmail() {
             >
               Resend Code
             </button>
-          </div>
-
-          <div className="text-center mt-4">
-            <Link
-              to="/auth-signin"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-sm transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </AuthLayout>
